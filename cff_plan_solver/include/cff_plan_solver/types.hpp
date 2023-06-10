@@ -1,13 +1,18 @@
 #pragma once
 
+#include <vector>
 #include "string"
 #include "memory"
 #include "optional"
 
+struct Action {
+    std::string name;
+    std::vector<std::string> params;
+};
 struct PlanItem {
     int duration;
     double time;
-    std::string action;
+    Action action;
 };
 struct PlanNode {
     PlanItem item;

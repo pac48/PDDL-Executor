@@ -1,1 +1,1 @@
-<{{action_class}}   name="{{action_name}}" {{args}} />
+<{{action_class}}   name="{{action_name}}" args="{{args}}" />

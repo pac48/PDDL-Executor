@@ -48,25 +48,26 @@ void extract_elements_from_line(const std::vector<std::string> &tokens, std::str
 }
 
 void createAction(const float &level, std::string operator_name, std::vector<std::string> operator_params,
-                  std::string &action) {
+                  Action &action) {
     transform(operator_name.begin(), operator_name.end(), operator_name.begin(), ::tolower);
     for (auto &val: operator_params) {
         transform(val.begin(), val.end(), val.begin(), ::tolower);
     }
 
-    std::string operator_parameters;
-    for (auto it = operator_params.begin(); it != operator_params.end(); ++it) {
-        if (std::next(it) != operator_params.end()) {
-            operator_parameters = operator_parameters + (*it) + " ";
-        } else {
-            operator_parameters = operator_parameters + (*it);
-        }
-    }
-    std::stringstream ss;
-    transform(operator_name.begin(), operator_name.end(), operator_name.begin(), ::tolower);
-//        ss << level << ": (" << operator_name << " " << operator_parameters << ")" << [" << 1 + level - 0.001 << "]\n";
-    ss << "(" << operator_name << " " << operator_parameters << ")";
-    action = ss.str();
+//    std::string operator_parameters;
+//    for (auto it = operator_params.begin(); it != operator_params.end(); ++it) {
+//        if (std::next(it) != operator_params.end()) {
+//            operator_parameters = operator_parameters + (*it) + " ";
+//        } else {
+//            operator_parameters = operator_parameters + (*it);
+//        }
+//    }
+//    std::stringstream ss;
+//    transform(operator_name.begin(), operator_name.end(), operator_name.begin(), ::tolower);
+////        ss << level << ": (" << operator_name << " " << operator_parameters << ")" << [" << 1 + level - 0.001 << "]\n";
+//    ss << "(" << operator_name << " " << operator_parameters << ")";
+    action.name = operator_name;
+    action.params = operator_params;
 }
 
 

@@ -30,38 +30,46 @@ Plan::Plan(std::shared_ptr<PlanNode> root) {
 }
 
 void Plan::add_observe_action_sequence(bool observe_result, const PlanItem &item, std::stringstream &tree) const {
-    const std::string action_id =
-            item.action + ":" + std::to_string(static_cast<int>(item.time * 1000));
-    std::string observe_expr = item.action;
-    tree << "<Sequence name=\"" + action_id + "\">\n";
-    if (observe_result) {
-        tree << "<WaitAtStartReq action=\"" + action_id + "\"/>\n";
-        tree << "<ReactiveSequence name=\"" + action_id + "\">\n";
-        tree << "<CheckOverAllReq action=\"" + action_id + "\"/>\n";
-        tree << "<ExecuteAction action=\"" + action_id + "\"/>\n";
-        tree << "</ReactiveSequence>\n";
+    const std::string action_id = item.action.name + ":" + std::to_string(static_cast<int>(item.time * 1000));
 
-        tree << "<ApplyObservation observe=\"" + observe_expr +
-                "\" value=\"true\"/>\n";
-    } else {
-        tree << "<ApplyObservation observe=\"" + observe_expr +
-                "\" value=\"false\"/>\n";
+    tree << "<Sequence name=\"" + action_id + "\">\n";
+
+    Jinja2CppLight::Template tree_template(template_map_.at("action.xml"));
+    tree_template.setValue("action_class", "class_" + item.action.name);
+    tree_template.setValue("action_name", item.action.name);
+    std::stringstream ss;
+    std::string sep;
+    for (auto &val: item.action.params) {
+        ss << sep << val;
+        sep = " ";
     }
+    tree_template.setValue("args", ss.str());
+
+    tree << tree_template.render();
+
     tree << "</Sequence>\n";
 }
 
 void Plan::add_action_sequence(const PlanItem &item, std::stringstream &tree) const {
-    const std::string action_id = item.action + ":" + std::to_string(static_cast<int>(item.time * 1000));
+    const std::string action_id = item.action.name + ":" + std::to_string(static_cast<int>(item.time * 1000));
+
     tree << "<Sequence name=\"" + action_id + "\">\n";
-    tree << "<WaitAtStartReq action=\"" + action_id + "\"/>\n";
-    tree << "<ApplyAtStartEffect action=\"" + action_id + "\"/>\n";
-    tree << "<ReactiveSequence name=\"" + action_id + "\">\n";
-    tree << "<CheckOverAllReq action=\"" + action_id + "\"/>\n";
-    tree << "<ExecuteAction action=\"" + action_id + "\"/>\n";
-    tree << "</ReactiveSequence>\n";
-    tree << "<CheckAtEndReq action=\"" + action_id + "\"/>\n";
-    tree << "<ApplyAtEndEffect action=\"" + action_id + "\"/>\n";
+
+    Jinja2CppLight::Template tree_template(template_map_.at("action.xml"));
+    tree_template.setValue("action_class", "class_" + item.action.name);
+    tree_template.setValue("action_name", item.action.name);
+    std::stringstream ss;
+    std::string sep;
+    for (auto &val: item.action.params) {
+        ss << sep << val;
+        sep = " ";
+    }
+    tree_template.setValue("args", ss.str());
+
+    tree << tree_template.render();
+
     tree << "</Sequence>\n";
+
 }
 
 void Plan::get_sub_tree(const std::shared_ptr<PlanNode> &root, std::stringstream &tree) const {
