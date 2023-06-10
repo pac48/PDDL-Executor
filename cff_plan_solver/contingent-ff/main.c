@@ -671,8 +671,52 @@ struct tms lstart, lend;
 
 
 
-int run( int argc, char *argv[] )
+void run( int argc, char *argv[] )
 {
+    gtempl_time = 0, greach_time = 0, grelev_time = 0, gconn_time = 0, gmem_time = 0;
+    gsearch_time = 0, geval_time = 0, gcnf_time = 0, genc_time = 0, gsat_time = 0;
+    grs_time = 0, grs_sat_time = 0, gss_time = 0, gsc_time = 0;
+    gr_sat_time = 0, grp_sat_time = 0, gr_cnf_time = 0, gr_enc_time = 0, gmembership_time = 0;
+    gsat_calls = 0, gcnfs = 0, grs_sat_calls = 0, gss_sat_calls = 0, gsc_sat_calls = 0;
+    gr_sat_calls = 0, grp_sat_calls = 0;
+    grs_comps = 0, grs_conf_comps = 0;
+    grs_hits = 0, gss_hits = 0, gdp_calls = 0, gup_calls = 0;
+    gevaluated_states = 0;
+    gmax_search_depth = 0;
+    gsum_k_clauses=0, gsum_clauses = 0;
+    lineno = 1;
+    gdomain_name = NULL;
+    gloaded_ops = NULL;
+    gorig_initial_facts = NULL;
+    gorig_goal_facts = NULL;
+    gloaded_axioms = NULL;
+    gparse_types = NULL;
+    gparse_constants = NULL;
+    gparse_predicates = NULL;
+    gparse_objects = NULL;
+    gorig_constant_list = NULL;
+    gpredicates_and_types = NULL;
+    gnum_constants = 0;
+    gnum_types = 0;
+    gnum_predicates = 0;
+    gnum_operators = 0;
+    gnum_full_initial = 0;
+    ggoal = NULL;
+    ginitial = NULL;
+    gnum_initial = 0;
+    gunknown_initial = NULL;
+    gnum_unknown_initial = 0;
+    gnum_initial_ft_equivalence = 0;
+    gnum_relevant_facts = 0;
+    gnum_pp_facts = 0;
+    sio_first_call = TRUE;
+    gnum_A = 0;
+    gnum_H = 0;
+    gnum_clauses = 0;/* beyond that, ie dynamic search fraction */
+    gremoved_lits = 0;
+
+
+
 
   /* resulting name for ops file
    */
@@ -939,7 +983,6 @@ int run( int argc, char *argv[] )
   output_planner_info();
 
   printf("\n\n");
-  exit( 0 );
 
 }
 

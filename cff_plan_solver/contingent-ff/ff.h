@@ -1398,7 +1398,7 @@ Bool process_command_line( int argc, char *argv[] );
 extern "C" {
 #endif
 
-int run(int argc, char *argv[]);
+void run(int argc, char *argv[]);
 
 #ifdef __cplusplus
 }
