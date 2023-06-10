@@ -18,5 +18,5 @@ set(src_files
         scan-fct_pddl.tab.c
         scan-ops_pddl.tab.c)
 
-add_library(FF SHARED main.c ${src_files})
+add_executable(FF main.c ${src_files})
 #target_link_libraries(FF LINK_PUBLIC Hello)

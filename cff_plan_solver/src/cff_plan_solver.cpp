@@ -1,23 +1,66 @@
+#include "string"
+#include <filesystem>
 #include <string>
 #include <vector>
+#include "fstream"
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <string>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <queue>
+#include <algorithm>
+#include <optional>
+
+
+#include "ament_index_cpp/get_package_share_directory.hpp"
+
 #include "cff_plan_solver/cff_plan_solver.hpp"
-#include "ff.h"
+#include "cff_plan_solver/types.hpp"
 
 
-void plan(int argc, char *const *argv) {
-    char *argv_copy[argc];
-    std::vector<std::string> args_string(argc);
-    for (int i =0 ; i < argc; i++){
-        args_string[i] = argv[i];
-        argv_copy[i] = args_string[i].data();
+
+
+std::optional<std::shared_ptr<PlanNode>>
+parsePlanOutput(const std::basic_string<char, std::char_traits<char>, std::allocator<char>> &plan_file_path);
+
+std::optional<std::shared_ptr<PlanNode>> getPlan(int argc, char *const *argv) {
+    std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("cff_plan_solver");
+    auto exe_path = pkg_dir / "FF";
+
+    // Replace "path/to/directory" with the actual path of the directory you want to create
+    std::string plan_out_dir = "/tmp/cff_plan_solver/";
+
+    if (!std::filesystem::exists(plan_out_dir)) {
+        std::filesystem::create_directory(plan_out_dir);
     }
-    run( argc, argv_copy);
+    auto plan_file_path = plan_out_dir + "pddlplan.txt";
+
+    std::stringstream args_stream;
+    for (int i = 1; i < argc; i++) {
+        args_stream << " ";
+        args_stream << argv[i];
+    }
+    args_stream << "> " << plan_file_path;
+    // run planner
+    std::system((exe_path.string() + args_stream.str()).c_str());
+
+
+    return parsePlanOutput(plan_file_path);
+
+
 }
 
-int main(int argc, char *argv[] ){
-    plan(argc, argv);
+
+
+
+int main(int argc, char *argv[]) {
+    auto plan = getPlan(argc, argv);
+
     int o = 0;
-    plan( argc, argv);
 
 }
 

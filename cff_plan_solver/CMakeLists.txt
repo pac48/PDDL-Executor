@@ -16,11 +16,10 @@ include_directories(
 )
 
 add_executable(cff_plan_solver
-    src/cff_plan_solver.cpp
+    src/cff_plan_solver.cpp src/cff_parser.cpp
     )
-target_link_libraries(cff_plan_solver FF)
-#ament_target_dependencies(cff_plan_solver dependencies)
-
+target_link_libraries(cff_plan_solver)
+ament_target_dependencies(cff_plan_solver ament_index_cpp)
 
 
 install(TARGETS
@@ -30,12 +29,10 @@ install(TARGETS
     RUNTIME DESTINATION bin
     )
 
-#install(TARGETS
-#    FF
-#    ARCHIVE DESTINATION lib
-#    LIBRARY DESTINATION lib
-#    RUNTIME DESTINATION lib/${PROJECT_NAME}
-#    )
+install(TARGETS
+    FF
+    RUNTIME DESTINATION share/cff_plan_solver
+    )
 
 
 install(DIRECTORY include/

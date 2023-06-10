@@ -1394,17 +1394,6 @@ void output_planner_info( void );
 void ff_usage( void );
 Bool process_command_line( int argc, char *argv[] );
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void run(int argc, char *argv[]);
-
-#ifdef __cplusplus
-}
-#endif
-
-
 
 
 /*
