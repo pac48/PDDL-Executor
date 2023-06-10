@@ -1,0 +1,775 @@
+<root BTCPP_format="4">
+    <BehaviorTree ID="MainTree\">
+        <Sequence name="root_sequence\">
+            <Fallback>
+                <Sequence>
+                    <Sequence name="(detectperson pioneer nathan home):0">
+                        <WaitAtStartReq action="(detectperson pioneer nathan home):0"/>
+                        <ReactiveSequence name="(detectperson pioneer nathan home):0">
+                            <CheckOverAllReq action="(detectperson pioneer nathan home):0"/>
+                            <ExecuteAction action="(detectperson pioneer nathan home):0"/>
+                        </ReactiveSequence>
+                        <ApplyObservation observe="(detectperson pioneer nathan home)" value="true"/>
+                    </Sequence>
+                    <Sequence name="(initguidepersontolandmarkattempt pioneer nathan home):1000">
+                        <WaitAtStartReq action="(initguidepersontolandmarkattempt pioneer nathan home):1000"/>
+                        <ApplyAtStartEffect action="(initguidepersontolandmarkattempt pioneer nathan home):1000"/>
+                        <ReactiveSequence name="(initguidepersontolandmarkattempt pioneer nathan home):1000">
+                            <CheckOverAllReq action="(initguidepersontolandmarkattempt pioneer nathan home):1000"/>
+                            <ExecuteAction action="(initguidepersontolandmarkattempt pioneer nathan home):1000"/>
+                        </ReactiveSequence>
+                        <CheckAtEndReq action="(initguidepersontolandmarkattempt pioneer nathan home):1000"/>
+                        <ApplyAtEndEffect action="(initguidepersontolandmarkattempt pioneer nathan home):1000"/>
+                    </Sequence>
+                    <Sequence name="(guidepersontolandmarkattempt1 pioneer nathan kitchen):2000">
+                        <WaitAtStartReq action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):2000"/>
+                        <ApplyAtStartEffect action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):2000"/>
+                        <ReactiveSequence name="(guidepersontolandmarkattempt1 pioneer nathan kitchen):2000">
+                            <CheckOverAllReq action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):2000"/>
+                            <ExecuteAction action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):2000"/>
+                        </ReactiveSequence>
+                        <CheckAtEndReq action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):2000"/>
+                        <ApplyAtEndEffect action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):2000"/>
+                    </Sequence>
+                    <Fallback>
+                        <Sequence>
+                            <Sequence name="(checkguidetosucceeded1 home):3000">
+                                <WaitAtStartReq action="(checkguidetosucceeded1 home):3000"/>
+                                <ReactiveSequence name="(checkguidetosucceeded1 home):3000">
+                                    <CheckOverAllReq action="(checkguidetosucceeded1 home):3000"/>
+                                    <ExecuteAction action="(checkguidetosucceeded1 home):3000"/>
+                                </ReactiveSequence>
+                                <ApplyObservation observe="(checkguidetosucceeded1 home)" value="true"/>
+                            </Sequence>
+                            <Sequence name="(updatepersonloc1 nathan home kitchen):4000">
+                                <WaitAtStartReq action="(updatepersonloc1 nathan home kitchen):4000"/>
+                                <ApplyAtStartEffect action="(updatepersonloc1 nathan home kitchen):4000"/>
+                                <ReactiveSequence name="(updatepersonloc1 nathan home kitchen):4000">
+                                    <CheckOverAllReq action="(updatepersonloc1 nathan home kitchen):4000"/>
+                                    <ExecuteAction action="(updatepersonloc1 nathan home kitchen):4000"/>
+                                </ReactiveSequence>
+                                <CheckAtEndReq action="(updatepersonloc1 nathan home kitchen):4000"/>
+                                <ApplyAtEndEffect action="(updatepersonloc1 nathan home kitchen):4000"/>
+                            </Sequence>
+                            <Fallback>
+                                <Sequence>
+                                    <Sequence name="(notifyautomatedmedicineat pioneer nathan kitchen):5000">
+                                        <WaitAtStartReq action="(notifyautomatedmedicineat pioneer nathan kitchen):5000"/>
+                                        <ReactiveSequence name="(notifyautomatedmedicineat pioneer nathan kitchen):5000">
+                                            <CheckOverAllReq action="(notifyautomatedmedicineat pioneer nathan kitchen):5000"/>
+                                            <ExecuteAction action="(notifyautomatedmedicineat pioneer nathan kitchen):5000"/>
+                                        </ReactiveSequence>
+                                        <ApplyObservation observe="(notifyautomatedmedicineat pioneer nathan kitchen)" value="true"/>
+                                    </Sequence>
+                                    <Sequence name="(updatesuccess1 ):6000">
+                                        <WaitAtStartReq action="(updatesuccess1 ):6000"/>
+                                        <ApplyAtStartEffect action="(updatesuccess1 ):6000"/>
+                                        <ReactiveSequence name="(updatesuccess1 ):6000">
+                                            <CheckOverAllReq action="(updatesuccess1 ):6000"/>
+                                            <ExecuteAction action="(updatesuccess1 ):6000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(updatesuccess1 ):6000"/>
+                                        <ApplyAtEndEffect action="(updatesuccess1 ):6000"/>
+                                    </Sequence>
+
+                                </Sequence>
+                                <Sequence>
+                                    <Sequence name="(notifyautomatedmedicineat pioneer nathan kitchen):5000">
+                                        <ApplyObservation observe="(notifyautomatedmedicineat pioneer nathan kitchen)" value="false"/>
+                                    </Sequence>
+                                    <Fallback>
+                                        <Sequence>
+                                            <Sequence name="(notifyrecordedmedicineat pioneer nathan kitchen):6000">
+                                                <WaitAtStartReq action="(notifyrecordedmedicineat pioneer nathan kitchen):6000"/>
+                                                <ReactiveSequence name="(notifyrecordedmedicineat pioneer nathan kitchen):6000">
+                                                    <CheckOverAllReq action="(notifyrecordedmedicineat pioneer nathan kitchen):6000"/>
+                                                    <ExecuteAction action="(notifyrecordedmedicineat pioneer nathan kitchen):6000"/>
+                                                </ReactiveSequence>
+                                                <ApplyObservation observe="(notifyrecordedmedicineat pioneer nathan kitchen)" value="true"/>
+                                            </Sequence>
+                                            <Sequence name="(updatesuccess2 ):7000">
+                                                <WaitAtStartReq action="(updatesuccess2 ):7000"/>
+                                                <ApplyAtStartEffect action="(updatesuccess2 ):7000"/>
+                                                <ReactiveSequence name="(updatesuccess2 ):7000">
+                                                    <CheckOverAllReq action="(updatesuccess2 ):7000"/>
+                                                    <ExecuteAction action="(updatesuccess2 ):7000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(updatesuccess2 ):7000"/>
+                                                <ApplyAtEndEffect action="(updatesuccess2 ):7000"/>
+                                            </Sequence>
+
+                                        </Sequence>
+                                        <Sequence>
+                                            <Sequence name="(notifyrecordedmedicineat pioneer nathan kitchen):6000">
+                                                <ApplyObservation observe="(notifyrecordedmedicineat pioneer nathan kitchen)" value="false"/>
+                                            </Sequence>
+                                            <Sequence name="(askcaregiverhelpmedicine1 pioneer nathan kitchen):7000">
+                                                <WaitAtStartReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):7000"/>
+                                                <ApplyAtStartEffect action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):7000"/>
+                                                <ReactiveSequence name="(askcaregiverhelpmedicine1 pioneer nathan kitchen):7000">
+                                                    <CheckOverAllReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):7000"/>
+                                                    <ExecuteAction action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):7000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):7000"/>
+                                                <ApplyAtEndEffect action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):7000"/>
+                                            </Sequence>
+                                            <Sequence name="(updatesuccess3 nathan):8000">
+                                                <WaitAtStartReq action="(updatesuccess3 nathan):8000"/>
+                                                <ApplyAtStartEffect action="(updatesuccess3 nathan):8000"/>
+                                                <ReactiveSequence name="(updatesuccess3 nathan):8000">
+                                                    <CheckOverAllReq action="(updatesuccess3 nathan):8000"/>
+                                                    <ExecuteAction action="(updatesuccess3 nathan):8000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(updatesuccess3 nathan):8000"/>
+                                                <ApplyAtEndEffect action="(updatesuccess3 nathan):8000"/>
+                                            </Sequence>
+
+                                        </Sequence>
+                                    </Fallback>
+                                </Sequence>
+                            </Fallback>
+                        </Sequence>
+                        <Sequence>
+                            <Sequence name="(checkguidetosucceeded1 home):3000">
+                                <ApplyObservation observe="(checkguidetosucceeded1 home)" value="false"/>
+                            </Sequence>
+                            <Sequence name="(initmovetolandmark pioneer):4000">
+                                <WaitAtStartReq action="(initmovetolandmark pioneer):4000"/>
+                                <ApplyAtStartEffect action="(initmovetolandmark pioneer):4000"/>
+                                <ReactiveSequence name="(initmovetolandmark pioneer):4000">
+                                    <CheckOverAllReq action="(initmovetolandmark pioneer):4000"/>
+                                    <ExecuteAction action="(initmovetolandmark pioneer):4000"/>
+                                </ReactiveSequence>
+                                <CheckAtEndReq action="(initmovetolandmark pioneer):4000"/>
+                                <ApplyAtEndEffect action="(initmovetolandmark pioneer):4000"/>
+                            </Sequence>
+                            <Sequence name="(movetolandmark pioneer home):5000">
+                                <WaitAtStartReq action="(movetolandmark pioneer home):5000"/>
+                                <ApplyAtStartEffect action="(movetolandmark pioneer home):5000"/>
+                                <ReactiveSequence name="(movetolandmark pioneer home):5000">
+                                    <CheckOverAllReq action="(movetolandmark pioneer home):5000"/>
+                                    <ExecuteAction action="(movetolandmark pioneer home):5000"/>
+                                </ReactiveSequence>
+                                <CheckAtEndReq action="(movetolandmark pioneer home):5000"/>
+                                <ApplyAtEndEffect action="(movetolandmark pioneer home):5000"/>
+                            </Sequence>
+                            <Sequence name="(initguidepersontolandmarkattempt pioneer nathan home):6000">
+                                <WaitAtStartReq action="(initguidepersontolandmarkattempt pioneer nathan home):6000"/>
+                                <ApplyAtStartEffect action="(initguidepersontolandmarkattempt pioneer nathan home):6000"/>
+                                <ReactiveSequence name="(initguidepersontolandmarkattempt pioneer nathan home):6000">
+                                    <CheckOverAllReq action="(initguidepersontolandmarkattempt pioneer nathan home):6000"/>
+                                    <ExecuteAction action="(initguidepersontolandmarkattempt pioneer nathan home):6000"/>
+                                </ReactiveSequence>
+                                <CheckAtEndReq action="(initguidepersontolandmarkattempt pioneer nathan home):6000"/>
+                                <ApplyAtEndEffect action="(initguidepersontolandmarkattempt pioneer nathan home):6000"/>
+                            </Sequence>
+                            <Sequence name="(guidepersontolandmarkattempt2 pioneer nathan kitchen):7000">
+                                <WaitAtStartReq action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):7000"/>
+                                <ApplyAtStartEffect action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):7000"/>
+                                <ReactiveSequence name="(guidepersontolandmarkattempt2 pioneer nathan kitchen):7000">
+                                    <CheckOverAllReq action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):7000"/>
+                                    <ExecuteAction action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):7000"/>
+                                </ReactiveSequence>
+                                <CheckAtEndReq action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):7000"/>
+                                <ApplyAtEndEffect action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):7000"/>
+                            </Sequence>
+                            <Fallback>
+                                <Sequence>
+                                    <Sequence name="(checkguidetosucceeded2 home):8000">
+                                        <WaitAtStartReq action="(checkguidetosucceeded2 home):8000"/>
+                                        <ReactiveSequence name="(checkguidetosucceeded2 home):8000">
+                                            <CheckOverAllReq action="(checkguidetosucceeded2 home):8000"/>
+                                            <ExecuteAction action="(checkguidetosucceeded2 home):8000"/>
+                                        </ReactiveSequence>
+                                        <ApplyObservation observe="(checkguidetosucceeded2 home)" value="true"/>
+                                    </Sequence>
+                                    <Sequence name="(updatepersonloc2 nathan home kitchen):9000">
+                                        <WaitAtStartReq action="(updatepersonloc2 nathan home kitchen):9000"/>
+                                        <ApplyAtStartEffect action="(updatepersonloc2 nathan home kitchen):9000"/>
+                                        <ReactiveSequence name="(updatepersonloc2 nathan home kitchen):9000">
+                                            <CheckOverAllReq action="(updatepersonloc2 nathan home kitchen):9000"/>
+                                            <ExecuteAction action="(updatepersonloc2 nathan home kitchen):9000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(updatepersonloc2 nathan home kitchen):9000"/>
+                                        <ApplyAtEndEffect action="(updatepersonloc2 nathan home kitchen):9000"/>
+                                    </Sequence>
+                                    <Fallback>
+                                        <Sequence>
+                                            <Sequence name="(notifyautomatedmedicineat pioneer nathan kitchen):10000">
+                                                <WaitAtStartReq action="(notifyautomatedmedicineat pioneer nathan kitchen):10000"/>
+                                                <ReactiveSequence name="(notifyautomatedmedicineat pioneer nathan kitchen):10000">
+                                                    <CheckOverAllReq action="(notifyautomatedmedicineat pioneer nathan kitchen):10000"/>
+                                                    <ExecuteAction action="(notifyautomatedmedicineat pioneer nathan kitchen):10000"/>
+                                                </ReactiveSequence>
+                                                <ApplyObservation observe="(notifyautomatedmedicineat pioneer nathan kitchen)" value="true"/>
+                                            </Sequence>
+                                            <Sequence name="(updatesuccess1 ):11000">
+                                                <WaitAtStartReq action="(updatesuccess1 ):11000"/>
+                                                <ApplyAtStartEffect action="(updatesuccess1 ):11000"/>
+                                                <ReactiveSequence name="(updatesuccess1 ):11000">
+                                                    <CheckOverAllReq action="(updatesuccess1 ):11000"/>
+                                                    <ExecuteAction action="(updatesuccess1 ):11000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(updatesuccess1 ):11000"/>
+                                                <ApplyAtEndEffect action="(updatesuccess1 ):11000"/>
+                                            </Sequence>
+
+                                        </Sequence>
+                                        <Sequence>
+                                            <Sequence name="(notifyautomatedmedicineat pioneer nathan kitchen):10000">
+                                                <ApplyObservation observe="(notifyautomatedmedicineat pioneer nathan kitchen)" value="false"/>
+                                            </Sequence>
+                                            <Fallback>
+                                                <Sequence>
+                                                    <Sequence name="(notifyrecordedmedicineat pioneer nathan kitchen):11000">
+                                                        <WaitAtStartReq action="(notifyrecordedmedicineat pioneer nathan kitchen):11000"/>
+                                                        <ReactiveSequence name="(notifyrecordedmedicineat pioneer nathan kitchen):11000">
+                                                            <CheckOverAllReq action="(notifyrecordedmedicineat pioneer nathan kitchen):11000"/>
+                                                            <ExecuteAction action="(notifyrecordedmedicineat pioneer nathan kitchen):11000"/>
+                                                        </ReactiveSequence>
+                                                        <ApplyObservation observe="(notifyrecordedmedicineat pioneer nathan kitchen)" value="true"/>
+                                                    </Sequence>
+                                                    <Sequence name="(updatesuccess2 ):12000">
+                                                        <WaitAtStartReq action="(updatesuccess2 ):12000"/>
+                                                        <ApplyAtStartEffect action="(updatesuccess2 ):12000"/>
+                                                        <ReactiveSequence name="(updatesuccess2 ):12000">
+                                                            <CheckOverAllReq action="(updatesuccess2 ):12000"/>
+                                                            <ExecuteAction action="(updatesuccess2 ):12000"/>
+                                                        </ReactiveSequence>
+                                                        <CheckAtEndReq action="(updatesuccess2 ):12000"/>
+                                                        <ApplyAtEndEffect action="(updatesuccess2 ):12000"/>
+                                                    </Sequence>
+
+                                                </Sequence>
+                                                <Sequence>
+                                                    <Sequence name="(notifyrecordedmedicineat pioneer nathan kitchen):11000">
+                                                        <ApplyObservation observe="(notifyrecordedmedicineat pioneer nathan kitchen)" value="false"/>
+                                                    </Sequence>
+                                                    <Sequence name="(askcaregiverhelpmedicine1 pioneer nathan kitchen):12000">
+                                                        <WaitAtStartReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):12000"/>
+                                                        <ApplyAtStartEffect action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):12000"/>
+                                                        <ReactiveSequence name="(askcaregiverhelpmedicine1 pioneer nathan kitchen):12000">
+                                                            <CheckOverAllReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):12000"/>
+                                                            <ExecuteAction action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):12000"/>
+                                                        </ReactiveSequence>
+                                                        <CheckAtEndReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):12000"/>
+                                                        <ApplyAtEndEffect action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):12000"/>
+                                                    </Sequence>
+                                                    <Sequence name="(updatesuccess3 nathan):13000">
+                                                        <WaitAtStartReq action="(updatesuccess3 nathan):13000"/>
+                                                        <ApplyAtStartEffect action="(updatesuccess3 nathan):13000"/>
+                                                        <ReactiveSequence name="(updatesuccess3 nathan):13000">
+                                                            <CheckOverAllReq action="(updatesuccess3 nathan):13000"/>
+                                                            <ExecuteAction action="(updatesuccess3 nathan):13000"/>
+                                                        </ReactiveSequence>
+                                                        <CheckAtEndReq action="(updatesuccess3 nathan):13000"/>
+                                                        <ApplyAtEndEffect action="(updatesuccess3 nathan):13000"/>
+                                                    </Sequence>
+
+                                                </Sequence>
+                                            </Fallback>
+                                        </Sequence>
+                                    </Fallback>
+                                </Sequence>
+                                <Sequence>
+                                    <Sequence name="(checkguidetosucceeded2 home):8000">
+                                        <ApplyObservation observe="(checkguidetosucceeded2 home)" value="false"/>
+                                    </Sequence>
+                                    <Sequence name="(initmovetolandmark pioneer):9000">
+                                        <WaitAtStartReq action="(initmovetolandmark pioneer):9000"/>
+                                        <ApplyAtStartEffect action="(initmovetolandmark pioneer):9000"/>
+                                        <ReactiveSequence name="(initmovetolandmark pioneer):9000">
+                                            <CheckOverAllReq action="(initmovetolandmark pioneer):9000"/>
+                                            <ExecuteAction action="(initmovetolandmark pioneer):9000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(initmovetolandmark pioneer):9000"/>
+                                        <ApplyAtEndEffect action="(initmovetolandmark pioneer):9000"/>
+                                    </Sequence>
+                                    <Sequence name="(movetolandmark pioneer home):10000">
+                                        <WaitAtStartReq action="(movetolandmark pioneer home):10000"/>
+                                        <ApplyAtStartEffect action="(movetolandmark pioneer home):10000"/>
+                                        <ReactiveSequence name="(movetolandmark pioneer home):10000">
+                                            <CheckOverAllReq action="(movetolandmark pioneer home):10000"/>
+                                            <ExecuteAction action="(movetolandmark pioneer home):10000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(movetolandmark pioneer home):10000"/>
+                                        <ApplyAtEndEffect action="(movetolandmark pioneer home):10000"/>
+                                    </Sequence>
+                                    <Sequence name="(askcaregiverhelpmedicine2 pioneer nathan home):11000">
+                                        <WaitAtStartReq action="(askcaregiverhelpmedicine2 pioneer nathan home):11000"/>
+                                        <ApplyAtStartEffect action="(askcaregiverhelpmedicine2 pioneer nathan home):11000"/>
+                                        <ReactiveSequence name="(askcaregiverhelpmedicine2 pioneer nathan home):11000">
+                                            <CheckOverAllReq action="(askcaregiverhelpmedicine2 pioneer nathan home):11000"/>
+                                            <ExecuteAction action="(askcaregiverhelpmedicine2 pioneer nathan home):11000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(askcaregiverhelpmedicine2 pioneer nathan home):11000"/>
+                                        <ApplyAtEndEffect action="(askcaregiverhelpmedicine2 pioneer nathan home):11000"/>
+                                    </Sequence>
+                                    <Sequence name="(updatesuccess3 nathan):12000">
+                                        <WaitAtStartReq action="(updatesuccess3 nathan):12000"/>
+                                        <ApplyAtStartEffect action="(updatesuccess3 nathan):12000"/>
+                                        <ReactiveSequence name="(updatesuccess3 nathan):12000">
+                                            <CheckOverAllReq action="(updatesuccess3 nathan):12000"/>
+                                            <ExecuteAction action="(updatesuccess3 nathan):12000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(updatesuccess3 nathan):12000"/>
+                                        <ApplyAtEndEffect action="(updatesuccess3 nathan):12000"/>
+                                    </Sequence>
+
+                                </Sequence>
+                            </Fallback>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+                <Sequence>
+                    <Sequence name="(detectperson pioneer nathan home):0">
+                        <ApplyObservation observe="(detectperson pioneer nathan home)" value="false"/>
+                    </Sequence>
+                    <Sequence name="(initmovetolandmark pioneer):1000">
+                        <WaitAtStartReq action="(initmovetolandmark pioneer):1000"/>
+                        <ApplyAtStartEffect action="(initmovetolandmark pioneer):1000"/>
+                        <ReactiveSequence name="(initmovetolandmark pioneer):1000">
+                            <CheckOverAllReq action="(initmovetolandmark pioneer):1000"/>
+                            <ExecuteAction action="(initmovetolandmark pioneer):1000"/>
+                        </ReactiveSequence>
+                        <CheckAtEndReq action="(initmovetolandmark pioneer):1000"/>
+                        <ApplyAtEndEffect action="(initmovetolandmark pioneer):1000"/>
+                    </Sequence>
+                    <Sequence name="(movetolandmark pioneer couch):2000">
+                        <WaitAtStartReq action="(movetolandmark pioneer couch):2000"/>
+                        <ApplyAtStartEffect action="(movetolandmark pioneer couch):2000"/>
+                        <ReactiveSequence name="(movetolandmark pioneer couch):2000">
+                            <CheckOverAllReq action="(movetolandmark pioneer couch):2000"/>
+                            <ExecuteAction action="(movetolandmark pioneer couch):2000"/>
+                        </ReactiveSequence>
+                        <CheckAtEndReq action="(movetolandmark pioneer couch):2000"/>
+                        <ApplyAtEndEffect action="(movetolandmark pioneer couch):2000"/>
+                    </Sequence>
+                    <Fallback>
+                        <Sequence>
+                            <Sequence name="(detectperson pioneer nathan couch):3000">
+                                <WaitAtStartReq action="(detectperson pioneer nathan couch):3000"/>
+                                <ReactiveSequence name="(detectperson pioneer nathan couch):3000">
+                                    <CheckOverAllReq action="(detectperson pioneer nathan couch):3000"/>
+                                    <ExecuteAction action="(detectperson pioneer nathan couch):3000"/>
+                                </ReactiveSequence>
+                                <ApplyObservation observe="(detectperson pioneer nathan couch)" value="true"/>
+                            </Sequence>
+                            <Sequence name="(initguidepersontolandmarkattempt pioneer nathan couch):4000">
+                                <WaitAtStartReq action="(initguidepersontolandmarkattempt pioneer nathan couch):4000"/>
+                                <ApplyAtStartEffect action="(initguidepersontolandmarkattempt pioneer nathan couch):4000"/>
+                                <ReactiveSequence name="(initguidepersontolandmarkattempt pioneer nathan couch):4000">
+                                    <CheckOverAllReq action="(initguidepersontolandmarkattempt pioneer nathan couch):4000"/>
+                                    <ExecuteAction action="(initguidepersontolandmarkattempt pioneer nathan couch):4000"/>
+                                </ReactiveSequence>
+                                <CheckAtEndReq action="(initguidepersontolandmarkattempt pioneer nathan couch):4000"/>
+                                <ApplyAtEndEffect action="(initguidepersontolandmarkattempt pioneer nathan couch):4000"/>
+                            </Sequence>
+                            <Sequence name="(guidepersontolandmarkattempt1 pioneer nathan kitchen):5000">
+                                <WaitAtStartReq action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):5000"/>
+                                <ApplyAtStartEffect action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):5000"/>
+                                <ReactiveSequence name="(guidepersontolandmarkattempt1 pioneer nathan kitchen):5000">
+                                    <CheckOverAllReq action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):5000"/>
+                                    <ExecuteAction action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):5000"/>
+                                </ReactiveSequence>
+                                <CheckAtEndReq action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):5000"/>
+                                <ApplyAtEndEffect action="(guidepersontolandmarkattempt1 pioneer nathan kitchen):5000"/>
+                            </Sequence>
+                            <Fallback>
+                                <Sequence>
+                                    <Sequence name="(checkguidetosucceeded1 home):6000">
+                                        <WaitAtStartReq action="(checkguidetosucceeded1 home):6000"/>
+                                        <ReactiveSequence name="(checkguidetosucceeded1 home):6000">
+                                            <CheckOverAllReq action="(checkguidetosucceeded1 home):6000"/>
+                                            <ExecuteAction action="(checkguidetosucceeded1 home):6000"/>
+                                        </ReactiveSequence>
+                                        <ApplyObservation observe="(checkguidetosucceeded1 home)" value="true"/>
+                                    </Sequence>
+                                    <Sequence name="(updatepersonloc1 nathan couch kitchen):7000">
+                                        <WaitAtStartReq action="(updatepersonloc1 nathan couch kitchen):7000"/>
+                                        <ApplyAtStartEffect action="(updatepersonloc1 nathan couch kitchen):7000"/>
+                                        <ReactiveSequence name="(updatepersonloc1 nathan couch kitchen):7000">
+                                            <CheckOverAllReq action="(updatepersonloc1 nathan couch kitchen):7000"/>
+                                            <ExecuteAction action="(updatepersonloc1 nathan couch kitchen):7000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(updatepersonloc1 nathan couch kitchen):7000"/>
+                                        <ApplyAtEndEffect action="(updatepersonloc1 nathan couch kitchen):7000"/>
+                                    </Sequence>
+                                    <Fallback>
+                                        <Sequence>
+                                            <Sequence name="(notifyautomatedmedicineat pioneer nathan kitchen):8000">
+                                                <WaitAtStartReq action="(notifyautomatedmedicineat pioneer nathan kitchen):8000"/>
+                                                <ReactiveSequence name="(notifyautomatedmedicineat pioneer nathan kitchen):8000">
+                                                    <CheckOverAllReq action="(notifyautomatedmedicineat pioneer nathan kitchen):8000"/>
+                                                    <ExecuteAction action="(notifyautomatedmedicineat pioneer nathan kitchen):8000"/>
+                                                </ReactiveSequence>
+                                                <ApplyObservation observe="(notifyautomatedmedicineat pioneer nathan kitchen)" value="true"/>
+                                            </Sequence>
+                                            <Sequence name="(updatesuccess1 ):9000">
+                                                <WaitAtStartReq action="(updatesuccess1 ):9000"/>
+                                                <ApplyAtStartEffect action="(updatesuccess1 ):9000"/>
+                                                <ReactiveSequence name="(updatesuccess1 ):9000">
+                                                    <CheckOverAllReq action="(updatesuccess1 ):9000"/>
+                                                    <ExecuteAction action="(updatesuccess1 ):9000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(updatesuccess1 ):9000"/>
+                                                <ApplyAtEndEffect action="(updatesuccess1 ):9000"/>
+                                            </Sequence>
+
+                                        </Sequence>
+                                        <Sequence>
+                                            <Sequence name="(notifyautomatedmedicineat pioneer nathan kitchen):8000">
+                                                <ApplyObservation observe="(notifyautomatedmedicineat pioneer nathan kitchen)" value="false"/>
+                                            </Sequence>
+                                            <Fallback>
+                                                <Sequence>
+                                                    <Sequence name="(notifyrecordedmedicineat pioneer nathan kitchen):9000">
+                                                        <WaitAtStartReq action="(notifyrecordedmedicineat pioneer nathan kitchen):9000"/>
+                                                        <ReactiveSequence name="(notifyrecordedmedicineat pioneer nathan kitchen):9000">
+                                                            <CheckOverAllReq action="(notifyrecordedmedicineat pioneer nathan kitchen):9000"/>
+                                                            <ExecuteAction action="(notifyrecordedmedicineat pioneer nathan kitchen):9000"/>
+                                                        </ReactiveSequence>
+                                                        <ApplyObservation observe="(notifyrecordedmedicineat pioneer nathan kitchen)" value="true"/>
+                                                    </Sequence>
+                                                    <Sequence name="(updatesuccess2 ):10000">
+                                                        <WaitAtStartReq action="(updatesuccess2 ):10000"/>
+                                                        <ApplyAtStartEffect action="(updatesuccess2 ):10000"/>
+                                                        <ReactiveSequence name="(updatesuccess2 ):10000">
+                                                            <CheckOverAllReq action="(updatesuccess2 ):10000"/>
+                                                            <ExecuteAction action="(updatesuccess2 ):10000"/>
+                                                        </ReactiveSequence>
+                                                        <CheckAtEndReq action="(updatesuccess2 ):10000"/>
+                                                        <ApplyAtEndEffect action="(updatesuccess2 ):10000"/>
+                                                    </Sequence>
+
+                                                </Sequence>
+                                                <Sequence>
+                                                    <Sequence name="(notifyrecordedmedicineat pioneer nathan kitchen):9000">
+                                                        <ApplyObservation observe="(notifyrecordedmedicineat pioneer nathan kitchen)" value="false"/>
+                                                    </Sequence>
+                                                    <Sequence name="(askcaregiverhelpmedicine1 pioneer nathan kitchen):10000">
+                                                        <WaitAtStartReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):10000"/>
+                                                        <ApplyAtStartEffect action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):10000"/>
+                                                        <ReactiveSequence name="(askcaregiverhelpmedicine1 pioneer nathan kitchen):10000">
+                                                            <CheckOverAllReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):10000"/>
+                                                            <ExecuteAction action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):10000"/>
+                                                        </ReactiveSequence>
+                                                        <CheckAtEndReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):10000"/>
+                                                        <ApplyAtEndEffect action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):10000"/>
+                                                    </Sequence>
+                                                    <Sequence name="(updatesuccess3 nathan):11000">
+                                                        <WaitAtStartReq action="(updatesuccess3 nathan):11000"/>
+                                                        <ApplyAtStartEffect action="(updatesuccess3 nathan):11000"/>
+                                                        <ReactiveSequence name="(updatesuccess3 nathan):11000">
+                                                            <CheckOverAllReq action="(updatesuccess3 nathan):11000"/>
+                                                            <ExecuteAction action="(updatesuccess3 nathan):11000"/>
+                                                        </ReactiveSequence>
+                                                        <CheckAtEndReq action="(updatesuccess3 nathan):11000"/>
+                                                        <ApplyAtEndEffect action="(updatesuccess3 nathan):11000"/>
+                                                    </Sequence>
+
+                                                </Sequence>
+                                            </Fallback>
+                                        </Sequence>
+                                    </Fallback>
+                                </Sequence>
+                                <Sequence>
+                                    <Sequence name="(checkguidetosucceeded1 home):6000">
+                                        <ApplyObservation observe="(checkguidetosucceeded1 home)" value="false"/>
+                                    </Sequence>
+                                    <Sequence name="(initmovetolandmark pioneer):7000">
+                                        <WaitAtStartReq action="(initmovetolandmark pioneer):7000"/>
+                                        <ApplyAtStartEffect action="(initmovetolandmark pioneer):7000"/>
+                                        <ReactiveSequence name="(initmovetolandmark pioneer):7000">
+                                            <CheckOverAllReq action="(initmovetolandmark pioneer):7000"/>
+                                            <ExecuteAction action="(initmovetolandmark pioneer):7000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(initmovetolandmark pioneer):7000"/>
+                                        <ApplyAtEndEffect action="(initmovetolandmark pioneer):7000"/>
+                                    </Sequence>
+                                    <Sequence name="(movetolandmark pioneer couch):8000">
+                                        <WaitAtStartReq action="(movetolandmark pioneer couch):8000"/>
+                                        <ApplyAtStartEffect action="(movetolandmark pioneer couch):8000"/>
+                                        <ReactiveSequence name="(movetolandmark pioneer couch):8000">
+                                            <CheckOverAllReq action="(movetolandmark pioneer couch):8000"/>
+                                            <ExecuteAction action="(movetolandmark pioneer couch):8000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(movetolandmark pioneer couch):8000"/>
+                                        <ApplyAtEndEffect action="(movetolandmark pioneer couch):8000"/>
+                                    </Sequence>
+                                    <Sequence name="(initguidepersontolandmarkattempt pioneer nathan couch):9000">
+                                        <WaitAtStartReq action="(initguidepersontolandmarkattempt pioneer nathan couch):9000"/>
+                                        <ApplyAtStartEffect action="(initguidepersontolandmarkattempt pioneer nathan couch):9000"/>
+                                        <ReactiveSequence name="(initguidepersontolandmarkattempt pioneer nathan couch):9000">
+                                            <CheckOverAllReq action="(initguidepersontolandmarkattempt pioneer nathan couch):9000"/>
+                                            <ExecuteAction action="(initguidepersontolandmarkattempt pioneer nathan couch):9000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(initguidepersontolandmarkattempt pioneer nathan couch):9000"/>
+                                        <ApplyAtEndEffect action="(initguidepersontolandmarkattempt pioneer nathan couch):9000"/>
+                                    </Sequence>
+                                    <Sequence name="(guidepersontolandmarkattempt2 pioneer nathan kitchen):10000">
+                                        <WaitAtStartReq action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):10000"/>
+                                        <ApplyAtStartEffect action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):10000"/>
+                                        <ReactiveSequence name="(guidepersontolandmarkattempt2 pioneer nathan kitchen):10000">
+                                            <CheckOverAllReq action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):10000"/>
+                                            <ExecuteAction action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):10000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):10000"/>
+                                        <ApplyAtEndEffect action="(guidepersontolandmarkattempt2 pioneer nathan kitchen):10000"/>
+                                    </Sequence>
+                                    <Fallback>
+                                        <Sequence>
+                                            <Sequence name="(checkguidetosucceeded2 home):11000">
+                                                <WaitAtStartReq action="(checkguidetosucceeded2 home):11000"/>
+                                                <ReactiveSequence name="(checkguidetosucceeded2 home):11000">
+                                                    <CheckOverAllReq action="(checkguidetosucceeded2 home):11000"/>
+                                                    <ExecuteAction action="(checkguidetosucceeded2 home):11000"/>
+                                                </ReactiveSequence>
+                                                <ApplyObservation observe="(checkguidetosucceeded2 home)" value="true"/>
+                                            </Sequence>
+                                            <Sequence name="(updatepersonloc2 nathan couch kitchen):12000">
+                                                <WaitAtStartReq action="(updatepersonloc2 nathan couch kitchen):12000"/>
+                                                <ApplyAtStartEffect action="(updatepersonloc2 nathan couch kitchen):12000"/>
+                                                <ReactiveSequence name="(updatepersonloc2 nathan couch kitchen):12000">
+                                                    <CheckOverAllReq action="(updatepersonloc2 nathan couch kitchen):12000"/>
+                                                    <ExecuteAction action="(updatepersonloc2 nathan couch kitchen):12000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(updatepersonloc2 nathan couch kitchen):12000"/>
+                                                <ApplyAtEndEffect action="(updatepersonloc2 nathan couch kitchen):12000"/>
+                                            </Sequence>
+                                            <Fallback>
+                                                <Sequence>
+                                                    <Sequence name="(notifyautomatedmedicineat pioneer nathan kitchen):13000">
+                                                        <WaitAtStartReq action="(notifyautomatedmedicineat pioneer nathan kitchen):13000"/>
+                                                        <ReactiveSequence name="(notifyautomatedmedicineat pioneer nathan kitchen):13000">
+                                                            <CheckOverAllReq action="(notifyautomatedmedicineat pioneer nathan kitchen):13000"/>
+                                                            <ExecuteAction action="(notifyautomatedmedicineat pioneer nathan kitchen):13000"/>
+                                                        </ReactiveSequence>
+                                                        <ApplyObservation observe="(notifyautomatedmedicineat pioneer nathan kitchen)" value="true"/>
+                                                    </Sequence>
+                                                    <Sequence name="(updatesuccess1 ):14000">
+                                                        <WaitAtStartReq action="(updatesuccess1 ):14000"/>
+                                                        <ApplyAtStartEffect action="(updatesuccess1 ):14000"/>
+                                                        <ReactiveSequence name="(updatesuccess1 ):14000">
+                                                            <CheckOverAllReq action="(updatesuccess1 ):14000"/>
+                                                            <ExecuteAction action="(updatesuccess1 ):14000"/>
+                                                        </ReactiveSequence>
+                                                        <CheckAtEndReq action="(updatesuccess1 ):14000"/>
+                                                        <ApplyAtEndEffect action="(updatesuccess1 ):14000"/>
+                                                    </Sequence>
+
+                                                </Sequence>
+                                                <Sequence>
+                                                    <Sequence name="(notifyautomatedmedicineat pioneer nathan kitchen):13000">
+                                                        <ApplyObservation observe="(notifyautomatedmedicineat pioneer nathan kitchen)" value="false"/>
+                                                    </Sequence>
+                                                    <Fallback>
+                                                        <Sequence>
+                                                            <Sequence name="(notifyrecordedmedicineat pioneer nathan kitchen):14000">
+                                                                <WaitAtStartReq action="(notifyrecordedmedicineat pioneer nathan kitchen):14000"/>
+                                                                <ReactiveSequence name="(notifyrecordedmedicineat pioneer nathan kitchen):14000">
+                                                                    <CheckOverAllReq action="(notifyrecordedmedicineat pioneer nathan kitchen):14000"/>
+                                                                    <ExecuteAction action="(notifyrecordedmedicineat pioneer nathan kitchen):14000"/>
+                                                                </ReactiveSequence>
+                                                                <ApplyObservation observe="(notifyrecordedmedicineat pioneer nathan kitchen)" value="true"/>
+                                                            </Sequence>
+                                                            <Sequence name="(updatesuccess2 ):15000">
+                                                                <WaitAtStartReq action="(updatesuccess2 ):15000"/>
+                                                                <ApplyAtStartEffect action="(updatesuccess2 ):15000"/>
+                                                                <ReactiveSequence name="(updatesuccess2 ):15000">
+                                                                    <CheckOverAllReq action="(updatesuccess2 ):15000"/>
+                                                                    <ExecuteAction action="(updatesuccess2 ):15000"/>
+                                                                </ReactiveSequence>
+                                                                <CheckAtEndReq action="(updatesuccess2 ):15000"/>
+                                                                <ApplyAtEndEffect action="(updatesuccess2 ):15000"/>
+                                                            </Sequence>
+
+                                                        </Sequence>
+                                                        <Sequence>
+                                                            <Sequence name="(notifyrecordedmedicineat pioneer nathan kitchen):14000">
+                                                                <ApplyObservation observe="(notifyrecordedmedicineat pioneer nathan kitchen)" value="false"/>
+                                                            </Sequence>
+                                                            <Sequence name="(askcaregiverhelpmedicine1 pioneer nathan kitchen):15000">
+                                                                <WaitAtStartReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):15000"/>
+                                                                <ApplyAtStartEffect action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):15000"/>
+                                                                <ReactiveSequence name="(askcaregiverhelpmedicine1 pioneer nathan kitchen):15000">
+                                                                    <CheckOverAllReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):15000"/>
+                                                                    <ExecuteAction action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):15000"/>
+                                                                </ReactiveSequence>
+                                                                <CheckAtEndReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):15000"/>
+                                                                <ApplyAtEndEffect action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):15000"/>
+                                                            </Sequence>
+                                                            <Sequence name="(updatesuccess3 nathan):16000">
+                                                                <WaitAtStartReq action="(updatesuccess3 nathan):16000"/>
+                                                                <ApplyAtStartEffect action="(updatesuccess3 nathan):16000"/>
+                                                                <ReactiveSequence name="(updatesuccess3 nathan):16000">
+                                                                    <CheckOverAllReq action="(updatesuccess3 nathan):16000"/>
+                                                                    <ExecuteAction action="(updatesuccess3 nathan):16000"/>
+                                                                </ReactiveSequence>
+                                                                <CheckAtEndReq action="(updatesuccess3 nathan):16000"/>
+                                                                <ApplyAtEndEffect action="(updatesuccess3 nathan):16000"/>
+                                                            </Sequence>
+
+                                                        </Sequence>
+                                                    </Fallback>
+                                                </Sequence>
+                                            </Fallback>
+                                        </Sequence>
+                                        <Sequence>
+                                            <Sequence name="(checkguidetosucceeded2 home):11000">
+                                                <ApplyObservation observe="(checkguidetosucceeded2 home)" value="false"/>
+                                            </Sequence>
+                                            <Sequence name="(initmovetolandmark pioneer):12000">
+                                                <WaitAtStartReq action="(initmovetolandmark pioneer):12000"/>
+                                                <ApplyAtStartEffect action="(initmovetolandmark pioneer):12000"/>
+                                                <ReactiveSequence name="(initmovetolandmark pioneer):12000">
+                                                    <CheckOverAllReq action="(initmovetolandmark pioneer):12000"/>
+                                                    <ExecuteAction action="(initmovetolandmark pioneer):12000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(initmovetolandmark pioneer):12000"/>
+                                                <ApplyAtEndEffect action="(initmovetolandmark pioneer):12000"/>
+                                            </Sequence>
+                                            <Sequence name="(movetolandmark pioneer couch):13000">
+                                                <WaitAtStartReq action="(movetolandmark pioneer couch):13000"/>
+                                                <ApplyAtStartEffect action="(movetolandmark pioneer couch):13000"/>
+                                                <ReactiveSequence name="(movetolandmark pioneer couch):13000">
+                                                    <CheckOverAllReq action="(movetolandmark pioneer couch):13000"/>
+                                                    <ExecuteAction action="(movetolandmark pioneer couch):13000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(movetolandmark pioneer couch):13000"/>
+                                                <ApplyAtEndEffect action="(movetolandmark pioneer couch):13000"/>
+                                            </Sequence>
+                                            <Sequence name="(askcaregiverhelpmedicine2 pioneer nathan couch):14000">
+                                                <WaitAtStartReq action="(askcaregiverhelpmedicine2 pioneer nathan couch):14000"/>
+                                                <ApplyAtStartEffect action="(askcaregiverhelpmedicine2 pioneer nathan couch):14000"/>
+                                                <ReactiveSequence name="(askcaregiverhelpmedicine2 pioneer nathan couch):14000">
+                                                    <CheckOverAllReq action="(askcaregiverhelpmedicine2 pioneer nathan couch):14000"/>
+                                                    <ExecuteAction action="(askcaregiverhelpmedicine2 pioneer nathan couch):14000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(askcaregiverhelpmedicine2 pioneer nathan couch):14000"/>
+                                                <ApplyAtEndEffect action="(askcaregiverhelpmedicine2 pioneer nathan couch):14000"/>
+                                            </Sequence>
+                                            <Sequence name="(updatesuccess3 nathan):15000">
+                                                <WaitAtStartReq action="(updatesuccess3 nathan):15000"/>
+                                                <ApplyAtStartEffect action="(updatesuccess3 nathan):15000"/>
+                                                <ReactiveSequence name="(updatesuccess3 nathan):15000">
+                                                    <CheckOverAllReq action="(updatesuccess3 nathan):15000"/>
+                                                    <ExecuteAction action="(updatesuccess3 nathan):15000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(updatesuccess3 nathan):15000"/>
+                                                <ApplyAtEndEffect action="(updatesuccess3 nathan):15000"/>
+                                            </Sequence>
+
+                                        </Sequence>
+                                    </Fallback>
+                                </Sequence>
+                            </Fallback>
+                        </Sequence>
+                        <Sequence>
+                            <Sequence name="(detectperson pioneer nathan couch):3000">
+                                <ApplyObservation observe="(detectperson pioneer nathan couch)" value="false"/>
+                            </Sequence>
+                            <Sequence name="(initmovetolandmark pioneer):4000">
+                                <WaitAtStartReq action="(initmovetolandmark pioneer):4000"/>
+                                <ApplyAtStartEffect action="(initmovetolandmark pioneer):4000"/>
+                                <ReactiveSequence name="(initmovetolandmark pioneer):4000">
+                                    <CheckOverAllReq action="(initmovetolandmark pioneer):4000"/>
+                                    <ExecuteAction action="(initmovetolandmark pioneer):4000"/>
+                                </ReactiveSequence>
+                                <CheckAtEndReq action="(initmovetolandmark pioneer):4000"/>
+                                <ApplyAtEndEffect action="(initmovetolandmark pioneer):4000"/>
+                            </Sequence>
+                            <Sequence name="(movetolandmark pioneer kitchen):5000">
+                                <WaitAtStartReq action="(movetolandmark pioneer kitchen):5000"/>
+                                <ApplyAtStartEffect action="(movetolandmark pioneer kitchen):5000"/>
+                                <ReactiveSequence name="(movetolandmark pioneer kitchen):5000">
+                                    <CheckOverAllReq action="(movetolandmark pioneer kitchen):5000"/>
+                                    <ExecuteAction action="(movetolandmark pioneer kitchen):5000"/>
+                                </ReactiveSequence>
+                                <CheckAtEndReq action="(movetolandmark pioneer kitchen):5000"/>
+                                <ApplyAtEndEffect action="(movetolandmark pioneer kitchen):5000"/>
+                            </Sequence>
+                            <Fallback>
+                                <Sequence>
+                                    <Sequence name="(notifyautomatedmedicineat pioneer nathan kitchen):6000">
+                                        <WaitAtStartReq action="(notifyautomatedmedicineat pioneer nathan kitchen):6000"/>
+                                        <ReactiveSequence name="(notifyautomatedmedicineat pioneer nathan kitchen):6000">
+                                            <CheckOverAllReq action="(notifyautomatedmedicineat pioneer nathan kitchen):6000"/>
+                                            <ExecuteAction action="(notifyautomatedmedicineat pioneer nathan kitchen):6000"/>
+                                        </ReactiveSequence>
+                                        <ApplyObservation observe="(notifyautomatedmedicineat pioneer nathan kitchen)" value="true"/>
+                                    </Sequence>
+                                    <Sequence name="(updatesuccess1 ):7000">
+                                        <WaitAtStartReq action="(updatesuccess1 ):7000"/>
+                                        <ApplyAtStartEffect action="(updatesuccess1 ):7000"/>
+                                        <ReactiveSequence name="(updatesuccess1 ):7000">
+                                            <CheckOverAllReq action="(updatesuccess1 ):7000"/>
+                                            <ExecuteAction action="(updatesuccess1 ):7000"/>
+                                        </ReactiveSequence>
+                                        <CheckAtEndReq action="(updatesuccess1 ):7000"/>
+                                        <ApplyAtEndEffect action="(updatesuccess1 ):7000"/>
+                                    </Sequence>
+
+                                </Sequence>
+                                <Sequence>
+                                    <Sequence name="(notifyautomatedmedicineat pioneer nathan kitchen):6000">
+                                        <ApplyObservation observe="(notifyautomatedmedicineat pioneer nathan kitchen)" value="false"/>
+                                    </Sequence>
+                                    <Fallback>
+                                        <Sequence>
+                                            <Sequence name="(notifyrecordedmedicineat pioneer nathan kitchen):7000">
+                                                <WaitAtStartReq action="(notifyrecordedmedicineat pioneer nathan kitchen):7000"/>
+                                                <ReactiveSequence name="(notifyrecordedmedicineat pioneer nathan kitchen):7000">
+                                                    <CheckOverAllReq action="(notifyrecordedmedicineat pioneer nathan kitchen):7000"/>
+                                                    <ExecuteAction action="(notifyrecordedmedicineat pioneer nathan kitchen):7000"/>
+                                                </ReactiveSequence>
+                                                <ApplyObservation observe="(notifyrecordedmedicineat pioneer nathan kitchen)" value="true"/>
+                                            </Sequence>
+                                            <Sequence name="(updatesuccess2 ):8000">
+                                                <WaitAtStartReq action="(updatesuccess2 ):8000"/>
+                                                <ApplyAtStartEffect action="(updatesuccess2 ):8000"/>
+                                                <ReactiveSequence name="(updatesuccess2 ):8000">
+                                                    <CheckOverAllReq action="(updatesuccess2 ):8000"/>
+                                                    <ExecuteAction action="(updatesuccess2 ):8000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(updatesuccess2 ):8000"/>
+                                                <ApplyAtEndEffect action="(updatesuccess2 ):8000"/>
+                                            </Sequence>
+
+                                        </Sequence>
+                                        <Sequence>
+                                            <Sequence name="(notifyrecordedmedicineat pioneer nathan kitchen):7000">
+                                                <ApplyObservation observe="(notifyrecordedmedicineat pioneer nathan kitchen)" value="false"/>
+                                            </Sequence>
+                                            <Sequence name="(askcaregiverhelpmedicine1 pioneer nathan kitchen):8000">
+                                                <WaitAtStartReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):8000"/>
+                                                <ApplyAtStartEffect action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):8000"/>
+                                                <ReactiveSequence name="(askcaregiverhelpmedicine1 pioneer nathan kitchen):8000">
+                                                    <CheckOverAllReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):8000"/>
+                                                    <ExecuteAction action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):8000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):8000"/>
+                                                <ApplyAtEndEffect action="(askcaregiverhelpmedicine1 pioneer nathan kitchen):8000"/>
+                                            </Sequence>
+                                            <Sequence name="(updatesuccess3 nathan):9000">
+                                                <WaitAtStartReq action="(updatesuccess3 nathan):9000"/>
+                                                <ApplyAtStartEffect action="(updatesuccess3 nathan):9000"/>
+                                                <ReactiveSequence name="(updatesuccess3 nathan):9000">
+                                                    <CheckOverAllReq action="(updatesuccess3 nathan):9000"/>
+                                                    <ExecuteAction action="(updatesuccess3 nathan):9000"/>
+                                                </ReactiveSequence>
+                                                <CheckAtEndReq action="(updatesuccess3 nathan):9000"/>
+                                                <ApplyAtEndEffect action="(updatesuccess3 nathan):9000"/>
+                                            </Sequence>
+
+                                        </Sequence>
+                                    </Fallback>
+                                </Sequence>
+                            </Fallback>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+</root>

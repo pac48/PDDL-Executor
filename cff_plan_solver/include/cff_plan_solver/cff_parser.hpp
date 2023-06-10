@@ -1,4 +1,5 @@
 #pragma once
+
 #include "string"
 #include "algorithm"
 #include "sstream"
@@ -17,5 +18,5 @@ void extract_elements_from_line(const std::vector<std::string> &tokens, std::str
 void createAction(const float &level, std::string operator_name, std::vector<std::string> operator_params,
                   std::string &action);
 
-std::optional<std::shared_ptr<PlanNode>>
+std::optional<Plan>
 parsePlanOutput(const std::basic_string<char, std::char_traits<char>, std::allocator<char>> &plan_file_path);

@@ -70,7 +70,7 @@ void createAction(const float &level, std::string operator_name, std::vector<std
 }
 
 
-std::optional<std::shared_ptr<PlanNode>>
+std::optional<Plan>
 parsePlanOutput(const std::basic_string<char, std::char_traits<char>, std::allocator<char>> &plan_file_path) {
     std::string line;
     std::ifstream plan_file(plan_file_path);
@@ -131,7 +131,11 @@ parsePlanOutput(const std::basic_string<char, std::char_traits<char>, std::alloc
                             if (tree_map.find(false_action_id) == tree_map.end()) {
                                 tree_map[false_action_id] = std::make_shared<PlanNode>();
                             }
-                            tree_map[action_id]->false_node = tree_map[false_action_id];
+                            if (false_action_id != true_action_id){
+                                tree_map[action_id]->false_node = tree_map[false_action_id];
+                            } else{
+                                tree_map[action_id]->false_node = nullptr;
+                            }
                         }
 
                     }

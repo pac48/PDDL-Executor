@@ -1,0 +1,8 @@
+<Fallback>
+    <Sequence>
+       {{action_sequence_1}}
+    </Sequence>
+    <Sequence>
+        {{action_sequence_2}}
+    </Sequence>
+</Fallback>
