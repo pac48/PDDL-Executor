@@ -1,11 +1,31 @@
 #include "pddl_parser/pddl_parser.hpp"
 
 
-void requirements(const std::string& content){}
-void types(const std::string& content){}
+Domain parse_domain(const std::string &content) {
 
+    return {};
+}
 
-void parse_domain(const std::string& content){
-    int o = 0;
+Predicate parse_predicate(const std::string &content) {
+    return {};
+}
 
+Action parse_action(const std::string &content) {
+    return {};
+}
+
+Condition parse_precondition(const std::string &content) {
+    return {};
+}
+
+Condition parse_parameters(const std::string &content) {
+    return {};
+}
+
+Condition parse_observe(const std::string &content) {
+    return {};
+}
+
+Condition parse_effect(const std::string &content) {
+    return {};
 }
