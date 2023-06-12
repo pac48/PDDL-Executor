@@ -8,7 +8,9 @@ endif ()
 
 include_directories(include)
 find_package(ament_cmake REQUIRED)
+find_package(FMT REQUIRED)
 add_library(pddl_parser src/pddl_parser.cpp)
+target_link_libraries(pddl_parser fmt::fmt)
 
 
 if (BUILD_TESTING)

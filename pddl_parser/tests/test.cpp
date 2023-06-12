@@ -17,7 +17,7 @@ TEST(AnyTest, assign_construct) {
     std::string content = ss.str();
 
 
-    parse_domain(content);
+    auto dom = parse_domain(content);
 
     ASSERT_TRUE(1 == 1);
 }

@@ -79,9 +79,9 @@ namespace std {
 
 struct Domain {
     std::string name;
-    std::unordered_set<std::string, std::hash<Predicate>> requirements;
+    std::unordered_set<std::string> requirements;
     std::unordered_set<std::string> types;
-    std::unordered_set<Predicate> predicates;
+    std::unordered_set<Predicate, std::hash<Predicate>> predicates;
     std::unordered_set<Action, std::hash<Action>> actions;
 
 };

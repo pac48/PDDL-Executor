@@ -4,7 +4,7 @@
 
 (:types
 	person
-	robot
+  robot
 	landmark
 )
 
