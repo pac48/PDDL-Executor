@@ -13,7 +13,8 @@ enum OPERATION {
 struct Parameter {
     std::string name;
     std::string type;
-    bool operator==(const Parameter & other) const{
+
+    bool operator==(const Parameter &other) const {
         return name == other.name && type == other.type;
     }
 };
@@ -22,7 +23,8 @@ struct Parameter {
 struct Predicate {
     std::string name;
     std::vector<Parameter> parameters;
-    bool operator==(const Predicate & other) const{
+
+    bool operator==(const Predicate &other) const {
         return name == other.name && parameters == other.parameters;
     }
 };
@@ -88,21 +90,15 @@ struct Domain {
     std::unordered_set<std::string> requirements;
     std::unordered_set<std::string> types;
     std::unordered_set<Predicate, std::hash<Predicate>> predicates;
-    std::unordered_set<Action, std::hash<Action>> actions;
+    std::vector<Action> actions;
 
 };
 
 // parsing functions
-Domain parse_domain(const std::string &content);
+std::optional<Domain> parse_domain(const std::string &content);
 
-Predicate parse_predicate(const std::string &content);
+std::optional<Predicate> parse_predicate(const std::string &content);
 
-Action parse_action(const std::string &content);
+std::optional<Action> parse_action(const std::string &content);
 
-Condition parse_precondition(const std::string &content);
-
-Condition parse_parameters(const std::string &content);
-
-Condition parse_observe(const std::string &content);
-
-Condition parse_effect(const std::string &content);
+std::optional<Condition> parse_condition(const std::string &content);
