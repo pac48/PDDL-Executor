@@ -1,6 +1,9 @@
 (define (domain paul_shr_conditional)
 
-(:requirements :strips :typing)
+(:requirements
+  :strips
+  :typing
+)
 
 (:types
 	person
@@ -272,6 +275,5 @@
                    )
 	:effect (asked_caregiver_help ?p)
 )
-
-
 )
+

@@ -13,12 +13,18 @@ enum OPERATION {
 struct Parameter {
     std::string name;
     std::string type;
+    bool operator==(const Parameter & other) const{
+        return name == other.name && type == other.type;
+    }
 };
 
 
 struct Predicate {
     std::string name;
     std::vector<Parameter> parameters;
+    bool operator==(const Predicate & other) const{
+        return name == other.name && parameters == other.parameters;
+    }
 };
 
 struct Condition {
