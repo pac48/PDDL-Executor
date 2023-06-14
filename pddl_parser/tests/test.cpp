@@ -5,7 +5,6 @@
 #include "pddl_parser/pddl_parser.hpp"
 
 
-
 TEST(AnyTest, assign_construct) {
     std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("pddl_parser");
     std::filesystem::path test_dir = pkg_dir / "tests" / "pddl";
@@ -16,16 +15,11 @@ TEST(AnyTest, assign_construct) {
     ss << pddl_file_stream.rdbuf();
     std::string content = ss.str();
 
-
     auto domain = parse_domain(content);
+    ASSERT_TRUE(domain.has_value());
 
     std::cout << domain.value() << std::endl;
 
-    std::stringstream ss2;
-    ss2 << domain.value() << std::endl;
-    auto tmp = ss2.str();
-
-    ASSERT_TRUE(1 == 1);
 }
 
 

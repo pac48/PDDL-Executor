@@ -22,4 +22,8 @@ if (BUILD_TESTING)
 
 endif ()
 
+install(DIRECTORY include/
+    DESTINATION include/
+    )
+ament_export_include_directories(include)
 ament_package()
