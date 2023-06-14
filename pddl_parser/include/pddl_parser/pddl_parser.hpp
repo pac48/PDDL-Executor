@@ -30,10 +30,12 @@ struct Predicate {
 };
 
 struct Condition {
-    OPERATION operation;
-    std::vector<std::variant<Condition, Predicate>> conditions;
-};
+    OPERATION op;
+    std::vector<Condition> conditions;
+    std::vector<Parameter> parameters;
+    std::vector<Predicate> predicates;
 
+};
 
 struct Action {
     std::string name;
@@ -73,11 +75,11 @@ namespace std {
             hash<std::string> stringHash;
 
             seed ^= intHash(obj.precondtions.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= intHash(obj.precondtions.operation) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= intHash(obj.precondtions.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             seed ^= intHash(obj.effect.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= intHash(obj.effect.operation) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= intHash(obj.effect.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             seed ^= intHash(obj.observe.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= intHash(obj.observe.operation) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= intHash(obj.observe.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 
             return seed;
@@ -102,3 +104,13 @@ std::optional<Predicate> parse_predicate(const std::string &content);
 std::optional<Action> parse_action(const std::string &content);
 
 std::optional<Condition> parse_condition(const std::string &content);
+
+
+// printing functions
+std::ostream &operator<<(std::ostream &os, const Domain &domain);
+
+std::ostream &operator<<(std::ostream &os, const Predicate &pred);
+
+std::ostream &operator<<(std::ostream &os, const Condition &cond);
+
+std::ostream &operator<<(std::ostream &os, const Action &action);

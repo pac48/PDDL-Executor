@@ -17,7 +17,13 @@ TEST(AnyTest, assign_construct) {
     std::string content = ss.str();
 
 
-    auto dom = parse_domain(content);
+    auto domain = parse_domain(content);
+
+    std::cout << domain.value() << std::endl;
+
+    std::stringstream ss2;
+    ss2 << domain.value() << std::endl;
+    auto tmp = ss2.str();
 
     ASSERT_TRUE(1 == 1);
 }

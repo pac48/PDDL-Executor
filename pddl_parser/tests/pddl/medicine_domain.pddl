@@ -38,6 +38,9 @@
 
 )
 
+
+
+
 (:action detectPerson
     :parameters (?r - robot ?p - person ?loc - landmark)
     :precondition (and
