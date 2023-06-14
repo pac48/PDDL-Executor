@@ -154,15 +154,6 @@ void init_OPERATION(py::module &m) {
             .export_values();
 }
 
-//// parsing functions
-//std::optional<Domain> parse_domain(const std::string &content);
-//
-//std::optional<Predicate> parse_predicate(const std::string &content);
-//
-//std::optional<Action> parse_action(const std::string &content);
-//
-//std::optional<Condition> parse_condition(const std::string &content);
-
 PYBIND11_MODULE(parser, m) {
     m.doc() = R"(
             PDDL parser functionalities.

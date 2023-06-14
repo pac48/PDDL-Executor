@@ -30,7 +30,7 @@ public:
             throw BT::RuntimeError("missing required input");
         }
 
-        return BT::NodeStatus::SUCCESS;
+        return BT::NodeStatus::RUNNING;
     }
 };
 

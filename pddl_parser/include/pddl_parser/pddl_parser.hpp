@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <variant>
-#include <unordered_set>
 
 // types
 enum OPERATION {
@@ -32,8 +31,8 @@ struct Predicate {
 struct Condition {
     OPERATION op;
     std::vector<Condition> conditions;
-    std::vector<Parameter> parameters;
     std::vector<Predicate> predicates;
+    std::vector<Parameter> parameters;
 
 };
 

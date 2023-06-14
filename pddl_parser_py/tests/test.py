@@ -2,7 +2,6 @@ import os
 
 # import pddl_parser.parser as p
 import pddl_parser
-from pddl_parser import *
 from ament_index_python.packages import get_package_share_directory
 
 param1 = pddl_parser.parser.Parameter("?r", "robot")
