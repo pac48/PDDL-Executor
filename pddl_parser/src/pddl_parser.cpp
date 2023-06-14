@@ -316,14 +316,20 @@ std::optional<Condition> parse_condition(const std::string &content) {
     return cond;
 }
 
+std::ostream &operator<<(std::ostream &os, const Parameter &param) {
+    os << " " << param.name;
+    if (!param.type.empty()) {
+        os << " - " << param.type;
+    }
+
+    return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const Action &action) {
     os << "(:action " << action.name << "\n";
     os << "\t:parameters (";
     for (auto &param: action.parameters) {
-        os << " " << param.name;
-        if (!param.type.empty()) {
-            os << " - " << param.type;
-        }
+        os << param;
     }
     os << ")\n";
 
@@ -400,10 +406,7 @@ std::ostream &operator<<(std::ostream &os, const Condition &condConst) {
 std::ostream &operator<<(std::ostream &os, const Predicate &pred) {
     os << "(" << pred.name;
     for (auto &param: pred.parameters) {
-        os << " " << param.name;
-        if (!param.type.empty()) {
-            os << " - " << param.type;
-        }
+        os << param;
     }
     os << ")";
 

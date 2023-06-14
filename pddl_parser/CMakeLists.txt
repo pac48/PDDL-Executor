@@ -4,6 +4,7 @@ project(pddl_parser)
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif ()
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
 include_directories(include)
@@ -25,5 +26,15 @@ endif ()
 install(DIRECTORY include/
     DESTINATION include/
     )
+
+install(
+    TARGETS pddl_parser
+    EXPORT pddl_parserTargets
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin)
+
+ament_export_targets(pddl_parserTargets HAS_LIBRARY_TARGET)
+ament_export_dependencies(FMT)
 ament_export_include_directories(include)
 ament_package()

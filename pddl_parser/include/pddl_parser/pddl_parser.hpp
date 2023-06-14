@@ -114,3 +114,5 @@ std::ostream &operator<<(std::ostream &os, const Predicate &pred);
 std::ostream &operator<<(std::ostream &os, const Condition &cond);
 
 std::ostream &operator<<(std::ostream &os, const Action &action);
+
+std::ostream &operator<<(std::ostream &os, const Parameter &param);

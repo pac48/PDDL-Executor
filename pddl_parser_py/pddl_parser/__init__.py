@@ -1,1 +1,1 @@
-from pddl_parser.pddl_types import *
+from pddl_parser import parser
