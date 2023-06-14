@@ -124,7 +124,7 @@ std::optional<std::string> parseInit(const std::string &content, Domain &domain)
         return fmt::format("ERROR line {}: missing ':requirements' keyword", get_line_num(content, substrings[0]));
     }
     for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
-        domain.requirements.insert(std::string(str));
+        domain.requirements.emplace_back(str);
     }
     ind++;
 
@@ -135,7 +135,7 @@ std::optional<std::string> parseInit(const std::string &content, Domain &domain)
         return fmt::format("ERROR line {}: missing ':types' keyword", get_line_num(content, substrings[0]));
     }
     for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
-        domain.types.insert(std::string(str));
+        domain.types.emplace_back(std::string(str));
     }
     ind++;
 
@@ -146,7 +146,7 @@ std::optional<std::string> parseInit(const std::string &content, Domain &domain)
     }
     for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
         if (auto pred = parse_predicate(std::string(str))) {
-            domain.predicates.insert(pred.value());
+            domain.predicates.emplace_back(pred.value());
         } else {
             return fmt::format("ERROR line {}: failed to parse predicate", get_line_num(content, str));
         }

@@ -45,53 +45,53 @@ struct Action {
     Condition observe;
 };
 
-// Hash function specialization for MyStruct
-namespace std {
-    template<>
-    struct hash<Predicate> {
-        std::size_t operator()(const Predicate &obj) const {
-            std::size_t seed = 0;
-            // Combine the hash values of the struct members
-            // using the std::hash function for each type
-            hash<int> intHash;
-            hash<std::string> stringHash;
-
-            seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-
-            return seed;
-        }
-    };
-}
-// Hash function specialization for MyStruct
-namespace std {
-    template<>
-    struct hash<Action> {
-        std::size_t operator()(const Action &obj) const {
-            std::size_t seed = 0;
-            // Combine the hash values of the struct members
-            // using the std::hash function for each type
-            hash<int> intHash;
-            hash<std::string> stringHash;
-
-            seed ^= intHash(obj.precondtions.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= intHash(obj.precondtions.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= intHash(obj.effect.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= intHash(obj.effect.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= intHash(obj.observe.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= intHash(obj.observe.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-
-            return seed;
-        }
-    };
-}
+//// Hash function specialization for MyStruct
+//namespace std {
+//    template<>
+//    struct hash<Predicate> {
+//        std::size_t operator()(const Predicate &obj) const {
+//            std::size_t seed = 0;
+//            // Combine the hash values of the struct members
+//            // using the std::hash function for each type
+//            hash<int> intHash;
+//            hash<std::string> stringHash;
+//
+//            seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+//            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+//
+//            return seed;
+//        }
+//    };
+//}
+//// Hash function specialization for MyStruct
+//namespace std {
+//    template<>
+//    struct hash<Action> {
+//        std::size_t operator()(const Action &obj) const {
+//            std::size_t seed = 0;
+//            // Combine the hash values of the struct members
+//            // using the std::hash function for each type
+//            hash<int> intHash;
+//            hash<std::string> stringHash;
+//
+//            seed ^= intHash(obj.precondtions.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+//            seed ^= intHash(obj.precondtions.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+//            seed ^= intHash(obj.effect.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+//            seed ^= intHash(obj.effect.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+//            seed ^= intHash(obj.observe.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+//            seed ^= intHash(obj.observe.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+//            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+//
+//            return seed;
+//        }
+//    };
+//}
 
 struct Domain {
     std::string name;
-    std::unordered_set<std::string> requirements;
-    std::unordered_set<std::string> types;
-    std::unordered_set<Predicate, std::hash<Predicate>> predicates;
+    std::vector<std::string> requirements;
+    std::vector<std::string> types;
+    std::vector<Predicate> predicates;
     std::vector<Action> actions;
 
 };
