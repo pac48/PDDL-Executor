@@ -7,8 +7,14 @@ endif ()
 
 find_package(ament_cmake REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
+find_package(pddl2cpp REQUIRED)
+
+generate_bt_header(src/medicine_domain.pddl
+    bt_medicine_domain
+    )
 
 add_executable(main src/main.cpp)
+add_dependencies(main bt_medicine_domain)
 target_include_directories(main PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)

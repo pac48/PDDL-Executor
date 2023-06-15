@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>pddl2cpp</name>
+  <name>pddl2cpp_py</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="paulgesel@gmail.com">paul</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>pddlpy</depend>
+  <depend>pddl_parser</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

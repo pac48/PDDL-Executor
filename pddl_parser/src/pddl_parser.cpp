@@ -4,6 +4,7 @@
 #include "pddl_parser/pddl_parser.hpp"
 #include <fmt/core.h>
 #include <functional>
+#include <unordered_set>
 
 
 std::vector<Parameter> parse_params(std::vector<std::string_view> str);

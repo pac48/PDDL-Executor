@@ -33,9 +33,6 @@ def main():
     domain_file = args.domain_file
     output_file = args.output_file
 
-    # if len(sys.argv) != 2:
-    #     print('pddl2cpp.py <domain_file>')
-    #     sys.exit(2)
     with open(domain_file) as f:
         domain = pddl_parser.parser.parse_domain(f.read())
 
