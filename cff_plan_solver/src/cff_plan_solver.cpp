@@ -10,6 +10,7 @@
 #include "cff_plan_solver/cff_plan_solver.hpp"
 #include <cff_plan_solver/cff_parser.hpp>
 #include "cff_plan_solver/types.hpp"
+#include "pddl_parser/pddl_parser.hpp"
 
 
 std::optional<Plan> runPlanner(int argc, char *const *argv) {
@@ -35,13 +36,27 @@ std::optional<Plan> runPlanner(int argc, char *const *argv) {
 }
 
 
-int main(int argc, char *argv[]) {
+std::string getPlan(const std::string &domain_str, const std::string &problem_str) {
+    {
+        std::ofstream domainFile("/tmp/cff_plan_solver/domain.pddl");
+        domainFile << domain_str;
+        std::ofstream problemFile("/tmp/cff_plan_solver/problem.pddl");
+        problemFile << problem_str;
+    }
+
+
+    char *argv[] = {"prog_name", "-a", "0", "-o", "/tmp/cff_plan_solver/domain.pddl", "-f", "/tmp/cff_plan_solver/problem.pddl"};
+    int argc = 7;
     auto plan = runPlanner(argc, argv);
 
     Plan plan_val = plan.value();
+    // modify
+    auto domain = parse_domain(domain_str);
 
-    std::cout << plan_val << std::endl;
+    std::cout << plan_val.convert_to_bt(domain.value()) << std::endl;
     int o = 0;
+
+    return "";
 
 }
 

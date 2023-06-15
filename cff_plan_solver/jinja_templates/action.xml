@@ -1,1 +1,1 @@
-<{{action_class}}   name="{{action_name}}" args="{{args}}" />
+<{{action_name}}   name="{{action_name}}" {{ports}} />

@@ -1,0 +1,1 @@
+std::string getPlan(const std::string &domain, const std::string &problem);

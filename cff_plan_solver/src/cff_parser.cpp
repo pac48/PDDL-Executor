@@ -48,7 +48,7 @@ void extract_elements_from_line(const std::vector<std::string> &tokens, std::str
 }
 
 void createAction(const float &level, std::string operator_name, std::vector<std::string> operator_params,
-                  Action &action) {
+                  CFFAction &action) {
     transform(operator_name.begin(), operator_name.end(), operator_name.begin(), ::tolower);
     for (auto &val: operator_params) {
         transform(val.begin(), val.end(), val.begin(), ::tolower);
@@ -68,6 +68,7 @@ void createAction(const float &level, std::string operator_name, std::vector<std
 //    ss << "(" << operator_name << " " << operator_parameters << ")";
     action.name = operator_name;
     action.params = operator_params;
+
 }
 
 
