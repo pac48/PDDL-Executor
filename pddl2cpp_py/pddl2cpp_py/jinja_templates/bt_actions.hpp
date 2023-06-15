@@ -6,4 +6,13 @@
 #include "behaviortree_cpp_v3/basic_types.h"
 #include "behaviortree_cpp_v3/tree_node.h"
 
-{{actions}}
+{{action_classes}}
+
+BT::BehaviorTreeFactory create_tree_factory(){
+    BT::BehaviorTreeFactory factory;
+    {% for name in action_names %}
+    factory.registerNodeType<{{name}}>("{{name}}");
+    {%- endfor %}
+
+    return factory;
+}

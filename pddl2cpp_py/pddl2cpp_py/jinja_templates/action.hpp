@@ -16,7 +16,7 @@ public:
         }
         {%- endfor %}
 
-        return tick_action({% for param in parameters %}{{param}} {%- if loop.index < loop.length %}, {% endif -%}{% endfor %});
+        return tick_action({% for param in parameters %}{{param}}.value() {%- if loop.index < loop.length %}, {% endif -%}{% endfor %});
     }
 
     BT::NodeStatus tick_action({% for param in parameters %}const std::string & {{param}} {%- if loop.index < loop.length %}, {% endif -%}{% endfor %});

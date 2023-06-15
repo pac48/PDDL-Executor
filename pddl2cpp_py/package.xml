@@ -7,7 +7,7 @@
   <maintainer email="paulgesel@gmail.com">paul</maintainer>
   <license>TODO: License declaration</license>
 
-  <depend>pddl_parser</depend>
+  <depend>pddl_parser_py</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

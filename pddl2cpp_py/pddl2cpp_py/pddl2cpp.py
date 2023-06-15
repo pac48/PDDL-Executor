@@ -38,17 +38,19 @@ def main():
 
     templates = get_all_templates()
 
-    actions_content = []
+    actions_classes = []
+    actions_names = []
     for action in domain.actions:
         j2_template = Template(templates["action.hpp"])
         parameters = [p.name.replace('?', '') + '_' + p.type for p in action.parameters]
 
         data = {'class_name': action.name, 'parameters': parameters}
         code = j2_template.render(data, trim_blocks=True)
-        actions_content.append(code)
+        actions_classes.append(code)
+        actions_names.append(action.name)
 
     j2_template = Template(templates["bt_actions.hpp"])
-    data = {'actions': "\n\n".join(actions_content)}
+    data = {'action_classes': "\n\n".join(actions_classes), 'action_names': actions_names}
     code = j2_template.render(data, trim_blocks=True)
 
     with open(output_file, 'w') as f:
