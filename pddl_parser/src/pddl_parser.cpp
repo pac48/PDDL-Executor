@@ -174,6 +174,7 @@ std::optional<Action> parse_action(const std::string &content) {
     int ind = 0;
     std::string_view section;
     std::string_view remaining;
+    std::unordered_map<std::string, std::string> param_to_type_map;
 
     std::tie(section, remaining) = getNextParen(content);
     const auto strings = parseVector(section, {'\t', '\n', ' '});
@@ -192,28 +193,31 @@ std::optional<Action> parse_action(const std::string &content) {
             std::tie(section, remaining) = getNextParen(strings[ind]);
             auto substrings = parseVector(section, {'\t', '\n', ' '});
             action.parameters = parse_params(substrings);
+            for (const auto &param: action.parameters) {
+                param_to_type_map[param.name] = param.type;
+            }
             ind++;
         } else if (strings[ind] == ":precondition") {
             ind++;
-            if (auto cond = parse_condition(std::string(strings[ind]))) {
+            if (auto cond = parse_condition(std::string(strings[ind]), param_to_type_map)) {
                 action.precondtions = cond.value();
-            } else if (auto pred = parse_predicate(std::string(strings[ind]))) {
+            } else if (auto pred = parse_predicate(std::string(strings[ind]), param_to_type_map)) {
                 action.precondtions.predicates.emplace_back(pred.value());
             }
             ind++;
         } else if (strings[ind] == ":effect") {
             ind++;
-            if (auto cond = parse_condition(std::string(strings[ind]))) {
+            if (auto cond = parse_condition(std::string(strings[ind]), param_to_type_map)) {
                 action.effect = cond.value();
-            } else if (auto pred = parse_predicate(std::string(strings[ind]))) {
+            } else if (auto pred = parse_predicate(std::string(strings[ind]), param_to_type_map)) {
                 action.effect.predicates.emplace_back(pred.value());
             }
             ind++;
         } else if (strings[ind] == ":observe") {
             ind++;
-            if (auto cond = parse_condition(std::string(strings[ind]))) {
+            if (auto cond = parse_condition(std::string(strings[ind]), param_to_type_map)) {
                 action.observe = cond.value();
-            } else if (auto pred = parse_predicate(std::string(strings[ind]))) {
+            } else if (auto pred = parse_predicate(std::string(strings[ind]), param_to_type_map)) {
                 action.observe.predicates.emplace_back(pred.value());
             }
             ind++;
@@ -239,14 +243,19 @@ std::optional<Domain> parse_domain(const std::string &content) {
     return domain;
 }
 
-std::optional<Predicate> parse_predicate(const std::string &content) {
+std::optional<Predicate>
+parse_predicate(const std::string &content, const std::unordered_map<std::string, std::string> &param_to_type_map) {
     auto [section, remaining] = getNextParen(content);
     auto str = parseVector(section, {'\t', '\n', ' '});
     auto pred = Predicate();
     pred.name = str[0];
 
     pred.parameters = parse_params(std::vector<std::string_view>(str.begin() + 1, str.end()));
-
+    for (auto &param: pred.parameters) {
+        if (param_to_type_map.find(param.name) != param_to_type_map.end()) {
+            param.type = param_to_type_map.at(param.name);
+        }
+    }
 
     return pred;
 }
@@ -282,7 +291,8 @@ std::vector<Parameter> parse_params(std::vector<std::string_view> str) {
 }
 
 
-std::optional<Condition> parse_condition(const std::string &content) {
+std::optional<Condition>
+parse_condition(const std::string &content, const std::unordered_map<std::string, std::string> &param_to_type_map) {
     std::string_view section;
     std::string_view remaining;
     Condition cond;
@@ -308,9 +318,9 @@ std::optional<Condition> parse_condition(const std::string &content) {
         return {};
     }
     for (int i = ind; i < strings.size(); i++) {
-        if (auto cond2 = parse_condition(std::string(strings[i]))) {
+        if (auto cond2 = parse_condition(std::string(strings[i]), param_to_type_map)) {
             cond.conditions.emplace_back(cond2.value());
-        } else if (auto pred = parse_predicate(std::string(strings[i]))) {
+        } else if (auto pred = parse_predicate(std::string(strings[i]), param_to_type_map)) {
             cond.predicates.emplace_back(pred.value());
         }
     }
@@ -319,6 +329,15 @@ std::optional<Condition> parse_condition(const std::string &content) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Parameter &param) {
+    os << " " << param.name;
+    if (!param.type.empty()) {
+        os << " - " << param.type;
+    }
+
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const InstantiatedParameter &param) {
     os << " " << param.name;
     if (!param.type.empty()) {
         os << " - " << param.type;
@@ -408,7 +427,17 @@ std::ostream &operator<<(std::ostream &os, const Condition &condConst) {
 std::ostream &operator<<(std::ostream &os, const Predicate &pred) {
     os << "(" << pred.name;
     for (auto &param: pred.parameters) {
-        os << param;
+        os << " " << param.name;
+    }
+    os << ")";
+
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const InstantiatedPredicate &pred) {
+    os << "(" << pred.name;
+    for (auto &param: pred.parameters) {
+        os << " " << param.name;
     }
     os << ")";
 
@@ -446,33 +475,87 @@ std::ostream &operator<<(std::ostream &os, const Domain &domain) {
     return os;
 }
 
+InstantiatedPredicate
+instantiate_predicate(const Predicate &predicate, const std::unordered_map<std::string, std::string> &param_subs) {
+    auto inst_pred = InstantiatedPredicate();
+    inst_pred.parameters.resize(predicate.parameters.size());
 
-void KnownKnowledgeBase::concurrent_insert(const Predicate &value) {
+    for (int i = 0; i < predicate.parameters.size(); i++) {
+        int len = predicate.parameters[i].name.size() - 1;
+        auto param_name = predicate.parameters[i].name.substr(1, len);
+        if (param_subs.find(param_name) == param_subs.end()) {
+            throw std::runtime_error(std::string("missing parameter for substitution: ") + param_name);
+        }
+
+        inst_pred.parameters[i].name = param_subs.at(param_name);
+    }
+
+    return inst_pred;
+}
+
+InstantiatedAction
+instantiate_action(const Action &action, const std::unordered_map<std::string, std::string> &param_subs) {
+    auto inst_action = InstantiatedAction();
+    inst_action.precondtions = instantiate_condition(action.precondtions, param_subs);
+    inst_action.effect = instantiate_condition(action.effect, param_subs);
+    inst_action.observe = instantiate_condition(action.observe, param_subs);
+
+    return inst_action;
+}
+
+InstantiatedCondition
+instantiate_condition(const Condition &condition, const std::unordered_map<std::string, std::string> &param_subs) {
+    auto & kb = KnowledgeBase::getInstance();
+    if (condition.op == OPERATION::FORALL) {
+        throw std::runtime_error("TODO");
+    }
+
+
+    auto inst_cond = InstantiatedCondition();
+    inst_cond.predicates.resize(condition.predicates.size());
+    for (int i = 0; i < condition.predicates.size(); i++) {
+        inst_cond.predicates[i] = instantiate_predicate(condition.predicates[i], param_subs);
+    }
+    inst_cond.conditions.resize(condition.conditions.size());
+    for (int i = 0; i < condition.conditions.size(); i++) {
+        inst_cond.conditions[i] = instantiate_condition(condition.conditions[i], param_subs);
+    }
+
+    return inst_cond;
+}
+
+
+KnowledgeBase &KnowledgeBase::getInstance() {
+    static KnowledgeBase instance; // Created only once
+    return instance;
+}
+
+void KnownKnowledgeBase::concurrent_insert(const InstantiatedPredicate &value) {
     std::lock_guard<std::mutex> lock(mutex_);
     insert(value);
 }
 
-void KnownKnowledgeBase::concurrent_erase(const Predicate &value) {
+void KnownKnowledgeBase::concurrent_erase(const InstantiatedPredicate &value) {
     std::lock_guard<std::mutex> lock(mutex_);
     erase(value);
 }
 
-bool KnownKnowledgeBase::concurrent_find(const Predicate &value) {
+bool KnownKnowledgeBase::concurrent_find(const InstantiatedPredicate &value) {
     std::lock_guard<std::mutex> lock(mutex_);
     return find(value) != end();
 }
 
-void UnknownKnowledgeBase::concurrent_insert(const Predicate &value) {
+void UnknownKnowledgeBase::concurrent_insert(const InstantiatedPredicate &value) {
     std::lock_guard<std::mutex> lock(mutex_);
     insert(value);
 }
 
-void UnknownKnowledgeBase::concurrent_erase(const Predicate &value) {
+void UnknownKnowledgeBase::concurrent_erase(const InstantiatedPredicate &value) {
     std::lock_guard<std::mutex> lock(mutex_);
     erase(value);
 }
 
-bool UnknownKnowledgeBase::concurrent_find(const Predicate &value) {
+bool UnknownKnowledgeBase::concurrent_find(const InstantiatedPredicate &value) {
     std::lock_guard<std::mutex> lock(mutex_);
     return find(value) != end();
 }
@@ -496,7 +579,7 @@ std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
 
     ss << "(:objects\n";
     for (auto &type: domain.types) {
-        if (type_inst_map[type].empty()){
+        if (type_inst_map[type].empty()) {
             continue;
         }
         ss << "\t";
@@ -507,7 +590,7 @@ std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
     }
     ss << ")\n";
 
-    auto pred_to_str_no_type = [](const Predicate& pred){
+    auto pred_to_str_no_type = [](const InstantiatedPredicate &pred) {
         std::stringstream ss;
         ss << "(" << pred.name;
         for (auto &param: pred.parameters) {

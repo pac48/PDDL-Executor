@@ -47,7 +47,8 @@ void init_Predicate(py::module &m) {
             }).def_readwrite("name", &Predicate::name)
             .def_readwrite("parameters", &Predicate::parameters);
     m.def("parse_predicate", &parse_predicate, "parse predicate from string",
-          py::arg("content"));
+          py::arg("content"),
+          py::arg("param_to_type_map") = std::unordered_map<std::string, std::string>());
 }
 
 void init_Parameter(py::module &m) {
@@ -104,7 +105,8 @@ void init_Condition(py::module &m) {
             .def_readwrite("conditions", &Condition::conditions)
             .def_readwrite("op", &Condition::op);
     m.def("parse_condition", &parse_condition, "parse condition from string",
-          py::arg("content"));
+          py::arg("content"),
+          py::arg("param_to_type_map") = std::unordered_map<std::string, std::string>());
 }
 
 

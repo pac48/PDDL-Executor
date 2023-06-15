@@ -42,9 +42,10 @@ def main():
     actions_names = []
     for action in domain.actions:
         j2_template = Template(templates["action.hpp"])
-        parameters = [p.name.replace('?', '') + '_' + p.type for p in action.parameters]
+        # parameters = [p.name.replace('?', '') + '_' + p.type for p in action.parameters]
+        parameters = [p.name.replace('?', '') for p in action.parameters]
 
-        data = {'class_name': action.name, 'parameters': parameters}
+        data = {'class_name': action.name, 'action_str': str(action), 'parameters': parameters}
         code = j2_template.render(data, trim_blocks=True)
         actions_classes.append(code)
         actions_names.append(action.name)

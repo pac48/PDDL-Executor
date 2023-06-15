@@ -6,6 +6,7 @@
 #include <optional>
 #include <unordered_set>
 #include <mutex>
+#include <unordered_map>
 
 
 // types
@@ -30,8 +31,26 @@ struct Parameter {
 struct Predicate {
     std::string name;
     std::vector<Parameter> parameters;
+//
+//    bool operator==(const Predicate &other) const {
+//        return name == other.name && parameters == other.parameters;
+//    }
+};
 
-    bool operator==(const Predicate &other) const {
+struct InstantiatedParameter {
+    std::string name;
+    std::string type;
+
+    bool operator==(const InstantiatedParameter &other) const {
+        return name == other.name && type == other.type;
+    }
+};
+
+struct InstantiatedPredicate {
+    std::string name;
+    std::vector<InstantiatedParameter> parameters;
+
+    bool operator==(const InstantiatedPredicate &other) const {
         return name == other.name && parameters == other.parameters;
     }
 };
@@ -44,10 +63,26 @@ struct Condition {
 
 };
 
+struct InstantiatedCondition {
+    OPERATION op;
+    std::vector<InstantiatedCondition> conditions;
+    std::vector<InstantiatedPredicate> predicates;
+    std::vector<InstantiatedParameter> parameters;
+
+};
+
 struct Constraint {
     CONSTRAINTS constraint;
-    std::vector<Predicate> predicates;
+    std::vector<InstantiatedPredicate> predicates;
 
+};
+
+struct InstantiatedAction {
+    std::string name;
+    std::vector<InstantiatedParameter> parameters;
+    InstantiatedCondition precondtions;
+    InstantiatedCondition effect;
+    InstantiatedCondition observe;
 };
 
 struct Action {
@@ -61,8 +96,8 @@ struct Action {
 //// Hash function specialization for MyStruct
 namespace std {
     template<>
-    struct hash<Predicate> {
-        std::size_t operator()(const Predicate &obj) const {
+    struct hash<InstantiatedPredicate> {
+        std::size_t operator()(const InstantiatedPredicate &obj) const {
             std::size_t seed = 0;
             hash<int> intHash;
             hash<std::string> stringHash;
@@ -84,26 +119,26 @@ struct Domain {
 
 };
 
-class KnownKnowledgeBase : public std::unordered_set<Predicate> {
+class KnownKnowledgeBase : public std::unordered_set<InstantiatedPredicate> {
 public:
-    void concurrent_insert(const Predicate &value);
+    void concurrent_insert(const InstantiatedPredicate &value);
 
-    void concurrent_erase(const Predicate &value);
+    void concurrent_erase(const InstantiatedPredicate &value);
 
-    bool concurrent_find(const Predicate &value);
+    bool concurrent_find(const InstantiatedPredicate &value);
 
 private:
     std::mutex mutex_;
 
 };
 
-class UnknownKnowledgeBase : public std::unordered_set<Predicate> {
+class UnknownKnowledgeBase : public std::unordered_set<InstantiatedPredicate> {
 public:
-    void concurrent_insert(const Predicate &value);
+    void concurrent_insert(const InstantiatedPredicate &value);
 
-    void concurrent_erase(const Predicate &value);
+    void concurrent_erase(const InstantiatedPredicate &value);
 
-    bool concurrent_find(const Predicate &value);
+    bool concurrent_find(const InstantiatedPredicate &value);
 
     std::vector<Constraint> constraints;
 private:
@@ -111,22 +146,42 @@ private:
 
 };
 
-struct KnowledgeBase {
+class KnowledgeBase {
+public:
+    static KnowledgeBase &getInstance();
+
+    std::string convert_to_problem(const Domain &domain);
+
     KnownKnowledgeBase knownKnowledgeBase;
     UnknownKnowledgeBase unknownKnowledgeBase;
 
-    std::string convert_to_problem(const Domain &domain);
+private:
+    KnowledgeBase() {} // Private constructor to prevent direct instantiation
+    ~KnowledgeBase() {} // Private destructor to prevent deletion
+    KnowledgeBase(const KnowledgeBase &) = delete; // Disable copy constructor
+    KnowledgeBase &operator=(const KnowledgeBase &) = delete; // Disable assignment operator
 };
 
 
 // parsing functions
 std::optional<Domain> parse_domain(const std::string &content);
 
-std::optional<Predicate> parse_predicate(const std::string &content);
+std::optional<Predicate>
+parse_predicate(const std::string &content, const std::unordered_map<std::string, std::string> &param_to_type_map = {});
 
 std::optional<Action> parse_action(const std::string &content);
 
-std::optional<Condition> parse_condition(const std::string &content);
+std::optional<Condition>
+parse_condition(const std::string &content, const std::unordered_map<std::string, std::string> &param_to_type_map = {});
+
+InstantiatedPredicate
+instantiate_predicate(const Predicate &predicate, const std::unordered_map<std::string, std::string> &param_subs);
+
+InstantiatedAction
+instantiate_action(const Action &action, const std::unordered_map<std::string, std::string> &param_subs);
+
+InstantiatedCondition
+instantiate_condition(const Condition &condition, const std::unordered_map<std::string, std::string> &param_subs);
 
 
 // printing functions

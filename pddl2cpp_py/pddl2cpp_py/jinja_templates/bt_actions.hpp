@@ -5,6 +5,7 @@
 #include "behaviortree_cpp_v3/xml_parsing.h"
 #include "behaviortree_cpp_v3/basic_types.h"
 #include "behaviortree_cpp_v3/tree_node.h"
+#include "pddl_parser/pddl_parser.hpp"
 
 {{action_classes}}
 

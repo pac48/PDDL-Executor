@@ -44,7 +44,8 @@ void Plan::add_observe_action_sequence(bool observe_result, const PlanItem &item
         auto params = action->parameters[i];
         std::string inst_name = item.action.params[i];
         int len = params.name.size();
-        ss << sep << params.name.substr(1, len - 1) << "_" << params.type << "=\"" << inst_name << "\"";
+//        ss << sep << params.name.substr(1, len - 1) << "_" << params.type << "=\"" << inst_name << "\"";
+        ss << sep << params.name.substr(1, len - 1) << "=\"" << inst_name << "\"";
         sep = " ";
     }
 
@@ -67,7 +68,8 @@ void Plan::add_action_sequence(const PlanItem &item, std::stringstream &tree,
         auto params = action->parameters[i];
         std::string inst_name = item.action.params[i];
         int len = params.name.size();
-        ss << sep << params.name.substr(1, len - 1) << "_" << params.type << "=\"" << inst_name << "\"";
+//        ss << sep << params.name.substr(1, len - 1) << "_" << params.type << "=\"" << inst_name << "\"";
+        ss << sep << params.name.substr(1, len - 1) << "=\"" << inst_name << "\"";
         sep = " ";
     }
 

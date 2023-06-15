@@ -36,13 +36,13 @@ TEST(KB, convert_To_problem) {
     ASSERT_TRUE(domain_opt.has_value());
     auto domain = domain_opt.value();
 
-    Parameter kitchen = {"kitchen", "landmark"};
-    Parameter couch = {"couch", "landmark"};
-    Parameter home = {"home", "landmark"};
-    Parameter pioneer = {"pioneer", "robot"};
-    Parameter nathan = {"nathan", "person"};
+    InstantiatedParameter kitchen = {"kitchen", "landmark"};
+    InstantiatedParameter couch = {"couch", "landmark"};
+    InstantiatedParameter home = {"home", "landmark"};
+    InstantiatedParameter pioneer = {"pioneer", "robot"};
+    InstantiatedParameter nathan = {"nathan", "person"};
 
-    KnowledgeBase kb;
+    auto & kb = KnowledgeBase::getInstance();
     kb.knownKnowledgeBase.insert({"robot_at", {pioneer, home}});
     kb.knownKnowledgeBase.insert({"medicine_location", {}});
 
