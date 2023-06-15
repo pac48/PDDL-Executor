@@ -8,6 +8,8 @@
 #include "behaviortree_cpp_v3/basic_types.h"
 #include "behaviortree_cpp_v3/tree_node.h"
 
+#include "bt_medicine_domain.hpp"
+
 
 BT::NodeStatus SimpleAction(BT::TreeNode &n) {
     std::cout << "SimpleAction: " << "1" << std::endl;

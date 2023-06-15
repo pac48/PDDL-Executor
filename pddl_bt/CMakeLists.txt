@@ -14,7 +14,8 @@ generate_bt_header(src/medicine_domain.pddl
     )
 
 add_executable(main src/main.cpp)
-add_dependencies(main bt_medicine_domain)
+target_link_libraries(main bt_medicine_domain)
+
 target_include_directories(main PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)

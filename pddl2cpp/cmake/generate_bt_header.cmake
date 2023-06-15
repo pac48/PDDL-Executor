@@ -33,9 +33,8 @@ function(generate_bt_header DOMAIN_FILE LIB_NAME)
   endif()
 
   # Make the include directory
-  set(OUTPUT_FILE_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}/include)
+  set(OUTPUT_FILE_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}/include/)
   file(MAKE_DIRECTORY ${OUTPUT_FILE_DIR})
-
 
   # Set the domain file parameter to be relative to the current source dir
   set(DOMAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${DOMAIN_FILE})
@@ -54,7 +53,12 @@ function(generate_bt_header DOMAIN_FILE LIB_NAME)
     "Running `${pddl2cpp_BIN} ${DOMAIN_FILE} ${HEADER_FILE}`"
     VERBATIM
   )
-  add_custom_target(${LIB_NAME} DEPENDS ${HEADER_FILE})
+#  add_custom_target(${LIB_NAME} DEPENDS ${HEADER_FILE})
+  add_library(${LIB_NAME} INTERFACE ${HEADER_FILE})
+  target_include_directories(${LIB_NAME} INTERFACE
+      $<BUILD_INTERFACE:${OUTPUT_FILE_DIR}>
+      $<INSTALL_INTERFACE:include/${LIB_NAME}>
+      )
 
   install(DIRECTORY ${OUTPUT_FILE_DIR} DESTINATION include/${LIB_NAME})
 endfunction()
