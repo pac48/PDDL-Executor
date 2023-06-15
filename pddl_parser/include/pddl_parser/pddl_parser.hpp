@@ -4,10 +4,17 @@
 #include <vector>
 #include <variant>
 #include <optional>
+#include <unordered_set>
+#include <mutex>
+
 
 // types
 enum OPERATION {
     AND, OR, FORALL, NOT
+};
+
+enum CONSTRAINTS {
+    ONEOF
 };
 
 struct Parameter {
@@ -37,6 +44,12 @@ struct Condition {
 
 };
 
+struct Constraint {
+    CONSTRAINTS constraint;
+    std::vector<Predicate> predicates;
+
+};
+
 struct Action {
     std::string name;
     std::vector<Parameter> parameters;
@@ -46,46 +59,21 @@ struct Action {
 };
 
 //// Hash function specialization for MyStruct
-//namespace std {
-//    template<>
-//    struct hash<Predicate> {
-//        std::size_t operator()(const Predicate &obj) const {
-//            std::size_t seed = 0;
-//            // Combine the hash values of the struct members
-//            // using the std::hash function for each type
-//            hash<int> intHash;
-//            hash<std::string> stringHash;
-//
-//            seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-//            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-//
-//            return seed;
-//        }
-//    };
-//}
-//// Hash function specialization for MyStruct
-//namespace std {
-//    template<>
-//    struct hash<Action> {
-//        std::size_t operator()(const Action &obj) const {
-//            std::size_t seed = 0;
-//            // Combine the hash values of the struct members
-//            // using the std::hash function for each type
-//            hash<int> intHash;
-//            hash<std::string> stringHash;
-//
-//            seed ^= intHash(obj.precondtions.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-//            seed ^= intHash(obj.precondtions.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-//            seed ^= intHash(obj.effect.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-//            seed ^= intHash(obj.effect.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-//            seed ^= intHash(obj.observe.conditions.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-//            seed ^= intHash(obj.observe.op) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-//            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-//
-//            return seed;
-//        }
-//    };
-//}
+namespace std {
+    template<>
+    struct hash<Predicate> {
+        std::size_t operator()(const Predicate &obj) const {
+            std::size_t seed = 0;
+            hash<int> intHash;
+            hash<std::string> stringHash;
+
+            seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+            return seed;
+        }
+    };
+}
 
 struct Domain {
     std::string name;
@@ -95,6 +83,41 @@ struct Domain {
     std::vector<Action> actions;
 
 };
+
+class KnownKnowledgeBase : public std::unordered_set<Predicate> {
+public:
+    void concurrent_insert(const Predicate &value);
+
+    void concurrent_erase(const Predicate &value);
+
+    bool concurrent_find(const Predicate &value);
+
+private:
+    std::mutex mutex_;
+
+};
+
+class UnknownKnowledgeBase : public std::unordered_set<Predicate> {
+public:
+    void concurrent_insert(const Predicate &value);
+
+    void concurrent_erase(const Predicate &value);
+
+    bool concurrent_find(const Predicate &value);
+
+    std::vector<Constraint> constraints;
+private:
+    std::mutex mutex_;
+
+};
+
+struct KnowledgeBase {
+    KnownKnowledgeBase knownKnowledgeBase;
+    UnknownKnowledgeBase unknownKnowledgeBase;
+
+    std::string convert_to_problem(const Domain &domain);
+};
+
 
 // parsing functions
 std::optional<Domain> parse_domain(const std::string &content);

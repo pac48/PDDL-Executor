@@ -5,6 +5,7 @@
 #include <fmt/core.h>
 #include <functional>
 #include <unordered_set>
+#include <cassert>
 
 
 std::vector<Parameter> parse_params(std::vector<std::string_view> str);
@@ -443,4 +444,98 @@ std::ostream &operator<<(std::ostream &os, const Domain &domain) {
     os << ")\n";
 
     return os;
+}
+
+
+void KnownKnowledgeBase::concurrent_insert(const Predicate &value) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    insert(value);
+}
+
+void KnownKnowledgeBase::concurrent_erase(const Predicate &value) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    erase(value);
+}
+
+bool KnownKnowledgeBase::concurrent_find(const Predicate &value) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return find(value) != end();
+}
+
+void UnknownKnowledgeBase::concurrent_insert(const Predicate &value) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    insert(value);
+}
+
+void UnknownKnowledgeBase::concurrent_erase(const Predicate &value) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    erase(value);
+}
+
+bool UnknownKnowledgeBase::concurrent_find(const Predicate &value) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return find(value) != end();
+}
+
+std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
+    std::stringstream ss;
+    ss << fmt::format("(define (problem {}_problem)\n", domain.name);
+    ss << fmt::format("(:domain {})\n", domain.name);
+
+    std::unordered_map<std::string, std::unordered_set<std::string>> type_inst_map;
+    for (const auto &preds: knownKnowledgeBase) {
+        for (const auto &param: preds.parameters) {
+            type_inst_map[param.type].insert(param.name);
+        }
+    }
+    for (const auto &preds: unknownKnowledgeBase) {
+        for (const auto &param: preds.parameters) {
+            type_inst_map[param.type].insert(param.name);
+        }
+    }
+
+    ss << "(:objects\n";
+    for (auto &type: domain.types) {
+        if (type_inst_map[type].empty()){
+            continue;
+        }
+        ss << "\t";
+        for (auto &inst: type_inst_map[type]) {
+            ss << inst << " ";
+        }
+        ss << "- " << type << "\n";
+    }
+    ss << ")\n";
+
+    auto pred_to_str_no_type = [](const Predicate& pred){
+        std::stringstream ss;
+        ss << "(" << pred.name;
+        for (auto &param: pred.parameters) {
+            ss << " " << param.name;
+        }
+        ss << ")";
+        return ss.str();
+    };
+
+    ss << "(:init\n";
+    for (auto &pred: knownKnowledgeBase) {
+        ss << "\t" << pred_to_str_no_type(pred) << "\n";
+    }
+    for (auto &pred: unknownKnowledgeBase) {
+        ss << "\t" << "(unknown " << pred_to_str_no_type(pred) << ")" << "\n";
+    }
+    for (auto &constraint: unknownKnowledgeBase.constraints) {
+        assert(constraint.constraint == CONSTRAINTS::ONEOF);
+        ss << "\t" << "(oneof";
+        for (auto &pred: constraint.predicates) {
+            ss << " " << pred_to_str_no_type(pred);
+        }
+        ss << ")\n";
+    }
+    ss << ")\n";
+
+    ss << "(:goal (success))\n";
+    ss << ")\n";
+
+    return ss.str();
 }
