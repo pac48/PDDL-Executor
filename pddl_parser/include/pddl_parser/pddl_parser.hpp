@@ -22,19 +22,6 @@ struct Parameter {
     std::string name;
     std::string type;
 
-    bool operator==(const Parameter &other) const {
-        return name == other.name && type == other.type;
-    }
-};
-
-
-struct Predicate {
-    std::string name;
-    std::vector<Parameter> parameters;
-//
-//    bool operator==(const Predicate &other) const {
-//        return name == other.name && parameters == other.parameters;
-//    }
 };
 
 struct InstantiatedParameter {
@@ -44,6 +31,11 @@ struct InstantiatedParameter {
     bool operator==(const InstantiatedParameter &other) const {
         return name == other.name && type == other.type;
     }
+};
+
+struct Predicate {
+    std::string name;
+    std::vector<Parameter> parameters;
 };
 
 struct InstantiatedPredicate {
@@ -71,12 +63,6 @@ struct InstantiatedCondition {
 
 };
 
-struct Constraint {
-    CONSTRAINTS constraint;
-    std::vector<InstantiatedPredicate> predicates;
-
-};
-
 struct InstantiatedAction {
     std::string name;
     std::vector<InstantiatedParameter> parameters;
@@ -93,7 +79,16 @@ struct Action {
     Condition observe;
 };
 
-//// Hash function specialization for MyStruct
+struct Domain {
+    std::string name;
+    std::vector<std::string> requirements;
+    std::vector<std::string> types;
+    std::vector<Predicate> predicates;
+    std::vector<Action> actions;
+
+};
+
+// Hash functions
 namespace std {
     template<>
     struct hash<InstantiatedPredicate> {
@@ -110,14 +105,6 @@ namespace std {
     };
 }
 
-struct Domain {
-    std::string name;
-    std::vector<std::string> requirements;
-    std::vector<std::string> types;
-    std::vector<Predicate> predicates;
-    std::vector<Action> actions;
-
-};
 
 class KnownKnowledgeBase : public std::unordered_set<InstantiatedPredicate> {
 public:
@@ -129,6 +116,12 @@ public:
 
 private:
     std::mutex mutex_;
+
+};
+
+struct Constraint {
+    CONSTRAINTS constraint;
+    std::vector<InstantiatedPredicate> predicates;
 
 };
 
@@ -152,8 +145,12 @@ public:
 
     std::string convert_to_problem(const Domain &domain);
 
-    KnownKnowledgeBase knownKnowledgeBase;
-    UnknownKnowledgeBase unknownKnowledgeBase;
+    bool check_conditions(const InstantiatedCondition &condition);
+
+    void apply_conditions(const InstantiatedCondition &condition, bool negated = false);
+
+    KnownKnowledgeBase knownPredicates;
+    UnknownKnowledgeBase unknownPredicates;
     std::vector<InstantiatedParameter> objects;
 
 private:
@@ -163,6 +160,7 @@ private:
     KnowledgeBase &operator=(const KnowledgeBase &) = delete; // Disable assignment operator
 };
 
+// condition
 
 // parsing functions
 std::optional<Domain> parse_domain(const std::string &content);
@@ -179,10 +177,12 @@ InstantiatedPredicate
 instantiate_predicate(const Predicate &predicate, const std::unordered_map<std::string, std::string> &param_subs);
 
 InstantiatedAction
-instantiate_action(const Action &action, const std::unordered_map<std::string, std::string> &param_subs);
+instantiate_action(const Action &action, const std::unordered_map<std::string, std::string> &param_subs,
+                   const std::vector<InstantiatedParameter> &objects = {});
 
 InstantiatedCondition
-instantiate_condition(const Condition &condition, const std::unordered_map<std::string, std::string> &param_subs);
+instantiate_condition(const Condition &condition, const std::unordered_map<std::string, std::string> &param_subs,
+                      const std::vector<InstantiatedParameter> &objects = {});
 
 
 // printing functions

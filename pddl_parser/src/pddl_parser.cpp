@@ -502,7 +502,8 @@ instantiate_predicate(const Predicate &predicate, const std::unordered_map<std::
 }
 
 InstantiatedAction
-instantiate_action(const Action &action, const std::unordered_map<std::string, std::string> &param_subs) {
+instantiate_action(const Action &action, const std::unordered_map<std::string, std::string> &param_subs,
+                   const std::vector<InstantiatedParameter> &objects) {
     auto inst_action = InstantiatedAction();
     inst_action.name = action.name;
 
@@ -519,15 +520,16 @@ instantiate_action(const Action &action, const std::unordered_map<std::string, s
 
     }
 
-    inst_action.precondtions = instantiate_condition(action.precondtions, param_subs);
-    inst_action.effect = instantiate_condition(action.effect, param_subs);
-    inst_action.observe = instantiate_condition(action.observe, param_subs);
+    inst_action.precondtions = instantiate_condition(action.precondtions, param_subs, objects);
+    inst_action.effect = instantiate_condition(action.effect, param_subs, objects);
+    inst_action.observe = instantiate_condition(action.observe, param_subs, objects);
 
     return inst_action;
 }
 
 InstantiatedCondition
-instantiate_condition(const Condition &conditionConst, const std::unordered_map<std::string, std::string> &param_subs) {
+instantiate_condition(const Condition &conditionConst, const std::unordered_map<std::string, std::string> &param_subs,
+                      const std::vector<InstantiatedParameter> &objects) {
     Condition condition = conditionConst;
 
     auto inst_cond = InstantiatedCondition();
@@ -538,16 +540,15 @@ instantiate_condition(const Condition &conditionConst, const std::unordered_map<
     }
     inst_cond.conditions.resize(condition.conditions.size());
     for (int i = 0; i < condition.conditions.size(); i++) {
-        inst_cond.conditions[i] = instantiate_condition(condition.conditions[i], param_subs);
+        inst_cond.conditions[i] = instantiate_condition(condition.conditions[i], param_subs, objects);
     }
 
     if (condition.op == OPERATION::FORALL) {
         auto inst_cond_2 = InstantiatedCondition();
         inst_cond_2.op = OPERATION::AND;
 
-        auto &kb = KnowledgeBase::getInstance();
         auto param_subs_mod = param_subs;
-        for (const auto &obj: kb.objects) {
+        for (const auto &obj: objects) {
             if (obj.type == condition.parameters[0].type) {
                 int len = condition.parameters[0].name.size() - 1;
                 auto var_name = condition.parameters[0].name.substr(1, len);
@@ -557,7 +558,8 @@ instantiate_condition(const Condition &conditionConst, const std::unordered_map<
                     inst_cond_2.predicates.push_back(instantiate_predicate(condition.predicates[i], param_subs_mod));
                 }
                 for (int i = 0; i < condition.conditions.size(); i++) {
-                    inst_cond_2.conditions.push_back(instantiate_condition(condition.conditions[i], param_subs_mod));
+                    inst_cond_2.conditions.push_back(
+                            instantiate_condition(condition.conditions[i], param_subs_mod, objects));
                 }
             }
         }
@@ -638,13 +640,13 @@ std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
     };
 
     ss << "(:init\n";
-    for (auto &pred: knownKnowledgeBase) {
+    for (auto &pred: knownPredicates) {
         ss << "\t" << pred_to_str_no_type(pred) << "\n";
     }
-    for (auto &pred: unknownKnowledgeBase) {
+    for (auto &pred: unknownPredicates) {
         ss << "\t" << "(unknown " << pred_to_str_no_type(pred) << ")" << "\n";
     }
-    for (auto &constraint: unknownKnowledgeBase.constraints) {
+    for (auto &constraint: unknownPredicates.constraints) {
         assert(constraint.constraint == CONSTRAINTS::ONEOF);
         ss << "\t" << "(oneof";
         for (auto &pred: constraint.predicates) {
@@ -658,4 +660,66 @@ std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
     ss << ")\n";
 
     return ss.str();
+}
+
+bool KnowledgeBase::check_conditions(const InstantiatedCondition &condition) {
+    bool ret;
+    if (condition.op == OPERATION::AND) {
+        ret = true;
+        for (const auto &sub_cond: condition.conditions) {
+            ret &= check_conditions(sub_cond);
+        }
+        for (const auto &pred: condition.predicates) {
+            ret &= knownPredicates.concurrent_find(pred);
+        }
+    } else if (condition.op == OPERATION::OR) {
+        ret = false;
+        for (const auto &sub_cond: condition.conditions) {
+            ret |= check_conditions(sub_cond);
+        }
+        for (const auto &pred: condition.predicates) {
+            ret |= knownPredicates.concurrent_find(pred);
+        }
+    } else if (condition.op == OPERATION::NOT) {
+        if (condition.predicates.size() == 1 && condition.conditions.empty()) {
+            auto pred = condition.predicates[0];
+            return !knownPredicates.concurrent_find(pred) && !unknownPredicates.concurrent_find(pred);
+        } else if (condition.predicates.empty() && condition.conditions.size() == 1) {
+            return !check_conditions(condition.conditions[0]);
+        } else {
+            throw std::runtime_error("OPERATION::NOT should applies to only a single condition or predicate");
+        }
+
+    } else {
+        throw std::runtime_error("Only AND, OR, and NOT operations are  allowed in a InstantiatedCondition");
+    }
+
+    if (!ret){
+        int o = 0;
+    }
+    return ret;
+}
+
+void KnowledgeBase::apply_conditions(const InstantiatedCondition &condition, bool negated) {
+    if (condition.op == OPERATION::AND) {
+        for (const auto &sub_cond: condition.conditions) {
+            apply_conditions(sub_cond, negated);
+        }
+    } else if (condition.op == OPERATION::NOT) {
+        negated = !negated;
+        for (const auto &sub_cond: condition.conditions) {
+            apply_conditions(sub_cond, negated);
+        }
+    } else {
+        throw std::runtime_error("Only AND and NOT operations can be applied");
+    }
+    for (const auto &pred: condition.predicates) {
+        if (!negated){
+            knownPredicates.concurrent_insert(pred);
+        } else{
+            knownPredicates.concurrent_erase(pred);
+        }
+        // whether or not the predicate becomes true or false, it must be removed from the unknown set
+        unknownPredicates.concurrent_erase(pred);
+    }
 }

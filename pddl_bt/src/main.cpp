@@ -326,20 +326,20 @@ int main(int argc, char **argv) {
 
     auto & kb = KnowledgeBase::getInstance();
     kb.objects = {kitchen, couch, home, pioneer, nathan};
-    kb.knownKnowledgeBase.insert({"robot_at", {pioneer, home}});
-    kb.knownKnowledgeBase.insert({"medicine_location", {kitchen}});
+    kb.knownPredicates.insert({"robot_at", {pioneer, home}});
+    kb.knownPredicates.insert({"medicine_location", {kitchen}});
 
-    kb.unknownKnowledgeBase.insert({"person_at", {nathan, couch}});
-    kb.unknownKnowledgeBase.insert({"person_at", {nathan, kitchen}});
-    kb.unknownKnowledgeBase.insert({"person_at", {nathan, home}});
+    kb.unknownPredicates.insert({"person_at", {nathan, couch}});
+    kb.unknownPredicates.insert({"person_at", {nathan, kitchen}});
+    kb.unknownPredicates.insert({"person_at", {nathan, home}});
 
-    kb.unknownKnowledgeBase.insert({"guide_to_succeeded_attempt_1", {}});
-    kb.unknownKnowledgeBase.insert({"guide_to_succeeded_attempt_2", {}});
-    kb.unknownKnowledgeBase.insert({"notify_automated_succeeded", {}});
-    kb.unknownKnowledgeBase.insert({"notify_recorded_succeeded", {}});
+    kb.unknownPredicates.insert({"guide_to_succeeded_attempt_1", {}});
+    kb.unknownPredicates.insert({"guide_to_succeeded_attempt_2", {}});
+    kb.unknownPredicates.insert({"notify_automated_succeeded", {}});
+    kb.unknownPredicates.insert({"notify_recorded_succeeded", {}});
 
-    kb.unknownKnowledgeBase.constraints.push_back({CONSTRAINTS::ONEOF,
-                                                   {{"person_at", {nathan, couch}},
+    kb.unknownPredicates.constraints.push_back({CONSTRAINTS::ONEOF,
+                                                {{"person_at", {nathan, couch}},
                                                     {"person_at", {nathan, kitchen}},
                                                     {"person_at", {nathan, home}}
                                                    }
