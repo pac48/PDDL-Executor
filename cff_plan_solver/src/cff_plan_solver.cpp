@@ -53,10 +53,8 @@ std::string getPlan(const std::string &domain_str, const std::string &problem_st
     // modify
     auto domain = parse_domain(domain_str);
 
-    std::cout << plan_val.convert_to_bt(domain.value()) << std::endl;
-    int o = 0;
 
-    return "";
+    return plan_val.convert_to_bt(domain.value());
 
 }
 

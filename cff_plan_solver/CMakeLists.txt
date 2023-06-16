@@ -72,6 +72,7 @@ install(DIRECTORY include/
 
 ament_export_include_directories(include)
 ament_export_libraries(cff_plan_solver)
+ament_export_dependencies(jinja2cpp_ros)
 
 ament_package()
 

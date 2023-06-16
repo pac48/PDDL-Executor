@@ -1,4 +1,6 @@
 #include <cstdio>
+#include <filesystem>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include "behaviortree_cpp_v3/behavior_tree.h"
 #include "behaviortree_cpp_v3/bt_factory.h"
@@ -8,7 +10,9 @@
 #include "behaviortree_cpp_v3/basic_types.h"
 #include "behaviortree_cpp_v3/tree_node.h"
 
+#include "cff_plan_solver/cff_plan_solver.hpp"
 #include "bt_medicine_domain.hpp"
+#include "pddl_bt/actions.hpp"
 
 
 std::string config = "<root BTCPP_format=\"4\">\n"
@@ -292,75 +296,6 @@ std::string config = "<root BTCPP_format=\"4\">\n"
                      "</root>";
 
 
-BT::NodeStatus
-detectPerson::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus initMoveToLandmark::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus moveToLandmark::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus InitguidePersonToLandmarkAttempt::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus guidePersonToLandmarkAttempt1::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus guidePersonToLandmarkAttempt2::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus checkGuideToSucceeded1::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus checkGuideToSucceeded2::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus UpdatePersonLoc1::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus UpdatePersonLoc2::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus UpdateSuccess1::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus UpdateSuccess2::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus UpdateSuccess3::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus notifyAutomatedMedicineAt::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus notifyRecordedMedicineAt::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus askCaregiverHelpMedicine1::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
-BT::NodeStatus askCaregiverHelpMedicine2::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
-}
-
 int main(int argc, char **argv) {
     (void) argc;
     (void) argv;
@@ -368,6 +303,51 @@ int main(int argc, char **argv) {
     // We use the BehaviorTreeFactory to register our custom nodes
     BT::BehaviorTreeFactory factory = create_tree_factory();
 
+    std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("pddl_bt");
+    std::filesystem::path test_dir = pkg_dir / "pddl";
+    std::filesystem::path domain_file = test_dir / "medicine_domain.pddl";
+    std::filesystem::path problem_file = test_dir / "medicine_problem.pddl";
+
+    std::ifstream domain_file_stream(domain_file.string().c_str());
+    std::stringstream ss;
+    ss << domain_file_stream.rdbuf();
+    std::string domain_str = ss.str();
+
+    auto domain = parse_domain(domain_str);
+    std::stringstream ss_domain;
+    ss_domain << domain.value();
+
+
+    InstantiatedParameter kitchen = {"kitchen", "landmark"};
+    InstantiatedParameter couch = {"couch", "landmark"};
+    InstantiatedParameter home = {"home", "landmark"};
+    InstantiatedParameter pioneer = {"pioneer", "robot"};
+    InstantiatedParameter nathan = {"nathan", "person"};
+
+    auto & kb = KnowledgeBase::getInstance();
+    kb.objects = {kitchen, couch, home, pioneer, nathan};
+    kb.knownKnowledgeBase.insert({"robot_at", {pioneer, home}});
+    kb.knownKnowledgeBase.insert({"medicine_location", {kitchen}});
+
+    kb.unknownKnowledgeBase.insert({"person_at", {nathan, couch}});
+    kb.unknownKnowledgeBase.insert({"person_at", {nathan, kitchen}});
+    kb.unknownKnowledgeBase.insert({"person_at", {nathan, home}});
+
+    kb.unknownKnowledgeBase.insert({"guide_to_succeeded_attempt_1", {}});
+    kb.unknownKnowledgeBase.insert({"guide_to_succeeded_attempt_2", {}});
+    kb.unknownKnowledgeBase.insert({"notify_automated_succeeded", {}});
+    kb.unknownKnowledgeBase.insert({"notify_recorded_succeeded", {}});
+
+    kb.unknownKnowledgeBase.constraints.push_back({CONSTRAINTS::ONEOF,
+                                                   {{"person_at", {nathan, couch}},
+                                                    {"person_at", {nathan, kitchen}},
+                                                    {"person_at", {nathan, home}}
+                                                   }
+                                                  });
+
+    auto problem_str = kb.convert_to_problem(domain.value());
+    auto config = getPlan(domain_str, problem_str);
+    // TODO get  config from planner!!
     auto tree = factory.createTreeFromText(config);
 
     while (tree.tickRoot() == BT::NodeStatus::RUNNING) {

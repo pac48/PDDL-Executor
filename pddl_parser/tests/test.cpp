@@ -42,7 +42,8 @@ TEST(KB, convert_To_problem) {
     InstantiatedParameter pioneer = {"pioneer", "robot"};
     InstantiatedParameter nathan = {"nathan", "person"};
 
-    auto & kb = KnowledgeBase::getInstance();
+    auto &kb = KnowledgeBase::getInstance();
+    kb.objects = {kitchen, couch, home, pioneer, nathan};
     kb.knownKnowledgeBase.insert({"robot_at", {pioneer, home}});
     kb.knownKnowledgeBase.insert({"medicine_location", {}});
 

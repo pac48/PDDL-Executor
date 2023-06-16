@@ -154,6 +154,7 @@ public:
 
     KnownKnowledgeBase knownKnowledgeBase;
     UnknownKnowledgeBase unknownKnowledgeBase;
+    std::vector<InstantiatedParameter> objects;
 
 private:
     KnowledgeBase() {} // Private constructor to prevent direct instantiation

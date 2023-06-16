@@ -292,10 +292,12 @@ std::vector<Parameter> parse_params(std::vector<std::string_view> str) {
 
 
 std::optional<Condition>
-parse_condition(const std::string &content, const std::unordered_map<std::string, std::string> &param_to_type_map) {
+parse_condition(const std::string &content,
+                const std::unordered_map<std::string, std::string> &param_to_type_map_const) {
     std::string_view section;
     std::string_view remaining;
     Condition cond;
+    auto param_to_type_map = param_to_type_map_const;
 
     std::tie(section, remaining) = getNextParen(content);
     auto strings = parseVector(section, {'\t', '\n', ' '});
@@ -313,6 +315,9 @@ parse_condition(const std::string &content, const std::unordered_map<std::string
         std::tie(section, remaining) = getNextParen(strings[ind]);
         auto tmp = parseVector(section, {'\t', '\n', ' '});
         cond.parameters = parse_params(tmp);
+        for (const auto &param: cond.parameters) {
+            param_to_type_map[param.name] = param.type;
+        }
         ind++;
     } else {
         return {};
@@ -478,16 +483,19 @@ std::ostream &operator<<(std::ostream &os, const Domain &domain) {
 InstantiatedPredicate
 instantiate_predicate(const Predicate &predicate, const std::unordered_map<std::string, std::string> &param_subs) {
     auto inst_pred = InstantiatedPredicate();
+    inst_pred.name = predicate.name;
     inst_pred.parameters.resize(predicate.parameters.size());
 
     for (int i = 0; i < predicate.parameters.size(); i++) {
+        inst_pred.parameters[i].type = predicate.parameters[i].type;
         int len = predicate.parameters[i].name.size() - 1;
         auto param_name = predicate.parameters[i].name.substr(1, len);
-        if (param_subs.find(param_name) == param_subs.end()) {
-            throw std::runtime_error(std::string("missing parameter for substitution: ") + param_name);
+        if (param_subs.find(param_name) != param_subs.end()) {
+            inst_pred.parameters[i].name = param_subs.at(param_name);
+        } else {
+            inst_pred.parameters[i].name = predicate.parameters[i].name;
         }
 
-        inst_pred.parameters[i].name = param_subs.at(param_name);
     }
 
     return inst_pred;
@@ -496,6 +504,21 @@ instantiate_predicate(const Predicate &predicate, const std::unordered_map<std::
 InstantiatedAction
 instantiate_action(const Action &action, const std::unordered_map<std::string, std::string> &param_subs) {
     auto inst_action = InstantiatedAction();
+    inst_action.name = action.name;
+
+    inst_action.parameters.resize(action.parameters.size());
+    for (int i = 0; i < action.parameters.size(); i++) {
+        inst_action.parameters[i].type = action.parameters[i].type;
+        int len = action.parameters[i].name.size() - 1;
+        auto param_name = action.parameters[i].name.substr(1, len);
+        if (param_subs.find(param_name) != param_subs.end()) {
+            inst_action.parameters[i].name = param_subs.at(param_name);
+        } else {
+            inst_action.parameters[i].name = action.parameters[i].name;
+        }
+
+    }
+
     inst_action.precondtions = instantiate_condition(action.precondtions, param_subs);
     inst_action.effect = instantiate_condition(action.effect, param_subs);
     inst_action.observe = instantiate_condition(action.observe, param_subs);
@@ -504,14 +527,11 @@ instantiate_action(const Action &action, const std::unordered_map<std::string, s
 }
 
 InstantiatedCondition
-instantiate_condition(const Condition &condition, const std::unordered_map<std::string, std::string> &param_subs) {
-    auto & kb = KnowledgeBase::getInstance();
-    if (condition.op == OPERATION::FORALL) {
-        throw std::runtime_error("TODO");
-    }
-
+instantiate_condition(const Condition &conditionConst, const std::unordered_map<std::string, std::string> &param_subs) {
+    Condition condition = conditionConst;
 
     auto inst_cond = InstantiatedCondition();
+    inst_cond.op = condition.op;
     inst_cond.predicates.resize(condition.predicates.size());
     for (int i = 0; i < condition.predicates.size(); i++) {
         inst_cond.predicates[i] = instantiate_predicate(condition.predicates[i], param_subs);
@@ -519,6 +539,30 @@ instantiate_condition(const Condition &condition, const std::unordered_map<std::
     inst_cond.conditions.resize(condition.conditions.size());
     for (int i = 0; i < condition.conditions.size(); i++) {
         inst_cond.conditions[i] = instantiate_condition(condition.conditions[i], param_subs);
+    }
+
+    if (condition.op == OPERATION::FORALL) {
+        auto inst_cond_2 = InstantiatedCondition();
+        inst_cond_2.op = OPERATION::AND;
+
+        auto &kb = KnowledgeBase::getInstance();
+        auto param_subs_mod = param_subs;
+        for (const auto &obj: kb.objects) {
+            if (obj.type == condition.parameters[0].type) {
+                int len = condition.parameters[0].name.size() - 1;
+                auto var_name = condition.parameters[0].name.substr(1, len);
+                param_subs_mod[var_name] = obj.name;
+
+                for (int i = 0; i < condition.predicates.size(); i++) {
+                    inst_cond_2.predicates.push_back(instantiate_predicate(condition.predicates[i], param_subs_mod));
+                }
+                for (int i = 0; i < condition.conditions.size(); i++) {
+                    inst_cond_2.conditions.push_back(instantiate_condition(condition.conditions[i], param_subs_mod));
+                }
+            }
+        }
+
+        return inst_cond_2;
     }
 
     return inst_cond;
@@ -565,28 +609,21 @@ std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
     ss << fmt::format("(define (problem {}_problem)\n", domain.name);
     ss << fmt::format("(:domain {})\n", domain.name);
 
-    std::unordered_map<std::string, std::unordered_set<std::string>> type_inst_map;
-    for (const auto &preds: knownKnowledgeBase) {
-        for (const auto &param: preds.parameters) {
-            type_inst_map[param.type].insert(param.name);
-        }
-    }
-    for (const auto &preds: unknownKnowledgeBase) {
-        for (const auto &param: preds.parameters) {
-            type_inst_map[param.type].insert(param.name);
-        }
-    }
+//    std::unordered_map<std::string, std::unordered_set<std::string>> type_inst_map;
+//    for (const auto &preds: knownKnowledgeBase) {
+//        for (const auto &param: preds.parameters) {
+//            type_inst_map[param.type].insert(param.name);
+//        }
+//    }
+//    for (const auto &preds: unknownKnowledgeBase) {
+//        for (const auto &param: preds.parameters) {
+//            type_inst_map[param.type].insert(param.name);
+//        }
+//    }
 
     ss << "(:objects\n";
-    for (auto &type: domain.types) {
-        if (type_inst_map[type].empty()) {
-            continue;
-        }
-        ss << "\t";
-        for (auto &inst: type_inst_map[type]) {
-            ss << inst << " ";
-        }
-        ss << "- " << type << "\n";
+    for (auto &object: objects) {
+        ss << "\t" << object << "\n";
     }
     ss << ")\n";
 
