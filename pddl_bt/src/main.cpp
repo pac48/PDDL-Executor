@@ -56,7 +56,6 @@ int main(int argc, char **argv) {
 
     auto problem_str = kb.convert_to_problem(domain.value());
     auto config = getPlan(domain_str, problem_str);
-    // TODO get  config from planner!!
     auto tree = factory.createTreeFromText(config);
 
     while (tree.tickRoot() == BT::NodeStatus::RUNNING) {

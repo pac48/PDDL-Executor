@@ -2,7 +2,7 @@
 
 BT::NodeStatus
 detectPerson::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::FAILURE;
+    return BT::NodeStatus::SUCCESS;
 }
 
 BT::NodeStatus initMoveToLandmark::tick_action(const InstantiatedAction & action) {
@@ -26,7 +26,7 @@ BT::NodeStatus guidePersonToLandmarkAttempt2::tick_action(const InstantiatedActi
 }
 
 BT::NodeStatus checkGuideToSucceeded1::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
+    return BT::NodeStatus::FAILURE;
 }
 
 BT::NodeStatus checkGuideToSucceeded2::tick_action(const InstantiatedAction & action) {
