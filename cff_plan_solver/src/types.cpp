@@ -32,6 +32,11 @@ Plan::Plan(std::shared_ptr<PlanNode> root) {
 
 void Plan::add_observe_action_sequence(bool observe_result, const PlanItem &item, std::stringstream &tree,
                                        std::unordered_map<std::string, const Action *> &action_map) const {
+
+    if (!observe_result){
+        return;
+    }
+
     const std::string action_id = item.action.name + ":" + std::to_string(static_cast<int>(item.time * 1000));
 
     auto action = action_map[item.action.name];
@@ -44,7 +49,6 @@ void Plan::add_observe_action_sequence(bool observe_result, const PlanItem &item
         auto params = action->parameters[i];
         std::string inst_name = item.action.params[i];
         int len = params.name.size();
-//        ss << sep << params.name.substr(1, len - 1) << "_" << params.type << "=\"" << inst_name << "\"";
         ss << sep << params.name.substr(1, len - 1) << "=\"" << inst_name << "\"";
         sep = " ";
     }

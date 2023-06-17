@@ -611,18 +611,6 @@ std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
     ss << fmt::format("(define (problem {}_problem)\n", domain.name);
     ss << fmt::format("(:domain {})\n", domain.name);
 
-//    std::unordered_map<std::string, std::unordered_set<std::string>> type_inst_map;
-//    for (const auto &preds: knownKnowledgeBase) {
-//        for (const auto &param: preds.parameters) {
-//            type_inst_map[param.type].insert(param.name);
-//        }
-//    }
-//    for (const auto &preds: unknownKnowledgeBase) {
-//        for (const auto &param: preds.parameters) {
-//            type_inst_map[param.type].insert(param.name);
-//        }
-//    }
-
     ss << "(:objects\n";
     for (auto &object: objects) {
         ss << "\t" << object << "\n";
@@ -694,9 +682,6 @@ bool KnowledgeBase::check_conditions(const InstantiatedCondition &condition) {
         throw std::runtime_error("Only AND, OR, and NOT operations are  allowed in a InstantiatedCondition");
     }
 
-    if (!ret){
-        int o = 0;
-    }
     return ret;
 }
 
@@ -714,12 +699,37 @@ void KnowledgeBase::apply_conditions(const InstantiatedCondition &condition, boo
         throw std::runtime_error("Only AND and NOT operations can be applied");
     }
     for (const auto &pred: condition.predicates) {
-        if (!negated){
+        if (!negated) {
             knownPredicates.concurrent_insert(pred);
-        } else{
+        } else {
             knownPredicates.concurrent_erase(pred);
         }
         // whether or not the predicate becomes true or false, it must be removed from the unknown set
         unknownPredicates.concurrent_erase(pred);
+    }
+}
+
+void KnowledgeBase::apply_constraints() {
+    int ind = 0;
+    while (ind < unknownPredicates.constraints.size()) {
+        auto constraint = unknownPredicates.constraints[ind];
+        if (constraint.constraint == CONSTRAINTS::ONEOF) {
+            std::vector<InstantiatedPredicate> preds;
+            for (const auto &pred_con: constraint.predicates) {
+                if (unknownPredicates.concurrent_find(pred_con)) {
+                    preds.push_back(pred_con);
+                }
+            }
+            if (preds.size() == 1) {
+                unknownPredicates.concurrent_erase(preds[0]);
+                knownPredicates.concurrent_insert(preds[0]);
+                unknownPredicates.constraints.erase(unknownPredicates.constraints.begin() + ind);
+                continue;
+            }
+
+        } else {
+            throw std::runtime_error("Only CONSTRAINTS::ONEOF constraint is supported");
+        }
+        ind++;
     }
 }

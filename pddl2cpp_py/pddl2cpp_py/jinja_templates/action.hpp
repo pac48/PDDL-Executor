@@ -43,18 +43,30 @@ public:
         auto & kb = KnowledgeBase::getInstance();
         InstantiatedAction inst_action = instantiate_action(action, param_subs, kb.objects);
         bool precondition_met = kb.check_conditions(inst_action.precondtions);
+
+        std::cout << "ACTION: " << inst_action.name << " params: ";
+        for (const auto & p : inst_action.parameters){
+            std::cout << p.name << " ";
+        }
+        std::cout << std::endl;
         if (!precondition_met){
+            std::cout << "\t" << "preconditions violated" << std::endl;
             return BT::NodeStatus::FAILURE;
         }
         BT::NodeStatus status = tick_action(inst_action);
         if (status == BT::NodeStatus::SUCCESS){
             kb.apply_conditions(inst_action.effect);
             kb.apply_conditions(inst_action.observe);
+            kb.apply_constraints();
+
         } else if (status == BT::NodeStatus::FAILURE){
             InstantiatedCondition cond;
             cond.op = OPERATION::NOT;
             cond.conditions.push_back(inst_action.observe);
             kb.apply_conditions(cond);
+            kb.apply_constraints();
+
+            std::cout << "\t" << "action failed" << std::endl;
         }
         return status;
     }

@@ -121,7 +121,7 @@ private:
 
 struct Constraint {
     CONSTRAINTS constraint;
-    std::vector<InstantiatedPredicate> predicates;
+    std::unordered_set<InstantiatedPredicate> predicates;
 
 };
 
@@ -148,6 +148,8 @@ public:
     bool check_conditions(const InstantiatedCondition &condition);
 
     void apply_conditions(const InstantiatedCondition &condition, bool negated = false);
+
+    void apply_constraints();
 
     KnownKnowledgeBase knownPredicates;
     UnknownKnowledgeBase unknownPredicates;
@@ -195,3 +197,4 @@ std::ostream &operator<<(std::ostream &os, const Condition &cond);
 std::ostream &operator<<(std::ostream &os, const Action &action);
 
 std::ostream &operator<<(std::ostream &os, const Parameter &param);
+

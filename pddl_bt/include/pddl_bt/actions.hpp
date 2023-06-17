@@ -2,7 +2,7 @@
 
 BT::NodeStatus
 detectPerson::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
+    return BT::NodeStatus::FAILURE;
 }
 
 BT::NodeStatus initMoveToLandmark::tick_action(const InstantiatedAction & action) {
@@ -54,7 +54,7 @@ BT::NodeStatus UpdateSuccess3::tick_action(const InstantiatedAction & action) {
 }
 
 BT::NodeStatus notifyAutomatedMedicineAt::tick_action(const InstantiatedAction & action) {
-    return BT::NodeStatus::SUCCESS;
+    return BT::NodeStatus::FAILURE;
 }
 
 BT::NodeStatus notifyRecordedMedicineAt::tick_action(const InstantiatedAction & action) {
