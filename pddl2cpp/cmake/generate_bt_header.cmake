@@ -26,7 +26,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-function(generate_bt_header DOMAIN_FILE LIB_NAME)
+function(generate_bt_header LIB_NAME)
+  if(NOT ARGN)
+    message(FATAL_ERROR "Expected a list of pddl domains files after LIB_NAME: " ${LIB_NAME})
+  endif()
+  set(DOMAIN_FILE "${ARGN}")
+
   find_program(pddl2cpp_BIN NAMES "pddl2cpp")
   if(NOT pddl2cpp_BIN)
     message(FATAL_ERROR "pddl2cpp() variable 'pddl2cpp_BIN' must not be empty")
@@ -37,20 +42,25 @@ function(generate_bt_header DOMAIN_FILE LIB_NAME)
   file(MAKE_DIRECTORY ${OUTPUT_FILE_DIR})
 
   # Set the domain file parameter to be relative to the current source dir
-  set(DOMAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${DOMAIN_FILE})
+  set(DOMAIN_FILE_MOD)
+  foreach (file IN LISTS DOMAIN_FILE)
+    list(APPEND DOMAIN_FILE_MOD ${CMAKE_CURRENT_SOURCE_DIR}/${file})
+  endforeach()
+
+#  string(REPLACE ";" " " DOMAIN_FILE_ARGS ${DOMAIN_FILE_MOD})
 
   # Set the output parameter header file name
   set(HEADER_FILE ${OUTPUT_FILE_DIR}/${LIB_NAME}.hpp)
 
-  message("Running `${pddl2cpp_BIN} ${DOMAIN_FILE} ${HEADER_FILE}`")
+  message("Running `${pddl2cpp_BIN} ${HEADER_FILE} ${DOMAIN_FILE_MOD}`")
 
   # Generate the header for the library
   add_custom_command(
     OUTPUT ${HEADER_FILE}
-    COMMAND ${pddl2cpp_BIN} ${DOMAIN_FILE} ${HEADER_FILE}
-    DEPENDS ${DOMAIN_FILE}
+    COMMAND ${pddl2cpp_BIN} ${HEADER_FILE} ${DOMAIN_FILE_MOD}
+    DEPENDS ${DOMAIN_FILE_MOD}
     COMMENT
-    "Running `${pddl2cpp_BIN} ${DOMAIN_FILE} ${HEADER_FILE}`"
+    "Running `${pddl2cpp_BIN} ${HEADER_FILE} ${DOMAIN_FILE_MOD}`"
     VERBATIM
   )
 #  add_custom_target(${LIB_NAME} DEPENDS ${HEADER_FILE})

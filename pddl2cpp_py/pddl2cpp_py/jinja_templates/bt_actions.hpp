@@ -9,6 +9,7 @@
 
 {{action_classes}}
 
+
 BT::BehaviorTreeFactory create_tree_factory(){
     BT::BehaviorTreeFactory factory;
     {% for name in action_names %}

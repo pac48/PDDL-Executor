@@ -21,6 +21,9 @@ enum CONSTRAINTS {
 struct Parameter {
     std::string name;
     std::string type;
+    bool operator==(const Parameter &other) const {
+        return name == other.name && type == other.type;
+    }
 
 };
 
@@ -36,6 +39,10 @@ struct InstantiatedParameter {
 struct Predicate {
     std::string name;
     std::vector<Parameter> parameters;
+
+    bool operator==(const Predicate &other) const {
+        return name == other.name && parameters == other.parameters;
+    }
 };
 
 struct InstantiatedPredicate {
@@ -79,15 +86,6 @@ struct Action {
     Condition observe;
 };
 
-struct Domain {
-    std::string name;
-    std::vector<std::string> requirements;
-    std::vector<std::string> types;
-    std::vector<Predicate> predicates;
-    std::vector<Action> actions;
-
-};
-
 // Hash functions
 namespace std {
     template<>
@@ -104,6 +102,32 @@ namespace std {
         }
     };
 }
+
+namespace std {
+    template<>
+    struct hash<Predicate> {
+        std::size_t operator()(const Predicate &obj) const {
+            std::size_t seed = 0;
+            hash<int> intHash;
+            hash<std::string> stringHash;
+
+            seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+            return seed;
+        }
+    };
+}
+
+struct Domain {
+    std::string name;
+    std::vector<std::string> requirements;
+    std::unordered_set<std::string> types;
+    std::unordered_set<Predicate> predicates;
+    std::vector<Action> actions;
+    std::string str();
+
+};
 
 
 class KnownKnowledgeBase : public std::unordered_set<InstantiatedPredicate> {

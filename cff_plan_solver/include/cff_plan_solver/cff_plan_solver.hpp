@@ -1,1 +1,1 @@
-std::string getPlan(const std::string &domain, const std::string &problem);
+std::optional<std::string> getPlan(const std::string &domain, const std::string &problem);

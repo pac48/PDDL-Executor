@@ -1,4 +1,42 @@
-#include "bt_medicine_domain.hpp"
+#include "bt_shr_actions.hpp"
+std::string active_domain;
+
+BT::NodeStatus
+StartFallProtocol::tick_action(const InstantiatedAction & action) {
+    return BT::NodeStatus::SUCCESS;
+}
+
+BT::NodeStatus
+StartMedicineProtocol::tick_action(const InstantiatedAction & action) {
+    active_domain = "medicine_domain.pddl";
+    return BT::NodeStatus::SUCCESS;
+}
+
+
+BT::NodeStatus
+StartIdle::tick_action(const InstantiatedAction & action) {
+    return BT::NodeStatus::SUCCESS;
+}
+
+BT::NodeStatus
+ChangePriority_1_2::tick_action(const InstantiatedAction & action) {
+    return BT::NodeStatus::SUCCESS;
+}
+
+BT::NodeStatus
+ChangePriority_2_3::tick_action(const InstantiatedAction & action) {
+    return BT::NodeStatus::SUCCESS;
+}
+
+BT::NodeStatus
+ChangePriority_3_4::tick_action(const InstantiatedAction & action) {
+    return BT::NodeStatus::SUCCESS;
+}
+
+BT::NodeStatus
+ChangePriority_4_5::tick_action(const InstantiatedAction & action) {
+    return BT::NodeStatus::SUCCESS;
+}
 
 BT::NodeStatus
 detectPerson::tick_action(const InstantiatedAction & action) {

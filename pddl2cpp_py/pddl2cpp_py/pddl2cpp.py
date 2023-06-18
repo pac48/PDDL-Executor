@@ -23,32 +23,33 @@ def get_all_templates():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("domain_file")
     parser.add_argument("output_file")
+    # parser.add_argument("domain_file")
+    parser.add_argument('domain_files', nargs='+', help='list of pddl domain files')
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    domain_file = args.domain_file
+    domain_files = args.domain_files
     output_file = args.output_file
 
-    with open(domain_file) as f:
-        domain = pddl_parser.parser.parse_domain(f.read())
-
     templates = get_all_templates()
-
     actions_classes = []
     actions_names = []
-    for action in domain.actions:
-        j2_template = Template(templates["action.hpp"])
-        # parameters = [p.name.replace('?', '') + '_' + p.type for p in action.parameters]
-        parameters = [p.name.replace('?', '') for p in action.parameters]
 
-        data = {'class_name': action.name, 'action_str': str(action), 'parameters': parameters}
-        code = j2_template.render(data, trim_blocks=True)
-        actions_classes.append(code)
-        actions_names.append(action.name)
+    for domain_file in domain_files:
+        with open(domain_file) as f:
+            domain = pddl_parser.parser.parse_domain(f.read())
+
+        for action in domain.actions:
+            j2_template = Template(templates["action.hpp"])
+            parameters = [p.name.replace('?', '') for p in action.parameters]
+
+            data = {'class_name': action.name, 'action_str': str(action), 'parameters': parameters}
+            code = j2_template.render(data, trim_blocks=True)
+            actions_classes.append(code)
+            actions_names.append(action.name)
 
     j2_template = Template(templates["bt_actions.hpp"])
     data = {'action_classes': "\n\n".join(actions_classes), 'action_names': actions_names}

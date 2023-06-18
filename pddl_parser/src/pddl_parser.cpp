@@ -137,7 +137,7 @@ std::optional<std::string> parseInit(const std::string &content, Domain &domain)
         return fmt::format("ERROR line {}: missing ':types' keyword", get_line_num(content, substrings[0]));
     }
     for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
-        domain.types.emplace_back(std::string(str));
+        domain.types.insert(std::string(str));
     }
     ind++;
 
@@ -148,7 +148,7 @@ std::optional<std::string> parseInit(const std::string &content, Domain &domain)
     }
     for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
         if (auto pred = parse_predicate(std::string(str))) {
-            domain.predicates.emplace_back(pred.value());
+            domain.predicates.insert(pred.value());
         } else {
             return fmt::format("ERROR line {}: failed to parse predicate", get_line_num(content, str));
         }
@@ -301,7 +301,10 @@ parse_condition(const std::string &content,
 
     std::tie(section, remaining) = getNextParen(content);
     auto strings = parseVector(section, {'\t', '\n', ' '});
-
+    if (strings.empty()) {
+        cond.op = OPERATION::AND;
+        return cond;
+    }
 
     int ind = 1;
     if (strings[0] == "and") {
@@ -613,7 +616,9 @@ std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
 
     ss << "(:objects\n";
     for (auto &object: objects) {
-        ss << "\t" << object << "\n";
+        if (domain.types.find(object.type) != domain.types.end()) {
+            ss << "\t" << object << "\n";
+        }
     }
     ss << ")\n";
 
@@ -627,15 +632,50 @@ std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
         return ss.str();
     };
 
+
+    std::unordered_map<std::string, const Predicate *> name_pred;
+    for (const auto &pred: domain.predicates) {
+        name_pred[pred.name] = &pred;
+    }
+    auto check_pred_in_domain = [name_pred](const InstantiatedPredicate &pred) {
+        auto it = name_pred.find(pred.name);
+        if (it == name_pred.end()) {
+            return false;
+        }
+        auto potential_match = it->second;
+        if (potential_match->parameters.size() != pred.parameters.size()) {
+            return false;
+        }
+        for (int i = 0; i < pred.parameters.size(); i++) {
+            if (pred.parameters[i].type != potential_match->parameters[i].type) {
+                return false;
+            }
+        }
+        return true;
+
+    };
+
     ss << "(:init\n";
-    for (auto &pred: knownPredicates) {
-        ss << "\t" << pred_to_str_no_type(pred) << "\n";
+    for (const auto &pred: knownPredicates) {
+        if (check_pred_in_domain(pred)) {
+            ss << "\t" << pred_to_str_no_type(pred) << "\n";
+        }
     }
     for (auto &pred: unknownPredicates) {
-        ss << "\t" << "(unknown " << pred_to_str_no_type(pred) << ")" << "\n";
+        if (check_pred_in_domain(pred)) {
+            ss << "\t" << "(unknown " << pred_to_str_no_type(pred) << ")" << "\n";
+        }
     }
     for (auto &constraint: unknownPredicates.constraints) {
         assert(constraint.constraint == CONSTRAINTS::ONEOF);
+        // remove entire constraint if any of the predicates are missing
+        bool none_missing = true;
+        for (auto &pred: constraint.predicates) {
+            none_missing &= check_pred_in_domain(pred);
+        }
+        if (!none_missing) {
+            continue;
+        }
         ss << "\t" << "(oneof";
         for (auto &pred: constraint.predicates) {
             ss << " " << pred_to_str_no_type(pred);
@@ -732,4 +772,10 @@ void KnowledgeBase::apply_constraints() {
         }
         ind++;
     }
+}
+
+std::string Domain::str() {
+    std::stringstream ss;
+    ss << *this;
+    return ss.str();
 }
