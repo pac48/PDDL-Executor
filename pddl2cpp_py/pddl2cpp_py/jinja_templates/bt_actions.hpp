@@ -11,27 +11,32 @@ enum TRUTH_VALUE{
     FALSE, TRUE, UNKNOWN
 };
 
-{% for type in types %}typedef std::string {{type}};
+{% for type in types %}class {{type}} : public std::string {
+public:
+    {{type}}(const std::string & value) :  std::string(value) {
+
+    }
+};
 {% endfor %}
 
 class UpdatePredicates {
   UpdatePredicates(){
       // maybe we don't need to give default values
-      {%- for pred in predicates %}
-      set_{{pred.name}}([](TRUTH_VALUE val{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %}){return val;});{% endfor %}
+//      {%- for pred in predicates %}
+//      set_{{pred.name}}([](TRUTH_VALUE val{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %}){return val;});{% endfor %}
   }
 
   void update(){
       auto & kb = KnowledgeBase::getInstance();
 
       {%- for type in types %}
-      std::vector<InstantiatedParameter> {{type}}s;
+      std::vector<InstantiatedParameter> {{type}}_instances;
       {%- endfor %}
 
       for (const auto object : kb.objects){
           {%- for type in types %}
           if (object.type == "{{type}}"){
-              {{type}}s.push_back(object);
+              {{type}}_instances.push_back(object);
           }
           {%- endfor %}
       }
@@ -39,9 +44,9 @@ class UpdatePredicates {
       {% for args in func_signatures %}
       for (auto [key, func] : pred_update_map_{{loop.index}}_){
           {%- for arg in args %}
-          for (auto {{arg}} : {{arg}}s ) {
+          for (auto {{arg}}_instance : {{arg}}_instances ) {
           {%- endfor %}
-              InstantiatedPredicate pred = {key, { {%- for arg in args %}{{arg}}{%- if loop.index < loop.length %}, {% endif -%}{%- endfor %} } };
+              InstantiatedPredicate pred = {key, { {%- for arg in args %}{{arg}}_instance{%- if loop.index < loop.length %}, {% endif -%}{%- endfor %} } };
               TRUTH_VALUE old_val;
               if (kb.knownPredicates.find(pred) != kb.knownPredicates.end()){
                   old_val = TRUTH_VALUE::TRUE;
@@ -50,7 +55,7 @@ class UpdatePredicates {
               } else{
                   old_val = TRUTH_VALUE::FALSE;
               }
-              func(old_val{% for arg in args %}, {{arg}}.name{%- endfor %});
+              func(old_val{% for arg in args %}, ({{arg}}) {{arg}}_instance.name{%- endfor %});
           {% for arg in args %} }
           {% endfor -%}
           }
@@ -69,7 +74,7 @@ class UpdatePredicates {
     }
     {% endfor -%}
     {% for args in func_signatures -%}
-  std::unordered_map<std::string, std::vector<std::function<TRUTH_VALUE(TRUTH_VALUE{% for type in args %}, {{type}}{% endfor %})>> > pred_update_map_{{loop.index}}_;
+  std::unordered_map<std::string, std::function<TRUTH_VALUE(TRUTH_VALUE{% for type in args %}, {{type}}{% endfor %})> > pred_update_map_{{loop.index}}_;
     {% endfor -%}
 
 };
