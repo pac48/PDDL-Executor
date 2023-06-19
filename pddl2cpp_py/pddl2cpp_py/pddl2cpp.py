@@ -37,11 +37,12 @@ def main():
     templates = get_all_templates()
     actions_classes = []
     actions_names = []
+    predicates = []
 
     for domain_file in domain_files:
         with open(domain_file) as f:
             domain = pddl_parser.parser.parse_domain(f.read())
-
+        predicates.extend([v.name for v in domain.predicates])
         for action in domain.actions:
             j2_template = Template(templates["action.hpp"])
             parameters = [p.name.replace('?', '') for p in action.parameters]
@@ -52,7 +53,8 @@ def main():
             actions_names.append(action.name)
 
     j2_template = Template(templates["bt_actions.hpp"])
-    data = {'action_classes': "\n\n".join(actions_classes), 'action_names': actions_names}
+    data = {'action_classes': "\n\n".join(actions_classes), 'action_names': actions_names,
+            'predicates': list(set(predicates))}
     code = j2_template.render(data, trim_blocks=True)
 
     with open(output_file, 'w') as f:

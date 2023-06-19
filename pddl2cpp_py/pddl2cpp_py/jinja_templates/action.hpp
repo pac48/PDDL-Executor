@@ -18,22 +18,6 @@ public:
         param_subs["{{param}}"] = {{param}}.value();
         {%- endfor %}
 
-//        BT::Optional <std::string> objects_str_opt = getInput<std::string>("objects");
-//        if (!objects_str_opt) {
-//            throw BT::RuntimeError("missing required input objects");
-//        }
-//        std::string objects_str = objects_opt.value();
-//        std::vector<InstantiatedParameter> objects;
-//        std::stringsream ss(objects_str);
-//        while(!ss.eof()){
-//            std::string name;
-//            std::string type;
-//            name << ss;
-//            type << ss;
-//            InstantiatedParameter param = {name, type};
-//            objects.push_back(param);
-//        }
-
         auto action_opt = parse_action(R"({{action_str}})");
         if (!action_opt.has_value()) {
             throw BT::RuntimeError("failed to parse action string for {{class_name}}");
