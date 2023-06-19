@@ -51,6 +51,7 @@ function(generate_bt_header LIB_NAME)
 
   # Set the output parameter header file name
   set(HEADER_FILE ${OUTPUT_FILE_DIR}/${LIB_NAME}.hpp)
+  file(REMOVE ${HEADER_FILE})
 
   message("Running `${pddl2cpp_BIN} ${HEADER_FILE} ${DOMAIN_FILE_MOD}`")
 

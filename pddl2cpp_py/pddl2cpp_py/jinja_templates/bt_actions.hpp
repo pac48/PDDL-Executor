@@ -7,46 +7,70 @@
 #include "behaviortree_cpp_v3/tree_node.h"
 #include "pddl_parser/pddl_parser.hpp"
 
-// Hash function for strings
-struct StringHash {
-  std::size_t operator()(const std::string& str) const {
-    // Use std::hash to hash the string
-    return std::hash<std::string>{}(str);
-  }
+enum TRUTH_VALUE{
+    FALSE, TRUE, UNKNOWN
 };
 
-// Hash function for vector of strings
-struct VectorHash {
-  std::size_t operator()(const std::vector<std::string>& vec) const {
-    std::size_t seed = vec.size();
-    StringHash stringHash;
-
-    for (const std::string& str : vec) {
-      seed ^= stringHash(str) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    }
-
-    return seed;
-  }
-};
+{% for type in types %}typedef std::string {{type}};
+{% endfor %}
 
 class UpdatePredicates {
-  void update(){
-
+  UpdatePredicates(){
+      // maybe we don't need to give default values
+      {%- for pred in predicates %}
+      set_{{pred.name}}([](TRUTH_VALUE val{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %}){return val;});{% endfor %}
   }
-  {% for pred in predicates %}void set_{{pred}}(std::vector<std::string> type, std::function<void(std::vector<std::string>)> & func){
-    if (pred_name_map_.find("{{pred}}") == pred_name_map_.end()){
-      pred_update_map_.insert(std::make_pair(type, &func));
-      pred_name_map_["{{pred}}"] = pred_update_map_.at(type).size()-1;
-    }
-    pred_update_map_.at(type)[pred_name_map_["{{pred}}"]] = func;
+
+  void update(){
+      auto & kb = KnowledgeBase::getInstance();
+
+      {%- for type in types %}
+      std::vector<InstantiatedParameter> {{type}}s;
+      {%- endfor %}
+
+      for (const auto object : kb.objects){
+          {%- for type in types %}
+          if (object.type == "{{type}}"){
+              {{type}}s.push_back(object);
+          }
+          {%- endfor %}
+      }
+
+      {% for args in func_signatures %}
+      for (auto [key, func] : pred_update_map_{{loop.index}}_){
+          {%- for arg in args %}
+          for (auto {{arg}} : {{arg}}s ) {
+          {%- endfor %}
+              InstantiatedPredicate pred = {key, { {%- for arg in args %}{{arg}}{%- if loop.index < loop.length %}, {% endif -%}{%- endfor %} } };
+              TRUTH_VALUE old_val;
+              if (kb.knownPredicates.find(pred) != kb.knownPredicates.end()){
+                  old_val = TRUTH_VALUE::TRUE;
+              } else if(kb.unknownPredicates.find(pred) != kb.unknownPredicates.end()){
+                  old_val = TRUTH_VALUE::UNKNOWN;
+              } else{
+                  old_val = TRUTH_VALUE::FALSE;
+              }
+              func(old_val{% for arg in args %}, {{arg}}.name{%- endfor %});
+          {% for arg in args %} }
+          {% endfor -%}
+          }
+      {% endfor %}
+  }
+
+  {% for pred in predicates %}void set_{{pred.name}}(std::function<TRUTH_VALUE(TRUTH_VALUE{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %})> & func){
+        set_pred_update_map("{{pred.name}}", func);
   }
   {% endfor -%}
 
   private:
-  std::unordered_map<std::vector<std::string>, std::vector<std::function<void(std::vector<std::string>)>> > pred_update_map_;
-  std::unordered_map<std::string, int> pred_name_map_;
-  {% for pred in predicates %}std::function<void(std::string)>{{pred}};
-  {% endfor -%}
+    {% for args in func_signatures -%}
+    void set_pred_update_map(const std::string name, const std::function<TRUTH_VALUE(TRUTH_VALUE{% for type in args %}, {{type}}{% endfor %})> & func){
+        pred_update_map_{{loop.index}}_[name] = func;
+    }
+    {% endfor -%}
+    {% for args in func_signatures -%}
+  std::unordered_map<std::string, std::vector<std::function<TRUTH_VALUE(TRUTH_VALUE{% for type in args %}, {{type}}{% endfor %})>> > pred_update_map_{{loop.index}}_;
+    {% endfor -%}
 
 };
 
