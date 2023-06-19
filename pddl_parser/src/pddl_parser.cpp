@@ -470,7 +470,13 @@ std::ostream &operator<<(std::ostream &os, const Domain &domain) {
 
     os << "(:predicates\n";
     for (auto &pred: domain.predicates) {
-        os << "\t" << pred << "\n";
+        os << "\t";
+        os << "(" << pred.name;
+        for (auto &param: pred.parameters) {
+            os << param;
+        }
+        os << ")";
+        os << "\n";
     }
     os << ")\n";
 

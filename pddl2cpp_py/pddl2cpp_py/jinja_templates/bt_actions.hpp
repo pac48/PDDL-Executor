@@ -11,21 +11,17 @@ enum TRUTH_VALUE{
     FALSE, TRUE, UNKNOWN
 };
 
-{% for type in types %}class {{type}} : public std::string {
+{% for type in types %}class {{type}} {
 public:
-    {{type}}(const std::string & value) :  std::string(value) {
+    std::string value;
+    {{type}}(const std::string & value_in) :  value{value_in} {
 
     }
 };
 {% endfor %}
 
 class UpdatePredicates {
-  UpdatePredicates(){
-      // maybe we don't need to give default values
-//      {%- for pred in predicates %}
-//      set_{{pred.name}}([](TRUTH_VALUE val{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %}){return val;});{% endfor %}
-  }
-
+public:
   void update(){
       auto & kb = KnowledgeBase::getInstance();
 
@@ -48,21 +44,31 @@ class UpdatePredicates {
           {%- endfor %}
               InstantiatedPredicate pred = {key, { {%- for arg in args %}{{arg}}_instance{%- if loop.index < loop.length %}, {% endif -%}{%- endfor %} } };
               TRUTH_VALUE old_val;
-              if (kb.knownPredicates.find(pred) != kb.knownPredicates.end()){
+              if (kb.knownPredicates.concurrent_find(pred)){
                   old_val = TRUTH_VALUE::TRUE;
-              } else if(kb.unknownPredicates.find(pred) != kb.unknownPredicates.end()){
+              } else if(kb.unknownPredicates.concurrent_find(pred)){
                   old_val = TRUTH_VALUE::UNKNOWN;
               } else{
                   old_val = TRUTH_VALUE::FALSE;
               }
-              func(old_val{% for arg in args %}, ({{arg}}) {{arg}}_instance.name{%- endfor %});
+              auto new_val = func(old_val{% for arg in args %}, ({{arg}}) {{arg}}_instance.name{%- endfor %});
+              if (new_val==TRUTH_VALUE::TRUE){
+                  kb.knownPredicates.concurrent_insert(pred);
+                  kb.unknownPredicates.concurrent_erase(pred);
+              } else if(new_val==TRUTH_VALUE::UNKNOWN){
+                  kb.knownPredicates.concurrent_erase(pred);
+                  kb.unknownPredicates.concurrent_insert(pred);
+              } else{
+                  kb.knownPredicates.concurrent_erase(pred);
+                  kb.unknownPredicates.concurrent_erase(pred);
+              }
           {% for arg in args %} }
           {% endfor -%}
           }
       {% endfor %}
   }
 
-  {% for pred in predicates %}void set_{{pred.name}}(std::function<TRUTH_VALUE(TRUTH_VALUE{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %})> & func){
+  {% for pred in predicates %}void set_{{pred.name}}(std::function<TRUTH_VALUE(TRUTH_VALUE{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %})>  func){
         set_pred_update_map("{{pred.name}}", func);
   }
   {% endfor -%}
