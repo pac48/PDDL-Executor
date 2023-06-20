@@ -70,14 +70,14 @@ public:
       {% endfor %}
   }
 
-  {% for pred in predicates %}void set_{{pred.name}}(std::function<TRUTH_VALUE(TRUTH_VALUE{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %})>  func){
-        set_pred_update_map("{{pred.name}}", func);
+  {% for pred in predicates %}void register_{{pred.name}}(std::function<TRUTH_VALUE(TRUTH_VALUE{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %})>  func){
+        register_pred_update_map("{{pred.name}}", func);
   }
   {% endfor -%}
 
   private:
     {% for args in func_signatures -%}
-    void set_pred_update_map(const std::string name, const std::function<TRUTH_VALUE(TRUTH_VALUE{% for type in args %}, {{type}}{% endfor %})> & func){
+    void register_pred_update_map(const std::string name, const std::function<TRUTH_VALUE(TRUTH_VALUE{% for type in args %}, {{type}}{% endfor %})> & func){
         pred_update_map_{{loop.index}}_[name] = func;
     }
     {% endfor -%}
