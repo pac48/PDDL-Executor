@@ -92,7 +92,7 @@ public:
 BT::BehaviorTreeFactory create_tree_factory(){
     BT::BehaviorTreeFactory factory;
     {% for name in action_names %}
-    factory.registerNodeType<{{name}}>("{{name}}");
+    factory.registerNodeType<pddl_lib::{{name}}>("pddl_lib::{{name}}");
     {%- endfor %}
 
     return factory;
