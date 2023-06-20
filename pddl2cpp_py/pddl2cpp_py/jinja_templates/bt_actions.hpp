@@ -7,6 +7,8 @@
 #include "behaviortree_cpp_v3/tree_node.h"
 #include "pddl_parser/pddl_parser.hpp"
 
+namespace pddl_lib {
+
 enum TRUTH_VALUE{
     FALSE, TRUE, UNKNOWN
 };
@@ -95,3 +97,5 @@ BT::BehaviorTreeFactory create_tree_factory(){
 
     return factory;
 }
+
+} // pddl_lib

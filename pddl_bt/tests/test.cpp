@@ -6,6 +6,7 @@
 #include "pddl_bt/actions.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
+using namespace pddl_lib;
 
 Domain load_domain(std::string &domain_file) {
     std::string domain_str;

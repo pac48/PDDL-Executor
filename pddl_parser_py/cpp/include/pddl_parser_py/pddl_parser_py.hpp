@@ -6,4 +6,3 @@
 
 namespace py = pybind11;
 
-void init_moveit_py(py::module &m);

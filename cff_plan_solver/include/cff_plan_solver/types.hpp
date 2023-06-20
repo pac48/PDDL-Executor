@@ -6,41 +6,48 @@
 #include "optional"
 #include "unordered_map"
 
-struct CFFAction {
-    std::string name;
-    std::vector<std::string> params;
-};
+namespace pddl_lib {
 
-struct PlanItem {
-    int duration;
-    double time;
-    CFFAction action;
-};
-struct PlanNode {
-    PlanItem item;
-    std::shared_ptr<PlanNode> true_node;
-    std::shared_ptr<PlanNode> false_node;
-};
+    struct CFFAction {
+        std::string name;
+        std::vector<std::string> params;
+    };
 
-class Plan {
-public:
-    Plan() = default;
+    struct PlanItem {
+        int duration;
+        double time;
+        CFFAction action;
+    };
+    struct PlanNode {
+        PlanItem item;
+        std::shared_ptr<PlanNode> true_node;
+        std::shared_ptr<PlanNode> false_node;
+    };
 
-    Plan(std::shared_ptr<PlanNode> root);
+    class Plan {
+    public:
+        Plan() = default;
 
-    std::string convert_to_bt(const Domain & domain) const;
+        Plan(std::shared_ptr<PlanNode> root);
 
-    friend std::ostream &operator<<(std::ostream &os, const Plan &obj);
-private:
+        std::string convert_to_bt(const Domain &domain) const;
 
-    void add_observe_action_sequence(bool observe_result, const PlanItem &item, std::stringstream &tree, std::unordered_map<std::string, Action> & action_map) const;
+        friend std::ostream &operator<<(std::ostream &os, const Plan &obj);
 
-    void add_action_sequence(const PlanItem &item, std::stringstream &tree, std::unordered_map<std::string, Action> & action_map) const;
+    private:
 
-    void get_sub_tree(const std::shared_ptr<PlanNode> &root, std::stringstream &tree, std::unordered_map<std::string, Action>& action_map) const;
+        void add_observe_action_sequence(bool observe_result, const PlanItem &item, std::stringstream &tree,
+                                         std::unordered_map<std::string, Action> &action_map) const;
 
-    std::shared_ptr<PlanNode> root_;
-    std::unordered_map<std::string, std::string> template_map_;
+        void add_action_sequence(const PlanItem &item, std::stringstream &tree,
+                                 std::unordered_map<std::string, Action> &action_map) const;
 
-};
+        void get_sub_tree(const std::shared_ptr<PlanNode> &root, std::stringstream &tree,
+                          std::unordered_map<std::string, Action> &action_map) const;
 
+        std::shared_ptr<PlanNode> root_;
+        std::unordered_map<std::string, std::string> template_map_;
+
+    };
+
+} // pddl_lib

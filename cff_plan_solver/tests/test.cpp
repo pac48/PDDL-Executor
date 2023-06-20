@@ -7,6 +7,8 @@
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "cff_plan_solver/cff_plan_solver.hpp"
 
+using namespace pddl_lib;
+
 int main(){
     std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("cff_plan_solver");
     std::filesystem::path test_dir = pkg_dir / "tests" / "pddl";

@@ -4,6 +4,7 @@
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "pddl_parser/pddl_parser.hpp"
 
+using namespace pddl_lib;
 
 TEST(DOMAIN, parse) {
     std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("pddl_parser");
