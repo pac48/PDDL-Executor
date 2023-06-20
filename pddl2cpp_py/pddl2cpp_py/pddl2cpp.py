@@ -60,10 +60,11 @@ def main():
             j2_template = Template(templates["action.hpp"])
             parameters = [p.name.replace('?', '') for p in action.parameters]
 
-            data = {'class_name': action.name, 'action_str': str(action), 'parameters': parameters}
+            data = {'domain_name': domain.name, 'class_name': action.name, 'action_str': str(action),
+                    'parameters': parameters}
             code = j2_template.render(data, trim_blocks=True)
             actions_classes.append(code)
-            actions_names.append(action.name)
+            actions_names.append(domain.name + "::" + action.name)
 
     predicates = list(predicate_map.values())
     for pred in predicates:

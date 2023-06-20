@@ -1,3 +1,4 @@
+namespace {{domain_name}} {
 class {{class_name}} : public BT::SyncActionNode {
 public:
     {{class_name}}(const std::string &name, const BT::NodeConfiguration &config)
@@ -58,3 +59,4 @@ public:
     BT::NodeStatus tick_action(const InstantiatedAction & action);
 
 };
+} // {{domain_name}}

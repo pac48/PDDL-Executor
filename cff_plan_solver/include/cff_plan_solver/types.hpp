@@ -33,11 +33,11 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Plan &obj);
 private:
 
-    void add_observe_action_sequence(bool observe_result, const PlanItem &item, std::stringstream &tree, std::unordered_map<std::string, const Action*> & action_map) const;
+    void add_observe_action_sequence(bool observe_result, const PlanItem &item, std::stringstream &tree, std::unordered_map<std::string, Action> & action_map) const;
 
-    void add_action_sequence(const PlanItem &item, std::stringstream &tree, std::unordered_map<std::string, const Action*> & action_map) const;
+    void add_action_sequence(const PlanItem &item, std::stringstream &tree, std::unordered_map<std::string, Action> & action_map) const;
 
-    void get_sub_tree(const std::shared_ptr<PlanNode> &root, std::stringstream &tree, std::unordered_map<std::string, const Action*>& action_map) const;
+    void get_sub_tree(const std::shared_ptr<PlanNode> &root, std::stringstream &tree, std::unordered_map<std::string, Action>& action_map) const;
 
     std::shared_ptr<PlanNode> root_;
     std::unordered_map<std::string, std::string> template_map_;
