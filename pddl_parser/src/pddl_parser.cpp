@@ -68,7 +68,7 @@ namespace pddl_lib {
                 ind++;
             }
             if (ind - ind1 > 0) {
-                if (section.substr(ind1, (ind - ind1)) == ";;") {
+                if (ind - ind1 >= 2 && section.substr(ind1, 2) == ";;") {
                     while (ind < section.size() && section[ind] != '\n') {
                         ind++;
                     }

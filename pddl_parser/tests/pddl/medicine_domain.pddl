@@ -51,7 +51,7 @@
     :observe (person_at ?p ?loc)
 )
 
-;; Init move
+;;Init move
 (:action initMoveToLandmark
 	:parameters (?r - robot)
 	:precondition (and
