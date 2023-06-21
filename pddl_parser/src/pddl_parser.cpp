@@ -361,7 +361,7 @@ namespace pddl_lib {
 
     InstantiatedAction
     instantiate_action(const Action &action, const std::unordered_map<std::string, std::string> &param_subs,
-                       const std::vector<InstantiatedParameter> &objects) {
+                       const std::unordered_set<InstantiatedParameter> &objects) {
         auto inst_action = InstantiatedAction();
         inst_action.name = action.name;
 
@@ -388,7 +388,7 @@ namespace pddl_lib {
     InstantiatedCondition
     instantiate_condition(const Condition &conditionConst,
                           const std::unordered_map<std::string, std::string> &param_subs,
-                          const std::vector<InstantiatedParameter> &objects) {
+                          const std::unordered_set<InstantiatedParameter> &objects) {
         Condition condition = conditionConst;
 
         auto inst_cond = InstantiatedCondition();
@@ -436,34 +436,73 @@ namespace pddl_lib {
         return instance;
     }
 
-    void KnownKnowledgeBase::concurrent_insert(const InstantiatedPredicate &value) {
+    void KnownPredicates::concurrent_insert(const InstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         insert(value);
     }
 
-    void KnownKnowledgeBase::concurrent_erase(const InstantiatedPredicate &value) {
+    void KnownPredicates::concurrent_erase(const InstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         erase(value);
     }
 
-    bool KnownKnowledgeBase::concurrent_find(const InstantiatedPredicate &value) {
+    bool KnownPredicates::concurrent_find(const InstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         return find(value) != end();
     }
 
-    void UnknownKnowledgeBase::concurrent_insert(const InstantiatedPredicate &value) {
+    void KnownPredicates::lock() {
+        mutex_.lock();
+    }
+
+    void KnownPredicates::unlock() {
+        mutex_.unlock();
+    }
+
+    void UnknownPredicates::concurrent_insert(const InstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         insert(value);
     }
 
-    void UnknownKnowledgeBase::concurrent_erase(const InstantiatedPredicate &value) {
+    void UnknownPredicates::concurrent_erase(const InstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         erase(value);
     }
 
-    bool UnknownKnowledgeBase::concurrent_find(const InstantiatedPredicate &value) {
+    bool UnknownPredicates::concurrent_find(const InstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         return find(value) != end();
+    }
+
+    void UnknownPredicates::lock() {
+        mutex_.lock();
+    }
+
+    void UnknownPredicates::unlock() {
+        mutex_.unlock();
+    }
+
+    void Objects::concurrent_insert(const InstantiatedParameter &value) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        insert(value);
+    }
+
+    void Objects::concurrent_erase(const InstantiatedParameter &value) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        erase(value);
+    }
+
+    bool Objects::concurrent_find(const InstantiatedParameter &value) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return find(value) != end();
+    }
+
+    void Objects::lock() {
+        mutex_.lock();
+    }
+
+    void Objects::unlock() {
+        mutex_.unlock();
     }
 
     std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
@@ -636,6 +675,7 @@ namespace pddl_lib {
         ss << *this;
         return ss.str();
     }
+
 
 } // pddl_lib
 

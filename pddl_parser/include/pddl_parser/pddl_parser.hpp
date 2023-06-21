@@ -89,37 +89,52 @@ namespace pddl_lib {
 } //pddl_lib
 
 // Hash functions
-    namespace std {
-        template<>
-        struct hash<pddl_lib::InstantiatedPredicate> {
-            std::size_t operator()(const pddl_lib::InstantiatedPredicate &obj) const {
-                std::size_t seed = 0;
-                hash<int> intHash;
-                hash<std::string> stringHash;
+namespace std {
+    template<>
+    struct hash<pddl_lib::InstantiatedPredicate> {
+        std::size_t operator()(const pddl_lib::InstantiatedPredicate &obj) const {
+            std::size_t seed = 0;
+            hash<int> intHash;
+            hash<std::string> stringHash;
 
-                seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-                seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 
-                return seed;
-            }
-        };
-    }
+            return seed;
+        }
+    };
+}
 
-    namespace std {
-        template<>
-        struct hash<pddl_lib::Predicate> {
-            std::size_t operator()(const pddl_lib::Predicate &obj) const {
-                std::size_t seed = 0;
-                hash<int> intHash;
-                hash<std::string> stringHash;
+namespace std {
+    template<>
+    struct hash<pddl_lib::Predicate> {
+        std::size_t operator()(const pddl_lib::Predicate &obj) const {
+            std::size_t seed = 0;
+            hash<int> intHash;
+            hash<std::string> stringHash;
 
-                seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-                seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 
-                return seed;
-            }
-        };
-    }
+            return seed;
+        }
+    };
+}
+
+namespace std {
+    template<>
+    struct hash<pddl_lib::InstantiatedParameter> {
+        std::size_t operator()(const pddl_lib::InstantiatedParameter &obj) const {
+            std::size_t seed = 0;
+            hash<std::string> stringHash;
+
+            seed ^= stringHash(obj.type) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+            return seed;
+        }
+    };
+}
 
 namespace pddl_lib {
 
@@ -135,13 +150,17 @@ namespace pddl_lib {
     };
 
 
-    class KnownKnowledgeBase : public std::unordered_set<InstantiatedPredicate> {
+    class KnownPredicates : public std::unordered_set<InstantiatedPredicate> {
     public:
         void concurrent_insert(const InstantiatedPredicate &value);
 
         void concurrent_erase(const InstantiatedPredicate &value);
 
         bool concurrent_find(const InstantiatedPredicate &value);
+
+        void lock();
+
+        void unlock();
 
     private:
         std::mutex mutex_;
@@ -154,7 +173,7 @@ namespace pddl_lib {
 
     };
 
-    class UnknownKnowledgeBase : public std::unordered_set<InstantiatedPredicate> {
+    class UnknownPredicates : public std::unordered_set<InstantiatedPredicate> {
     public:
         void concurrent_insert(const InstantiatedPredicate &value);
 
@@ -162,7 +181,28 @@ namespace pddl_lib {
 
         bool concurrent_find(const InstantiatedPredicate &value);
 
+        void lock();
+
+        void unlock();
+
         std::vector<Constraint> constraints;
+    private:
+        std::mutex mutex_;
+
+    };
+
+    class Objects : public std::unordered_set<InstantiatedParameter> {
+    public:
+        void concurrent_insert(const InstantiatedParameter &value);
+
+        void concurrent_erase(const InstantiatedParameter &value);
+
+        bool concurrent_find(const InstantiatedParameter &value);
+
+        void lock();
+
+        void unlock();
+
     private:
         std::mutex mutex_;
 
@@ -180,9 +220,9 @@ namespace pddl_lib {
 
         void apply_constraints();
 
-        KnownKnowledgeBase knownPredicates;
-        UnknownKnowledgeBase unknownPredicates;
-        std::vector<InstantiatedParameter> objects;
+        KnownPredicates knownPredicates;
+        UnknownPredicates unknownPredicates;
+        Objects objects;
 
     private:
         KnowledgeBase() {} // Private constructor to prevent direct instantiation
@@ -211,11 +251,11 @@ namespace pddl_lib {
 
     InstantiatedAction
     instantiate_action(const Action &action, const std::unordered_map<std::string, std::string> &param_subs,
-                       const std::vector<InstantiatedParameter> &objects = {});
+                       const std::unordered_set<InstantiatedParameter> &objects = {});
 
     InstantiatedCondition
     instantiate_condition(const Condition &condition, const std::unordered_map<std::string, std::string> &param_subs,
-                          const std::vector<InstantiatedParameter> &objects = {});
+                          const std::unordered_set<InstantiatedParameter> &objects = {});
 
 } // pddl_lib
 
@@ -229,4 +269,5 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::Condition &cond);
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Action &action);
 
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Parameter &param);
+
 std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedParameter &param);

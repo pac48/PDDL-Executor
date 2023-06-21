@@ -14,15 +14,9 @@
 
 namespace pddl_lib {
 
-    std::optional<Plan> runPlanner(int argc, char *const *argv) {
+    std::optional<Plan> runPlanner(int argc, const char *argv[], const std::string& plan_file_path) {
         std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("cff_plan_solver");
         auto exe_path = pkg_dir / "FF";
-
-        std::string plan_out_dir = "/tmp/cff_plan_solver/";
-        if (!std::filesystem::exists(plan_out_dir)) {
-            std::filesystem::create_directory(plan_out_dir);
-        }
-        auto plan_file_path = plan_out_dir + "pddlplan.txt";
 
         std::stringstream args_stream;
         for (int i = 1; i < argc; i++) {
@@ -38,23 +32,29 @@ namespace pddl_lib {
 
 
     std::optional<std::string> getPlan(const std::string &domain_str, const std::string &problem_str) {
-        {
-            std::ofstream domainFile("/tmp/cff_plan_solver/domain.pddl");
+        auto domain = parse_domain(domain_str);
+        std::string domain_file_path = "/tmp/cff_plan_solver/domain_" + domain->name + ".pddl";
+        std::string problem_file_path = "/tmp/cff_plan_solver/problem_" + domain->name + ".pddl";
+        std::string plan_file_path = "/tmp/cff_plan_solver/pddlplan_" + domain->name + ".txt";
+        if (domain.has_value()) {
+            std::ofstream domainFile(domain_file_path);
             domainFile << domain_str;
-            std::ofstream problemFile("/tmp/cff_plan_solver/problem.pddl");
+            std::ofstream problemFile(problem_file_path);
             problemFile << problem_str;
+
+        } else {
+            return {};
         }
 
-
-        char *argv[] = {"prog_name", "-a", "0", "-o", "/tmp/cff_plan_solver/domain.pddl", "-f",
-                        "/tmp/cff_plan_solver/problem.pddl"};
+        const char *argv[] = {"prog_name", "-a", "0", "-o", domain_file_path.c_str(), "-f",
+                              problem_file_path.c_str()};
         int argc = 7;
 
-        if (auto plan = runPlanner(argc, argv)) {
-            if (auto domain = parse_domain(domain_str)) {
-                return plan.value().convert_to_bt(domain.value());
-            }
+        if (auto plan = runPlanner(argc, argv, plan_file_path)) {
+            return plan.value().convert_to_bt(domain.value());
+
         }
+
         return {};
     }
 

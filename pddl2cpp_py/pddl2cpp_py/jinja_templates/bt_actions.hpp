@@ -24,7 +24,7 @@ public:
 
 class UpdatePredicates {
 public:
-  void update(){
+  void update() const {
       auto & kb = KnowledgeBase::getInstance();
 
       {%- for type in types %}
