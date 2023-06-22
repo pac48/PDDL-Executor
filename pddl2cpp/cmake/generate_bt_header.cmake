@@ -47,8 +47,6 @@ function(generate_bt_header LIB_NAME)
     list(APPEND DOMAIN_FILE_MOD ${CMAKE_CURRENT_SOURCE_DIR}/${file})
   endforeach()
 
-#  string(REPLACE ";" " " DOMAIN_FILE_ARGS ${DOMAIN_FILE_MOD})
-
   # Set the output parameter header file name
   set(HEADER_FILE ${OUTPUT_FILE_DIR}/${LIB_NAME}.hpp)
 #  file(REMOVE ${HEADER_FILE})
@@ -59,7 +57,7 @@ function(generate_bt_header LIB_NAME)
   add_custom_command(
     OUTPUT ${HEADER_FILE}
     COMMAND ${pddl2cpp_BIN} ${HEADER_FILE} ${DOMAIN_FILE_MOD}
-    DEPENDS ${DOMAIN_FILE_MOD}
+    DEPENDS ${DOMAIN_FILE_MOD} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../jinja_templates/bt_actions.hpp ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../jinja_templates/action.hpp
     COMMENT
     "Running `${pddl2cpp_BIN} ${HEADER_FILE} ${DOMAIN_FILE_MOD}`"
     VERBATIM
@@ -73,5 +71,5 @@ function(generate_bt_header LIB_NAME)
   target_include_directories(${LIB_NAME} INTERFACE ${pddl_parser_INCLUDE_DIRS})
   target_link_libraries(${LIB_NAME} INTERFACE pddl_parser::pddl_parser)
 
-  install(DIRECTORY ${OUTPUT_FILE_DIR} DESTINATION include/${LIB_NAME})
+#  install(DIRECTORY ${OUTPUT_FILE_DIR} DESTINATION include/${LIB_NAME})
 endfunction()

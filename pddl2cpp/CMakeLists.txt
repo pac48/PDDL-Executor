@@ -9,7 +9,7 @@ endif ()
 find_package(ament_cmake REQUIRED)
 
 install(
-    DIRECTORY cmake
+    DIRECTORY cmake jinja_templates
     DESTINATION share/pddl2cpp
 )
 

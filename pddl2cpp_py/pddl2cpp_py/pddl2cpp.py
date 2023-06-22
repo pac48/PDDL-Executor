@@ -3,12 +3,11 @@ import sys
 import os
 from jinja2 import Template
 import pddl_parser
+from ament_index_python.packages import get_package_share_directory
 
 
 def get_all_templates():
-    template_path = os.path.join(
-        os.path.dirname(__file__), "jinja_templates"
-    )
+    template_path = os.path.join(get_package_share_directory('pddl2cpp'), 'jinja_templates')
     template_map = {}
     for file_name in [
         f
