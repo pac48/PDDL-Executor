@@ -38,6 +38,8 @@ def main():
     actions_names = []
     func_signature_map = dict()
     predicate_map = dict()
+    predicates = []
+    pred_name_maps = []
     all_types = set()
     for domain_file in domain_files:
         with open(domain_file) as f:
@@ -51,9 +53,10 @@ def main():
 
             func_signature_map[params].append(pred.name)
 
+        pred_name_maps.append(dict())
         for pred in domain.predicates:
-            if pred.name not in predicate_map:
-                predicate_map[pred.name] = pred
+            predicates.append(pred)
+            pred_name_maps[-1][pred.name] = pred
 
         for action in domain.actions:
             j2_template = Template(templates["action.hpp"])
@@ -65,10 +68,11 @@ def main():
             actions_classes.append(code)
             actions_names.append(domain.name + "::" + action.name)
 
-    predicates = list(predicate_map.values())
+    # predicates = list(predicate_map.values())
     for pred in predicates:
         for param in pred.parameters:
             param.name = param.name.replace('?', '')
+
 
     func_signatures = [list(p) for p in list(func_signature_map.keys())]
 

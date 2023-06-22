@@ -13,17 +13,20 @@ enum TRUTH_VALUE{
     FALSE, TRUE, UNKNOWN
 };
 
-{% for type in types %}class {{type}} {
+{% for type in types %}class {{type}} : public std::string {
 public:
-    std::string value;
-    {{type}}(const std::string & value_in) :  value{value_in} {
-
-    }
+    // Inherit constructors from std::string
+    using std::string::string;
+    // Prevent implicit conversion to std::string
+    explicit {{type}}(const std::string& str) : std::string(str) {}
 };
 {% endfor %}
 
 class UpdatePredicates {
 public:
+  UpdatePredicates(){
+
+  }
   void update() const {
       auto & kb = KnowledgeBase::getInstance();
 
@@ -39,12 +42,12 @@ public:
           {%- endfor %}
       }
 
-      {% for args in func_signatures %}
-      for (auto [key, func] : pred_update_map_{{loop.index}}_){
-          {%- for arg in args %}
-          for (auto {{arg}}_instance : {{arg}}_instances ) {
+      {% for pred in predicates %}
+        {
+          {%- for param in pred.parameters %}
+            for (auto {{param.type}}_instance : {{param.type}}_instances ) {
           {%- endfor %}
-              InstantiatedPredicate pred = {key, { {%- for arg in args %}{{arg}}_instance{%- if loop.index < loop.length %}, {% endif -%}{%- endfor %} } };
+              InstantiatedPredicate pred = {"{{pred.name}}", { {%- for param in pred.parameters %}{{param.type}}_instance{%- if loop.index < loop.length %}, {% endif -%}{%- endfor %} } };
               TRUTH_VALUE old_val;
               if (kb.knownPredicates.concurrent_find(pred)){
                   old_val = TRUTH_VALUE::TRUE;
@@ -53,27 +56,24 @@ public:
               } else{
                   old_val = TRUTH_VALUE::FALSE;
               }
-              auto new_val = func(old_val{% for arg in args %}, ({{arg}}) {{arg}}_instance.name{%- endfor %});
-              if (new_val==TRUTH_VALUE::TRUE){
-                  kb.knownPredicates.concurrent_insert(pred);
-                  kb.unknownPredicates.concurrent_erase(pred);
-              } else if(new_val==TRUTH_VALUE::UNKNOWN){
-                  kb.knownPredicates.concurrent_erase(pred);
-                  kb.unknownPredicates.concurrent_insert(pred);
-              } else{
-                  kb.knownPredicates.concurrent_erase(pred);
-                  kb.unknownPredicates.concurrent_erase(pred);
-              }
-          {% for arg in args %} }
-          {% endfor -%}
-          }
-      {% endfor %}
+            {{pred.name}}(old_val{% for param in pred.parameters %}, {{param.type}}({{param.type}}_instance.name){%- endfor %});
+          {%- for param in pred.parameters %}
+             }
+          {%- endfor %}
+        }
+      {%- endfor %}
+
   }
 
   {% for pred in predicates %}void register_{{pred.name}}(std::function<TRUTH_VALUE(TRUTH_VALUE{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %})>  func){
         register_pred_update_map("{{pred.name}}", func);
   }
   {% endfor -%}
+
+    {% for pred in predicates %}virtual TRUTH_VALUE {{pred.name}}(TRUTH_VALUE val{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %}) const {
+        return val;
+    }
+    {% endfor -%}
 
   private:
     {% for args in func_signatures -%}
