@@ -24,9 +24,6 @@ public:
 
 class UpdatePredicates {
 public:
-  UpdatePredicates(){
-
-  }
   void update() const {
       auto & kb = KnowledgeBase::getInstance();
 
@@ -56,7 +53,17 @@ public:
               } else{
                   old_val = TRUTH_VALUE::FALSE;
               }
-            {{pred.name}}(old_val{% for param in pred.parameters %}, {{param.type}}({{param.type}}_instance.name){%- endfor %});
+            auto new_val = {{pred.name}}(old_val{% for param in pred.parameters %}, {{param.type}}({{param.type}}_instance.name){%- endfor %});
+            if (new_val==TRUTH_VALUE::TRUE){
+                kb.knownPredicates.concurrent_insert(pred);
+                kb.unknownPredicates.concurrent_erase(pred);
+            } else if(new_val==TRUTH_VALUE::UNKNOWN){
+                kb.knownPredicates.concurrent_erase(pred);
+                kb.unknownPredicates.concurrent_insert(pred);
+            } else{
+                kb.knownPredicates.concurrent_erase(pred);
+                kb.unknownPredicates.concurrent_erase(pred);
+            }
           {%- for param in pred.parameters %}
              }
           {%- endfor %}
@@ -65,26 +72,10 @@ public:
 
   }
 
-  {% for pred in predicates %}void register_{{pred.name}}(std::function<TRUTH_VALUE(TRUTH_VALUE{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %})>  func){
-        register_pred_update_map("{{pred.name}}", func);
-  }
-  {% endfor -%}
-
     {% for pred in predicates %}virtual TRUTH_VALUE {{pred.name}}(TRUTH_VALUE val{% for param in pred.parameters %}, {{param.type}} {{param.name}}{% endfor %}) const {
         return val;
     }
     {% endfor -%}
-
-  private:
-    {% for args in func_signatures -%}
-    void register_pred_update_map(const std::string name, const std::function<TRUTH_VALUE(TRUTH_VALUE{% for type in args %}, {{type}}{% endfor %})> & func){
-        pred_update_map_{{loop.index}}_[name] = func;
-    }
-    {% endfor -%}
-    {% for args in func_signatures -%}
-  std::unordered_map<std::string, std::function<TRUTH_VALUE(TRUTH_VALUE{% for type in args %}, {{type}}{% endfor %})> > pred_update_map_{{loop.index}}_;
-    {% endfor -%}
-
 };
 
 {{action_classes}}

@@ -73,6 +73,8 @@ def main():
         for param in pred.parameters:
             param.name = param.name.replace('?', '')
 
+    tmp = {f"{p.name}:::{str([param.type for param in p.parameters])}": p for p in predicates}
+    predicates = list(tmp.values())
 
     func_signatures = [list(p) for p in list(func_signature_map.keys())]
 
