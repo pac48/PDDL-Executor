@@ -138,7 +138,8 @@ namespace pddl_lib {
                 return std::tolower(c);
             });
             action_map[action_name] = action;
-            action_map[action_name].name = "pddl_lib::" + domain.name + "::" + action.name;
+            action_map[action_name].name = domain.name + "::" + action.name;
+//            action_map[action_name].name = domain.name + "_" + action.name;
         }
 
         Jinja2CppLight::Template tree_template(template_map_.at("bt.xml"));

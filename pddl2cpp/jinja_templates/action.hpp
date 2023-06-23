@@ -1,4 +1,5 @@
 namespace {{domain_name}} {
+template<typename T>
 class {{class_name}} : public BT::SyncActionNode {
 public:
     {{class_name}}(const std::string &name, const BT::NodeConfiguration &config)
@@ -38,7 +39,8 @@ public:
             std::cout << "\t" << "preconditions violated" << std::endl;
             return BT::NodeStatus::FAILURE;
         }
-        BT::NodeStatus status = tick_action(inst_action);
+        T inst;
+        BT::NodeStatus status = inst.{{domain_name}}_{{class_name}}(inst_action); //tick_action(inst_action);
         if (status == BT::NodeStatus::SUCCESS){
             kb.apply_conditions(inst_action.effect);
             kb.apply_conditions(inst_action.observe);
@@ -55,8 +57,6 @@ public:
         }
         return status;
     }
-
-    BT::NodeStatus tick_action(const InstantiatedAction & action);
 
 };
 } // {{domain_name}}

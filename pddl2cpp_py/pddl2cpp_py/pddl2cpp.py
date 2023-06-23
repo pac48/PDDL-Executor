@@ -35,7 +35,7 @@ def main():
 
     templates = get_all_templates()
     actions_classes = []
-    actions_names = []
+    action_names = []
     func_signature_map = dict()
     predicate_map = dict()
     predicates = []
@@ -66,7 +66,15 @@ def main():
                     'parameters': parameters}
             code = j2_template.render(data, trim_blocks=True)
             actions_classes.append(code)
-            actions_names.append(domain.name + "::" + action.name)
+
+            class TMP:
+                qualified = ""
+                underscore = ""
+
+            tmp = TMP()
+            tmp.qualified = domain.name + "::" + action.name
+            tmp.underscore = domain.name + "_" + action.name
+            action_names.append(tmp)
 
     # predicates = list(predicate_map.values())
     for pred in predicates:
@@ -79,7 +87,7 @@ def main():
     func_signatures = [list(p) for p in list(func_signature_map.keys())]
 
     j2_template = Template(templates["bt_actions.hpp"])
-    data = {'action_classes': "\n\n".join(actions_classes), 'action_names': actions_names,
+    data = {'action_classes': "\n\n".join(actions_classes), 'action_names': action_names,
             'predicates': predicates, 'types': list(all_types), 'func_signatures': func_signatures}
     code = j2_template.render(data, trim_blocks=True)
 

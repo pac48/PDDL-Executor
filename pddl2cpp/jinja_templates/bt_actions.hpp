@@ -15,9 +15,7 @@ enum TRUTH_VALUE{
 
 {% for type in types %}class {{type}} : public std::string {
 public:
-    // Inherit constructors from std::string
     using std::string::string;
-    // Prevent implicit conversion to std::string
     explicit {{type}}(const std::string& str) : std::string(str) {}
 };
 {% endfor %}
@@ -78,15 +76,29 @@ public:
     {% endfor -%}
 };
 
-{{action_classes}}
+class ActionInterface {
+public:
+    {%- for name in action_names %}
+    virtual BT::NodeStatus {{name.underscore}}(const InstantiatedAction & action){return BT::NodeStatus::SUCCESS;} // do nothing default
+    {%- endfor %}
+};
 
+{{ action_classes }}
+
+template<typename T>
 BT::BehaviorTreeFactory create_tree_factory(){
+    static_assert(
+            std::is_base_of<ActionInterface, T>::value,
+            "template is not derived from ActionInterface"
+    );
+
     BT::BehaviorTreeFactory factory;
     {% for name in action_names %}
-    factory.registerNodeType<pddl_lib::{{name}}>("pddl_lib::{{name}}");
+    factory.registerNodeType<{{name.qualified}}<T>>("{{name.qualified}}");
     {%- endfor %}
 
     return factory;
 }
+
 
 } // pddl_lib
