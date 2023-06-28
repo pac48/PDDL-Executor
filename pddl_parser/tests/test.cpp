@@ -16,10 +16,13 @@ TEST(DOMAIN, parse) {
     ss << pddl_file_stream.rdbuf();
     std::string content = ss.str();
 
-    auto domain = parse_domain(content);
-    ASSERT_TRUE(domain.has_value());
+    if (auto domain = parse_domain(content)){
+    } else{
+        std::cout << domain.error() <<std::endl;
+        ASSERT_TRUE(false);
+    }
 
-    std::cout << domain.value() << std::endl;
+//    std::cout << domain.value() << std::endl;
 
 }
 
@@ -33,10 +36,13 @@ TEST(DOMAIN, parse_high_level) {
     ss << pddl_file_stream.rdbuf();
     std::string content = ss.str();
 
-    auto domain = parse_domain(content);
-    ASSERT_TRUE(domain.has_value());
+    if (auto domain = parse_domain(content)){
+    } else{
+        std::cout << domain.error() <<std::endl;
+        ASSERT_TRUE(false);
+    }
 
-    std::cout << domain.value() << std::endl;
+//    std::cout << domain.value() << std::endl;
 
 }
 
@@ -82,12 +88,12 @@ TEST(KB, convert_To_problem) {
 
     kb.unknownPredicates.constraints.push_back({CONSTRAINTS::ONEOF,
                                                 {{"person_at", {nathan, couch}},
-                                                    {"person_at", {nathan, kitchen}},
-                                                    {"person_at", {nathan, home}}
-                                                   }
-                                                  });
+                                                 {"person_at", {nathan, kitchen}},
+                                                 {"person_at", {nathan, home}}
+                                                }
+                                               });
 
-    std::cout << kb.convert_to_problem(domain) << std::endl;
+//    std::cout << kb.convert_to_problem(domain) << std::endl;
 
 }
 

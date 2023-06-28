@@ -71,5 +71,5 @@ function(generate_bt_header LIB_NAME)
   target_include_directories(${LIB_NAME} INTERFACE ${pddl_parser_INCLUDE_DIRS})
   target_link_libraries(${LIB_NAME} INTERFACE pddl_parser::pddl_parser)
 
-#  install(DIRECTORY ${OUTPUT_FILE_DIR} DESTINATION include/${LIB_NAME})
+  install(DIRECTORY ${OUTPUT_FILE_DIR} DESTINATION include/${LIB_NAME})
 endfunction()

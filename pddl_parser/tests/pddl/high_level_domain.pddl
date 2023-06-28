@@ -43,25 +43,6 @@
 
 )
 
-(:action ClearActiveProtocols
-	:parameters ()
-	:precondition (and (init))
-	:effect (and (priority_1) (not (init))
-                (forall (?fall - FallProtocol)
-                  (not (fall_protocol_enabled ?fall))
-                )
-                (forall (?food - FoodProtocol)
-                  (not (food_protocol_enabled ?food))
-                )
-                (forall (?med - MedicineProtocol)
-                  (not (medicine_protocol_enabled ?med))
-                )
-                (forall (?wond - WonderingProtocol)
-                  (not (wondering_protocol_enabled ?wond))
-                )
-	        )
-)
-
 (:action ChangePriority_1_2
 	:parameters ()
 	:precondition (and
@@ -133,11 +114,12 @@
 		)
 	:effect (and
 	          (success)
-            (not (priority_2)) )
+            (not (priority_2))
             (food_protocol_enabled ?f)
             (forall (?fall - FallProtocol) (not (fall_protocol_enabled ?fall)) )
             (forall (?med - MedicineProtocol) (not (medicine_protocol_enabled ?med)) )
             (forall (?wond - WonderingProtocol) (not (wondering_protocol_enabled ?wond)) )
+          )
 )
 (:action ContinueFoodProtocol
 	:parameters (?f - FoodProtocol)
@@ -160,11 +142,12 @@
 		)
 	:effect (and
 	          (success)
-	          (not (priority_1)) )
+	          (not (priority_1))
 	          (fall_protocol_enabled ?f)
             (forall (?med - MedicineProtocol) (not (medicine_protocol_enabled ?med)) )
             (forall (?wond - WonderingProtocol) (not (wondering_protocol_enabled ?wond)) )
             (forall (?food - FoodProtocol) (not (food_protocol_enabled ?food)) )
+          )
 )
 
 (:action ContinueFallProtocol
@@ -189,11 +172,12 @@
     )
 	:effect (and
 	          (success)
-	          (not (priority_1)) )
+	          (not (priority_1))
 	          (wondering_protocol_enabled ?w)
             (forall (?fall - FallProtocol) (not (fall_protocol_enabled ?fall)) )
             (forall (?med - MedicineProtocol) (not (medicine_protocol_enabled ?med)) )
             (forall (?food - FoodProtocol) (not (food_protocol_enabled ?food)) )
+          )
 )
 
 (:action ContinueWonderingProtocol

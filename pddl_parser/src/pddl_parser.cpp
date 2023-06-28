@@ -151,7 +151,8 @@ namespace pddl_lib {
             if (auto pred = parse_predicate(std::string(str))) {
                 domain.predicates.insert(pred.value());
             } else {
-                return fmt::format("ERROR line {}: failed to parse predicate", get_line_num(content, str));
+                return fmt::format("ERROR line {}: failed to parse predicate \n{}", get_line_num(content, str),
+                                   pred.error());
             }
         }
         ind++;
@@ -160,105 +161,124 @@ namespace pddl_lib {
             if (auto action = parse_action(std::string(strings[ind]))) {
                 domain.actions.push_back(action.value());
             } else {
-                return fmt::format("ERROR line {}: failed to parse action", get_line_num(content, strings[ind]));
+                return fmt::format("ERROR line {}: failed to parse action \n{}", get_line_num(content, strings[ind]),
+                                   action.error());
             }
             ind++;
         }
 
-        return {
-        };
+        return {};
     }
 
-    std::optional<Action> parse_action(const std::string &content) {
-        auto action = Action();
+    tl::expected<Action, std::string> parse_action(const std::string &content) {
+        try {
+            auto action = Action();
 
-        int ind = 0;
-        std::string_view section;
-        std::string_view remaining;
-        std::unordered_map<std::string, std::string> param_to_type_map;
+            int ind = 0;
+            std::string_view section;
+            std::string_view remaining;
+            std::unordered_map<std::string, std::string> param_to_type_map;
 
-        std::tie(section, remaining) = getNextParen(content);
-        const auto strings = parseVector(section, {'\t', '\n', ' '});
+            std::tie(section, remaining) = getNextParen(content);
+            const auto strings = parseVector(section, {'\t', '\n', ' '});
 
-        if (strings[ind] != ":action") {
-            return {};
-        }
-        ind++;
-
-        action.name = strings[ind];
-        ind++;
-
-        while (ind < strings.size()) {
-            if (strings[ind] == ":parameters") {
-                ind++;
-                std::tie(section, remaining) = getNextParen(strings[ind]);
-                auto substrings = parseVector(section, {'\t', '\n', ' '});
-                action.parameters = parse_params(substrings);
-                for (const auto &param: action.parameters) {
-                    param_to_type_map[param.name] = param.type;
-                }
-                ind++;
-            } else if (strings[ind] == ":precondition") {
-                ind++;
-                if (auto cond = parse_condition(std::string(strings[ind]), param_to_type_map)) {
-                    action.precondtions = cond.value();
-                } else if (auto pred = parse_predicate(std::string(strings[ind]), param_to_type_map)) {
-                    action.precondtions.predicates.emplace_back(pred.value());
-                }
-                ind++;
-            } else if (strings[ind] == ":effect") {
-                ind++;
-                if (auto cond = parse_condition(std::string(strings[ind]), param_to_type_map)) {
-                    action.effect = cond.value();
-                } else if (auto pred = parse_predicate(std::string(strings[ind]), param_to_type_map)) {
-                    action.effect.predicates.emplace_back(pred.value());
-                }
-                ind++;
-            } else if (strings[ind] == ":observe") {
-                ind++;
-                if (auto cond = parse_condition(std::string(strings[ind]), param_to_type_map)) {
-                    action.observe = cond.value();
-                } else if (auto pred = parse_predicate(std::string(strings[ind]), param_to_type_map)) {
-                    action.observe.predicates.emplace_back(pred.value());
-                }
-                ind++;
+            if (strings[ind] != ":action") {
+                return {};
             }
-        }
+            ind++;
 
-        return action;
+            action.name = strings[ind];
+
+            while (ind < strings.size()) {
+                ind++;
+                if (strings[ind] == ":parameters") {
+                    ind++;
+                    std::tie(section, remaining) = getNextParen(strings[ind]);
+                    auto substrings = parseVector(section, {'\t', '\n', ' '});
+                    action.parameters = parse_params(substrings);
+                    for (const auto &param: action.parameters) {
+                        param_to_type_map[param.name] = param.type;
+                    }
+                } else if (strings[ind] == ":precondition") {
+                    ind++;
+                    if (auto cond = parse_condition(std::string(strings[ind]), param_to_type_map)) {
+                        action.precondtions = cond.value();
+                        continue;
+                    }
+                    if (auto pred = parse_predicate(std::string(strings[ind]), param_to_type_map)) {
+                        action.precondtions.predicates.emplace_back(pred.value());
+                        continue;
+                    }
+                    return tl::unexpected(fmt::format("ERROR: failed to parse precondition of action {}", action.name));
+
+                } else if (strings[ind] == ":effect") {
+                    ind++;
+                    if (auto cond = parse_condition(std::string(strings[ind]), param_to_type_map)) {
+                        action.effect = cond.value();
+                        continue;
+                    }
+                    if (auto pred = parse_predicate(std::string(strings[ind]), param_to_type_map)) {
+                        action.effect.predicates.emplace_back(pred.value());
+                        continue;
+                    }
+                    return tl::unexpected(fmt::format("ERROR: failed to parse effect of action {}", action.name));
+
+                } else if (strings[ind] == ":observe") {
+                    ind++;
+                    if (auto cond = parse_condition(std::string(strings[ind]), param_to_type_map)) {
+                        action.observe = cond.value();
+                        continue;
+                    }
+                    if (auto pred = parse_predicate(std::string(strings[ind]), param_to_type_map)) {
+                        action.observe.predicates.emplace_back(pred.value());
+                        continue;
+                    }
+                    return tl::unexpected(fmt::format("ERROR: failed to parse observe of action {}", action.name));
+
+                }
+            }
+
+            return action;
+
+        } catch (std::exception e) {
+            return tl::unexpected(std::string("ERROR: failed to parse action"));
+        }
     }
 
 
-    std::optional<Domain> parse_domain(const std::string &content) {
+    tl::expected<Domain, std::string> parse_domain(const std::string &content) {
         Domain domain;
         if (auto error = checkParens(content)) {
-            std::cout << error.value() << std::endl;
-            return {};
+            return tl::unexpected(fmt::format("ERROR: failed to parse domain\n{}", error.value()));
         }
 
         if (auto error = parseInit(content, domain)) {
-            std::cout << error.value() << std::endl;
-            return {};
+            return tl::unexpected(fmt::format("ERROR: failed to parse domain\n{}", error.value()));
         }
 
         return domain;
     }
 
-    std::optional<Predicate>
+    tl::expected<Predicate, std::string>
     parse_predicate(const std::string &content, const std::unordered_map<std::string, std::string> &param_to_type_map) {
-        auto [section, remaining] = getNextParen(content);
-        auto str = parseVector(section, {'\t', '\n', ' '});
-        auto pred = Predicate();
-        pred.name = str[0];
+        try {
+            auto pred = Predicate();
+            auto [section, remaining] = getNextParen(content);
+            auto str = parseVector(section, {'\t', '\n', ' '});
+            pred.name = str[0];
 
-        pred.parameters = parse_params(std::vector<std::string_view>(str.begin() + 1, str.end()));
-        for (auto &param: pred.parameters) {
-            if (param_to_type_map.find(param.name) != param_to_type_map.end()) {
-                param.type = param_to_type_map.at(param.name);
+            pred.parameters = parse_params(std::vector<std::string_view>(str.begin() + 1, str.end()));
+            for (auto &param: pred.parameters) {
+                if (param_to_type_map.find(param.name) != param_to_type_map.end()) {
+                    param.type = param_to_type_map.at(param.name);
+                }
             }
-        }
 
-        return pred;
+            return pred;
+
+        } catch (std::exception e) {
+            return tl::unexpected(std::string("ERROR: failed to parse predicate"));
+        }
     }
 
     std::vector<Parameter> parse_params(std::vector<std::string_view> str) {
@@ -285,6 +305,8 @@ namespace pddl_lib {
                     param.name = name;
                     parameters.push_back(param);
                 }
+            } else {
+                throw std::runtime_error("failed to parse parameters");
             }
             ind++;
         }
@@ -292,7 +314,7 @@ namespace pddl_lib {
     }
 
 
-    std::optional<Condition>
+    tl::expected<Condition, std::string>
     parse_condition(const std::string &content,
                     const std::unordered_map<std::string, std::string> &param_to_type_map_const) {
         std::string_view section;
@@ -324,17 +346,24 @@ namespace pddl_lib {
             }
             ind++;
         } else {
-            return {};
+            return tl::unexpected(std::string("ERROR: failed to parse condition"));
         }
+
         for (int i = ind; i < strings.size(); i++) {
             if (auto cond2 = parse_condition(std::string(strings[i]), param_to_type_map)) {
                 cond.conditions.emplace_back(cond2.value());
-            } else if (auto pred = parse_predicate(std::string(strings[i]), param_to_type_map)) {
-                cond.predicates.emplace_back(pred.value());
+                continue;
             }
+            if (auto pred = parse_predicate(std::string(strings[i]), param_to_type_map)) {
+                cond.predicates.emplace_back(pred.value());
+                continue;
+            }
+
+            return tl::unexpected(std::string("ERROR: failed to parse condition"));
         }
 
         return cond;
+
     }
 
 

@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <mutex>
 #include <unordered_map>
+#include <tl_expected/expected.hpp>
 
 namespace pddl_lib {
 // types
@@ -234,15 +235,15 @@ namespace pddl_lib {
 // condition
 
 // parsing functions
-    std::optional<Domain> parse_domain(const std::string &content);
+    tl::expected<Domain, std::string> parse_domain(const std::string &content);
 
-    std::optional<Predicate>
+    tl::expected<Predicate, std::string>
     parse_predicate(const std::string &content,
                     const std::unordered_map<std::string, std::string> &param_to_type_map = {});
 
-    std::optional<Action> parse_action(const std::string &content);
+    tl::expected<Action, std::string> parse_action(const std::string &content);
 
-    std::optional<Condition>
+    tl::expected<Condition, std::string>
     parse_condition(const std::string &content,
                     const std::unordered_map<std::string, std::string> &param_to_type_map = {});
 

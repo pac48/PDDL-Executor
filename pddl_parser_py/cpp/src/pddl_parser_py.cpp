@@ -1,6 +1,36 @@
 #include "pddl_parser_py/pddl_parser_py.hpp"
 #include "pddl_parser/pddl_parser.hpp"
 
+namespace pddl_lib {
+    std::optional<Domain> parse_domain_py(const std::string &content) {
+        if (auto domain = parse_domain(content)) {
+            return {domain.value()};
+        }
+        return {};
+    }
+
+    std::optional<Predicate> parse_predicate_py(const std::string &content) {
+        if (auto pred = parse_predicate(content)) {
+            return {pred.value()};
+        }
+        return {};
+    }
+
+    std::optional<Condition> parse_condition_py(const std::string &content) {
+        if (auto cond = parse_condition(content)) {
+            return {cond.value()};
+        }
+        return {};
+    }
+
+    std::optional<Action> parse_action_py(const std::string &content) {
+        if (auto action = parse_action(content)) {
+            return {action.value()};
+        }
+        return {};
+    }
+}
+
 void init_Domain(py::module &m) {
     py::class_<pddl_lib::Domain>(m, "Domain", R"(
   The Domain class from parser.
@@ -21,7 +51,7 @@ void init_Domain(py::module &m) {
             .def_readwrite("actions", &pddl_lib::Domain::actions)
             .def_readwrite("requirements", &pddl_lib::Domain::requirements)
             .def_readwrite("types", &pddl_lib::Domain::types);
-    m.def("parse_domain", &pddl_lib::parse_domain, "parse domain from string",
+    m.def("parse_domain", &pddl_lib::parse_domain_py, "parse domain from string",
           py::arg("content"));
 }
 
@@ -46,9 +76,8 @@ void init_Predicate(py::module &m) {
                 return ss.str();
             }).def_readwrite("name", &pddl_lib::Predicate::name)
             .def_readwrite("parameters", &pddl_lib::Predicate::parameters);
-    m.def("parse_predicate", &pddl_lib::parse_predicate, "parse predicate from string",
-          py::arg("content"),
-          py::arg("param_to_type_map") = std::unordered_map<std::string, std::string>());
+    m.def("parse_predicate", &pddl_lib::parse_predicate_py, "parse predicate from string",
+          py::arg("content"));
 }
 
 void init_Parameter(py::module &m) {
@@ -104,9 +133,8 @@ void init_Condition(py::module &m) {
             .def_readwrite("predicates", &pddl_lib::Condition::predicates)
             .def_readwrite("conditions", &pddl_lib::Condition::conditions)
             .def_readwrite("op", &pddl_lib::Condition::op);
-    m.def("parse_condition", &pddl_lib::parse_condition, "parse condition from string",
-          py::arg("content"),
-          py::arg("param_to_type_map") = std::unordered_map<std::string, std::string>());
+    m.def("parse_condition", &pddl_lib::parse_condition_py, "parse condition from string",
+          py::arg("content"));
 }
 
 
@@ -116,7 +144,8 @@ void init_Action(py::module &m) {
 									     )")
 
             .def(py::init([](const std::string &name, const std::vector<pddl_lib::Parameter> &parameters,
-                             const pddl_lib::Condition &precondtions, const pddl_lib::Condition &effect, const pddl_lib::Condition &observe) {
+                             const pddl_lib::Condition &precondtions, const pddl_lib::Condition &effect,
+                             const pddl_lib::Condition &observe) {
                      auto action = pddl_lib::Action();
                      action.name = name;
                      action.parameters = parameters;
@@ -141,7 +170,7 @@ void init_Action(py::module &m) {
             .def_readwrite("precondtions", &pddl_lib::Action::precondtions)
             .def_readwrite("effect", &pddl_lib::Action::effect)
             .def_readwrite("observe", &pddl_lib::Action::observe);
-    m.def("parse_action", &pddl_lib::parse_action, "parse action from string",
+    m.def("parse_action", &pddl_lib::parse_action_py, "parse action from string",
           py::arg("content"));
 }
 

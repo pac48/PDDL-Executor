@@ -10,8 +10,13 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include_directories(include)
 find_package(ament_cmake REQUIRED)
 find_package(FMT REQUIRED)
+find_package(tl_expected REQUIRED)
+
 add_library(pddl_parser src/pddl_parser.cpp)
-target_link_libraries(pddl_parser fmt::fmt)
+target_link_libraries(pddl_parser
+    fmt::fmt
+    tl_expected::tl_expected
+)
 
 
 if (BUILD_TESTING)
@@ -35,6 +40,9 @@ install(
     RUNTIME DESTINATION bin)
 
 ament_export_targets(pddl_parserTargets HAS_LIBRARY_TARGET)
-ament_export_dependencies(FMT)
+ament_export_dependencies(
+    FMT
+    tl_expected
+)
 ament_export_include_directories(include)
 ament_package()
