@@ -930,6 +930,27 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::Action &action) {
     return os;
 }
 
+std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedAction &action) {
+    os << "(:action " << action.name << "\n";
+    os << "\t:parameters (";
+    for (auto &param: action.parameters) {
+        os << param;
+    }
+    os << ")\n";
+
+    os << "\t:precondition " << action.precondtions << "\n";
+    if (!action.effect.conditions.empty() || !action.effect.predicates.empty()) {
+        os << "\t:effect " << action.effect << "\n";
+    }
+    if (!action.observe.conditions.empty() || !action.observe.predicates.empty()) {
+        os << "\t:observe " << action.observe << "\n";
+    }
+
+    os << ")\n";
+
+    return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Condition &condConst) {
     pddl_lib::Condition cond = condConst;
     if (cond.op == pddl_lib::OPERATION::AND && cond.predicates.size() == 1 && cond.conditions.empty()) {
@@ -955,6 +976,62 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::Condition &condConst)
         term = "\n";
         std::function<void(pddl_lib::Condition &cond, std::vector<pddl_lib::Parameter>)> sub_pred;
         sub_pred = [&sub_pred](pddl_lib::Condition &cond, std::vector<pddl_lib::Parameter> params) {
+            for (auto &pred: cond.predicates) {
+                for (auto &pred_param: pred.parameters) {
+                    for (auto &param: params) {
+                        if (pred_param.name == param.name) {
+                            pred_param.type = param.type;
+                        }
+                    }
+                }
+            }
+            if (cond.op == pddl_lib::OPERATION::FORALL) {
+                params.push_back(cond.parameters[0]);
+            }
+            for (auto &c: cond.conditions) {
+                sub_pred(c, params);
+            }
+
+        };
+        sub_pred(cond, {cond.parameters[0]});
+
+    }
+    for (const auto &p: predicates) {
+        os << p << term;
+    }
+    for (const auto &c: conditions) {
+        os << c << term;
+    }
+    os << ")";
+
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedCondition &condConst) {
+    pddl_lib::InstantiatedCondition cond = condConst;
+    if (cond.op == pddl_lib::OPERATION::AND && cond.predicates.size() == 1 && cond.conditions.empty()) {
+        os << cond.predicates[0];
+        return os;
+    }
+
+    std::string op;
+    std::string term;
+    auto predicates = cond.predicates;
+    auto conditions = cond.conditions;
+    if (cond.op == pddl_lib::OPERATION::AND) {
+        os << "(and\n";
+        term = "\n";
+    } else if (cond.op == pddl_lib::OPERATION::OR) {
+        os << "(or\n";
+        term = "\n";
+    } else if (cond.op == pddl_lib::OPERATION::NOT) {
+        os << "(not ";
+        term = " ";
+    } else if (cond.op == pddl_lib::OPERATION::FORALL) {
+        os << "(forall (" << cond.parameters[0].name << " - " << cond.parameters[0].type << ")\n";
+        term = "\n";
+        std::function<void(pddl_lib::InstantiatedCondition &cond, std::vector<pddl_lib::InstantiatedParameter>)> sub_pred;
+        sub_pred = [&sub_pred](pddl_lib::InstantiatedCondition &cond, std::vector<pddl_lib::InstantiatedParameter> params) {
             for (auto &pred: cond.predicates) {
                 for (auto &pred_param: pred.parameters) {
                     for (auto &param: params) {

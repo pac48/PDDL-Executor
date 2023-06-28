@@ -8,6 +8,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <tl_expected/expected.hpp>
+#include <tl_expected/expected.hpp>
 
 namespace pddl_lib {
 // types
@@ -188,7 +189,6 @@ namespace pddl_lib {
     };
 
 
-
     class UnknownPredicates : public std::unordered_set<InstantiatedPredicate> {
     public:
         void concurrent_insert(const InstantiatedPredicate &value);
@@ -291,8 +291,11 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::Predicate &pred);
 std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedPredicate &pred);
 
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Condition &cond);
+std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedCondition &cond);
 
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Action &action);
+
+std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedAction &action);
 
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Parameter &param);
 
