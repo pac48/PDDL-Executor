@@ -56,19 +56,6 @@ namespace pddl_lib {
         }
     };
 
-    struct UnknownInstantiatedPredicate : public InstantiatedPredicate {
-
-        bool operator==(const UnknownInstantiatedPredicate &other) const {
-            return name == other.name && parameters == other.parameters;
-        }
-        operator InstantiatedPredicate(){
-            InstantiatedPredicate pred;
-            pred.name = name;
-            pred.parameters = parameters;
-            return pred;
-        }
-    };
-
     struct Condition {
         OPERATION op;
         std::vector<Condition> conditions;
@@ -106,22 +93,6 @@ namespace pddl_lib {
 namespace std {
     template<>
     struct hash<pddl_lib::InstantiatedPredicate> {
-        std::size_t operator()(const pddl_lib::InstantiatedPredicate &obj) const {
-            std::size_t seed = 0;
-            hash<int> intHash;
-            hash<std::string> stringHash;
-
-            seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-
-            return seed;
-        }
-    };
-}
-
-namespace std {
-    template<>
-    struct hash<pddl_lib::UnknownInstantiatedPredicate> {
         std::size_t operator()(const pddl_lib::InstantiatedPredicate &obj) const {
             std::size_t seed = 0;
             hash<int> intHash;
@@ -190,7 +161,7 @@ namespace pddl_lib {
         std::string domain;
         std::vector<InstantiatedParameter> objects;
         std::unordered_set<InstantiatedPredicate> init;
-        std::unordered_set<UnknownInstantiatedPredicate> unknowns;
+        std::unordered_set<InstantiatedPredicate> unknowns;
         std::vector<Constraint> constraints;
         std::unordered_set<InstantiatedPredicate> goal;
 
@@ -218,13 +189,13 @@ namespace pddl_lib {
 
 
 
-    class UnknownPredicates : public std::unordered_set<UnknownInstantiatedPredicate> {
+    class UnknownPredicates : public std::unordered_set<InstantiatedPredicate> {
     public:
-        void concurrent_insert(const UnknownInstantiatedPredicate &value);
+        void concurrent_insert(const InstantiatedPredicate &value);
 
-        void concurrent_erase(const UnknownInstantiatedPredicate &value);
+        void concurrent_erase(const InstantiatedPredicate &value);
 
-        bool concurrent_find(const UnknownInstantiatedPredicate &value);
+        bool concurrent_find(const InstantiatedPredicate &value);
 
         void lock();
 
@@ -316,6 +287,8 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::Domain &domain);
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Problem &problem);
 
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Predicate &pred);
+
+std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedPredicate &pred);
 
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Condition &cond);
 

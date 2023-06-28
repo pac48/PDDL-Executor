@@ -9,8 +9,22 @@ namespace pddl_lib {
         return {};
     }
 
+    std::optional<Problem> parse_problem_py(const std::string &content) {
+        if (auto problem = parse_problem(content)) {
+            return {problem.value()};
+        }
+        return {};
+    }
+
     std::optional<Predicate> parse_predicate_py(const std::string &content) {
         if (auto pred = parse_predicate(content)) {
+            return {pred.value()};
+        }
+        return {};
+    }
+
+    std::optional<InstantiatedPredicate> parse_instantiated_predicate_py(const std::string &content) {
+        if (auto pred = parse_instantiated_predicate(content)) {
             return {pred.value()};
         }
         return {};
@@ -29,6 +43,23 @@ namespace pddl_lib {
         }
         return {};
     }
+}
+
+void init_Constraint(py::module &m) {
+    py::class_<pddl_lib::Constraint>(m, "Constraint", R"(
+  The Constraint class from parser.
+									     )")
+
+            .def(py::init([]() {
+                     auto constraint = pddl_lib::Constraint();
+                     return constraint;
+                 }),
+                 R"(
+                 Init stuff.
+           )").def("__str__", [](const pddl_lib::Constraint &con) {
+                return "TODO";
+            }).def_readwrite("constraint", &pddl_lib::Constraint::constraint)
+            .def_readwrite("predicates", &pddl_lib::Constraint::predicates);
 }
 
 void init_Domain(py::module &m) {
@@ -55,6 +86,31 @@ void init_Domain(py::module &m) {
           py::arg("content"));
 }
 
+void init_Problem(py::module &m) {
+    py::class_<pddl_lib::Problem>(m, "Problem", R"(
+  The Problem class from parser.
+									     )")
+
+            .def(py::init([]() {
+                     auto problem = pddl_lib::Problem();
+                     return problem;
+                 }),
+                 R"(
+                 Init stuff.
+           )").def("__str__", [](const pddl_lib::Domain &pred) {
+                std::stringstream ss;
+                ss << pred;
+                return ss.str();
+            }).def_readwrite("name", &pddl_lib::Problem::name)
+            .def_readwrite("predicates", &pddl_lib::Problem::domain)
+            .def_readwrite("init", &pddl_lib::Problem::init)
+            .def_readwrite("unknowns", &pddl_lib::Problem::unknowns)
+            .def_readwrite("constraints", &pddl_lib::Problem::constraints);
+    m.def("parse_problem", &pddl_lib::parse_problem_py, "parse problem from string",
+          py::arg("content"));
+}
+
+
 void init_Predicate(py::module &m) {
     py::class_<pddl_lib::Predicate>(m, "Predicate", R"(
   The Predicate class from parser.
@@ -80,6 +136,32 @@ void init_Predicate(py::module &m) {
           py::arg("content"));
 }
 
+void init_InstantiatedPredicate(py::module &m) {
+    py::class_<pddl_lib::InstantiatedPredicate>(m, "InstantiatedPredicate", R"(
+  The InstantiatedPredicate class from parser.
+									     )")
+
+            .def(py::init([](const std::string &name, const std::vector<pddl_lib::InstantiatedParameter> &parameters) {
+                     auto pred = pddl_lib::InstantiatedPredicate();
+                     pred.name = name;
+                     pred.parameters = parameters;
+                     return pred;
+                 }),
+                 py::arg("name") = "default_name",
+                 py::arg("parameters") = std::vector<pddl_lib::Parameter>(),
+                 R"(
+                 Init stuff.
+           )").def("__str__", [](const pddl_lib::InstantiatedPredicate &pred) {
+                std::stringstream ss;
+                ss << pred;
+                return ss.str();
+            }).def_readwrite("name", &pddl_lib::InstantiatedPredicate::name)
+            .def_readwrite("parameters", &pddl_lib::InstantiatedPredicate::parameters);
+    m.def("parse_instantiated_predicate", &pddl_lib::parse_instantiated_predicate_py,
+          "parse InstantiatedPredicate from string",
+          py::arg("content"));
+}
+
 void init_Parameter(py::module &m) {
     py::class_<pddl_lib::Parameter>(m, "Parameter", R"(
   The Parameter class from parser.
@@ -101,6 +183,29 @@ void init_Parameter(py::module &m) {
                 return ss.str();
             }).def_readwrite("name", &pddl_lib::Parameter::name)
             .def_readwrite("type", &pddl_lib::Parameter::type);
+}
+
+void init_InstantiatedParameter(py::module &m) {
+    py::class_<pddl_lib::InstantiatedParameter>(m, "InstantiatedParameter", R"(
+  The InstantiatedParameter class from parser.
+									     )")
+
+            .def(py::init([](const std::string &name, const std::string &type) {
+                     auto param = pddl_lib::InstantiatedParameter();
+                     param.name = name;
+                     param.type = type;
+                     return param;
+                 }),
+                 py::arg("name"),
+                 py::arg("type") = "",
+                 R"(
+                 Init stuff.
+           )").def("__str__", [](const pddl_lib::InstantiatedParameter &param) {
+                std::stringstream ss;
+                ss << param;
+                return ss.str();
+            }).def_readwrite("name", &pddl_lib::InstantiatedParameter::name)
+            .def_readwrite("type", &pddl_lib::InstantiatedParameter::type);
 }
 
 void init_Condition(py::module &m) {
@@ -185,14 +290,28 @@ void init_OPERATION(py::module &m) {
             .export_values();
 }
 
+void init_CONSTRAINTS(py::module &m) {
+    py::enum_<pddl_lib::CONSTRAINTS>(m, "CONSTRAINTS", R"(
+  The CONSTRAINTS class from parser.
+									     )")
+            .value("ONEOF", pddl_lib::ONEOF)
+            .export_values();
+}
+
+
 PYBIND11_MODULE(parser, m) {
     m.doc() = R"(
             PDDL parser functionalities.
             )";
     init_OPERATION(m);
+    init_CONSTRAINTS(m);
     init_Condition(m);
     init_Domain(m);
+    init_Constraint(m);
+    init_Problem(m);
     init_Action(m);
     init_Predicate(m);
+    init_InstantiatedPredicate(m);
     init_Parameter(m);
+    init_InstantiatedParameter(m);
 }

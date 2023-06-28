@@ -665,17 +665,17 @@ namespace pddl_lib {
         mutex_.unlock();
     }
 
-    void UnknownPredicates::concurrent_insert(const UnknownInstantiatedPredicate &value) {
+    void UnknownPredicates::concurrent_insert(const InstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         insert(value);
     }
 
-    void UnknownPredicates::concurrent_erase(const UnknownInstantiatedPredicate &value) {
+    void UnknownPredicates::concurrent_erase(const InstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         erase(value);
     }
 
-    bool UnknownPredicates::concurrent_find(const UnknownInstantiatedPredicate &value) {
+    bool UnknownPredicates::concurrent_find(const InstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         return find(value) != end();
     }
