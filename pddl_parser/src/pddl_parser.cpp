@@ -11,6 +11,8 @@ namespace pddl_lib {
 
     std::vector<Parameter> parse_params(std::vector<std::string_view> str);
 
+    std::vector<InstantiatedParameter> parse_instantiated_params(std::vector<std::string_view> str);
+
 
     std::optional<std::string> checkParens(const std::string &content) {
         auto ind = 0ul;
@@ -93,7 +95,114 @@ namespace pddl_lib {
     }
 
 
-    std::optional<std::string> parseInit(const std::string &content, Domain &domain) {
+    std::optional<std::string> parse_problem_internal(const std::string &content, Problem &problem) {
+        std::string_view remaining;
+        std::string_view current;
+        std::string_view section;
+        std::string matched_token;
+
+        std::tie(section, remaining) = getNextParen(content);
+        const auto strings = parseVector(section, {'\t', '\n', ' '});
+
+        int ind = 0;
+
+        if (strings[ind] != "define") {
+            return fmt::format("ERROR line {}: start of file does not begin with '(define'",
+                               get_line_num(content, strings[ind]));
+        }
+        ind++;
+
+
+        std::tie(section, remaining) = getNextParen(strings[ind]);
+        auto substrings = parseVector(section, {'\t', '\n', ' '});
+        if (substrings[0] != "problem") {
+            return fmt::format("ERROR line {}: missing 'domain' keyword",
+                               get_line_num(content, substrings[0]));
+        }
+        problem.name = substrings[1];
+        ind++;
+
+
+        std::tie(section, remaining) = getNextParen(strings[ind]);
+        substrings = parseVector(section, {'\t', '\n', ' '});
+        if (substrings[0] != ":domain") {
+            return fmt::format("ERROR line {}: missing ':domain' keyword", get_line_num(content, substrings[0]));
+        }
+        problem.domain = substrings[1];
+        ind++;
+
+        std::tie(section, remaining) = getNextParen(strings[ind]);
+        substrings = parseVector(section, {'\t', '\n', ' '});
+        if (substrings[0] != ":objects") {
+            return fmt::format("ERROR line {}: missing ':objects' keyword", get_line_num(content, substrings[0]));
+        }
+        problem.objects = parse_instantiated_params(
+                std::vector<std::string_view>(substrings.begin() + 1, substrings.end()));
+        ind++;
+
+        std::tie(section, remaining) = getNextParen(strings[ind]);
+        substrings = parseVector(section, {'\t', '\n', ' '});
+        if (substrings[0] != ":init") {
+            return fmt::format("ERROR line {}: missing ':init' keyword", get_line_num(content, substrings[0]));
+        }
+        for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
+            std::tie(section, remaining) = getNextParen(str);
+            auto subsubstrings = parseVector(section, {'\t', '\n', ' '});
+            if (subsubstrings[0] == "unknown") {
+                if (auto pred = parse_instantiated_predicate(std::string(subsubstrings[1]))) {
+                    problem.unknowns.insert({pred.value()});
+                } else {
+                    return fmt::format("ERROR line {}: failed to parse unknown predicate \n{}",
+                                       get_line_num(content, str),
+                                       pred.error());
+                }
+            } else if (subsubstrings[0] == "oneof") {
+                Constraint con;
+                con.constraint = CONSTRAINTS::ONEOF;
+                for (const auto &tmp: std::vector<std::string_view>(subsubstrings.begin() + 1, subsubstrings.end())) {
+                    if (auto pred = parse_instantiated_predicate(std::string(tmp))) {
+                        con.predicates.insert(pred.value());
+                    } else {
+                        return fmt::format("ERROR line {}: failed to parse oneof predicate \n{}",
+                                           get_line_num(content, str),
+                                           pred.error());
+                    }
+                }
+                problem.constraints.push_back(con);
+
+            } else {
+                if (auto pred = parse_instantiated_predicate(std::string(str))) {
+                    problem.init.insert(pred.value());
+                } else {
+                    return fmt::format("ERROR line {}: failed to parse predicate \n{}", get_line_num(content, str),
+                                       pred.error());
+                }
+            }
+
+
+        }
+        ind++;
+
+        std::tie(section, remaining) = getNextParen(strings[ind]);
+        substrings = parseVector(section, {'\t', '\n', ' '});
+        if (substrings[0] != ":goal") {
+            return fmt::format("ERROR line {}: missing ':goal' keyword", get_line_num(content, substrings[0]));
+        }
+        for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
+            if (auto pred = parse_instantiated_predicate(std::string(str))) {
+                problem.goal.insert(pred.value());
+            } else {
+                return fmt::format("ERROR line {}: failed to parse goal predicate \n{}", get_line_num(content, str),
+                                   pred.error());
+            }
+        }
+        ind++;
+
+        return {};
+    }
+
+
+    std::optional<std::string> parse_domain_internal(const std::string &content, Domain &domain) {
         std::string_view remaining;
         std::string_view current;
         std::string_view section;
@@ -252,11 +361,24 @@ namespace pddl_lib {
             return tl::unexpected(fmt::format("ERROR: failed to parse domain\n{}", error.value()));
         }
 
-        if (auto error = parseInit(content, domain)) {
+        if (auto error = parse_domain_internal(content, domain)) {
             return tl::unexpected(fmt::format("ERROR: failed to parse domain\n{}", error.value()));
         }
 
         return domain;
+    }
+
+    tl::expected<Problem, std::string> parse_problem(const std::string &content) {
+        Problem problem;
+        if (auto error = checkParens(content)) {
+            return tl::unexpected(fmt::format("ERROR: failed to parse problem\n{}", error.value()));
+        }
+
+        if (auto error = parse_problem_internal(content, problem)) {
+            return tl::unexpected(fmt::format("ERROR: failed to parse problem\n{}", error.value()));
+        }
+
+        return problem;
     }
 
     tl::expected<Predicate, std::string>
@@ -268,6 +390,29 @@ namespace pddl_lib {
             pred.name = str[0];
 
             pred.parameters = parse_params(std::vector<std::string_view>(str.begin() + 1, str.end()));
+            for (auto &param: pred.parameters) {
+                if (param_to_type_map.find(param.name) != param_to_type_map.end()) {
+                    param.type = param_to_type_map.at(param.name);
+                }
+            }
+
+            return pred;
+
+        } catch (std::exception e) {
+            return tl::unexpected(std::string("ERROR: failed to parse predicate"));
+        }
+    }
+
+    tl::expected<InstantiatedPredicate, std::string>
+    parse_instantiated_predicate(const std::string &content,
+                                 const std::unordered_map<std::string, std::string> &param_to_type_map) {
+        try {
+            auto pred = InstantiatedPredicate();
+            auto [section, remaining] = getNextParen(content);
+            auto str = parseVector(section, {'\t', '\n', ' '});
+            pred.name = str[0];
+
+            pred.parameters = parse_instantiated_params(std::vector<std::string_view>(str.begin() + 1, str.end()));
             for (auto &param: pred.parameters) {
                 if (param_to_type_map.find(param.name) != param_to_type_map.end()) {
                     param.type = param_to_type_map.at(param.name);
@@ -302,6 +447,38 @@ namespace pddl_lib {
             } else if (ind == str.size()) {
                 for (const auto &name: names) {
                     auto param = Parameter();
+                    param.name = name;
+                    parameters.push_back(param);
+                }
+            } else {
+                throw std::runtime_error("failed to parse parameters");
+            }
+            ind++;
+        }
+        return parameters;
+    }
+
+    std::vector<InstantiatedParameter> parse_instantiated_params(std::vector<std::string_view> str) {
+        std::vector<InstantiatedParameter> parameters;
+        int ind = 0;
+        while (ind < str.size()) {
+            std::vector<std::string> names;
+            while (ind < str.size() && isalnum(str[ind][0])) {
+                names.push_back(std::string(str[ind]));
+                ind++;
+            }
+            if (ind < str.size() && str[ind][0] == '-') {
+                ind++;
+                auto type = str[ind];
+                for (const auto &name: names) {
+                    auto param = InstantiatedParameter();
+                    param.name = name;
+                    param.type = type;
+                    parameters.push_back(param);
+                }
+            } else if (ind == str.size()) {
+                for (const auto &name: names) {
+                    auto param = InstantiatedParameter();
                     param.name = name;
                     parameters.push_back(param);
                 }
@@ -488,17 +665,17 @@ namespace pddl_lib {
         mutex_.unlock();
     }
 
-    void UnknownPredicates::concurrent_insert(const InstantiatedPredicate &value) {
+    void UnknownPredicates::concurrent_insert(const UnknownInstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         insert(value);
     }
 
-    void UnknownPredicates::concurrent_erase(const InstantiatedPredicate &value) {
+    void UnknownPredicates::concurrent_erase(const UnknownInstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         erase(value);
     }
 
-    bool UnknownPredicates::concurrent_find(const InstantiatedPredicate &value) {
+    bool UnknownPredicates::concurrent_find(const UnknownInstantiatedPredicate &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         return find(value) != end();
     }
@@ -636,7 +813,7 @@ namespace pddl_lib {
         } else if (condition.op == OPERATION::NOT) {
             if (condition.predicates.size() == 1 && condition.conditions.empty()) {
                 auto pred = condition.predicates[0];
-                return !knownPredicates.concurrent_find(pred) && !unknownPredicates.concurrent_find(pred);
+                return !knownPredicates.concurrent_find(pred) && !unknownPredicates.concurrent_find({pred});
             } else if (condition.predicates.empty() && condition.conditions.size() == 1) {
                 return !check_conditions(condition.conditions[0]);
             } else {
@@ -670,7 +847,7 @@ namespace pddl_lib {
                 knownPredicates.concurrent_erase(pred);
             }
             // whether or not the predicate becomes true or false, it must be removed from the unknown set
-            unknownPredicates.concurrent_erase(pred);
+            unknownPredicates.concurrent_erase({pred});
         }
     }
 
@@ -681,12 +858,12 @@ namespace pddl_lib {
             if (constraint.constraint == CONSTRAINTS::ONEOF) {
                 std::vector<InstantiatedPredicate> preds;
                 for (const auto &pred_con: constraint.predicates) {
-                    if (unknownPredicates.concurrent_find(pred_con)) {
+                    if (unknownPredicates.concurrent_find({pred_con})) {
                         preds.push_back(pred_con);
                     }
                 }
                 if (preds.size() == 1) {
-                    unknownPredicates.concurrent_erase(preds[0]);
+                    unknownPredicates.concurrent_erase({preds[0]});
                     knownPredicates.concurrent_insert(preds[0]);
                     unknownPredicates.constraints.erase(unknownPredicates.constraints.begin() + ind);
                     continue;
@@ -706,6 +883,11 @@ namespace pddl_lib {
     }
 
 
+    std::string Problem::str() {
+        std::stringstream ss;
+        ss << *this;
+        return ss.str();
+    }
 } // pddl_lib
 
 
@@ -856,6 +1038,80 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::Domain &domain) {
     for (auto &action: domain.actions) {
         os << action;// << "\n";
     }
+
+    os << ")\n";
+
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const pddl_lib::Problem &problem) {
+    os << fmt::format("(define (problem {})\n", problem.name);
+    os << fmt::format("(:domain {})\n", problem.domain);
+
+    os << "(:objects\n";
+    std::unordered_map<std::string, std::vector<std::string>> type_to_name_map;
+    for (auto &obj: problem.objects) {
+        type_to_name_map[obj.type].push_back(obj.name);
+    }
+    for (auto [type, objs]: type_to_name_map) {
+        for (auto obj: objs) {
+            os << obj << " ";
+        }
+        os << "- " << type << "\n";
+    }
+    os << ")\n";
+
+    os << "(:init\n";
+    for (auto &pred: problem.init) {
+        os << "\t";
+        os << "(" << pred.name;
+        for (auto &param: pred.parameters) {
+            os << param;
+        }
+        os << ")";
+        os << "\n";
+    }
+
+    for (auto &pred: problem.unknowns) {
+        os << "\t";
+        os << "(unknown ";
+        os << "(" << pred.name;
+        for (auto &param: pred.parameters) {
+            os << param;
+        }
+        os << ")";
+        os << ")";
+        os << "\n";
+    }
+
+    for (auto &cond: problem.constraints) {
+        os << "\t";
+        assert(cond.constraint == pddl_lib::CONSTRAINTS::ONEOF);
+        os << "(oneof";
+        for (const auto &pred: cond.predicates) {
+            os << " (" << pred.name;
+            for (const auto &param: pred.parameters) {
+                os << param;
+            }
+            os << ")";
+        }
+        os << ")";
+        os << "\n";
+    }
+
+    os << ")\n";
+
+    os << "(:goal\n";
+    for (auto &pred: problem.goal) {
+        os << "\t";
+        os << "(" << pred.name;
+        for (auto &param: pred.parameters) {
+            os << param;
+        }
+        os << ")";
+        os << "\n";
+    }
+    os << ")\n";
 
     os << ")\n";
 

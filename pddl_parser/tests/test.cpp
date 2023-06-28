@@ -6,6 +6,26 @@
 
 using namespace pddl_lib;
 
+
+TEST(PROBLEM, parse) {
+    std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("pddl_parser");
+    std::filesystem::path test_dir = pkg_dir / "tests" / "pddl";
+    std::filesystem::path pddl_file = test_dir / "medicine_problem.pddl";
+
+    std::ifstream pddl_file_stream(pddl_file.string().c_str());
+    std::stringstream ss;
+    ss << pddl_file_stream.rdbuf();
+    std::string content = ss.str();
+
+    if (auto problem = parse_problem(content)) {
+        std::cout << problem.value() << std::endl;
+    } else {
+        std::cout << problem.error() << std::endl;
+        ASSERT_TRUE(false);
+    }
+
+}
+
 TEST(DOMAIN, parse) {
     std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("pddl_parser");
     std::filesystem::path test_dir = pkg_dir / "tests" / "pddl";
@@ -16,9 +36,9 @@ TEST(DOMAIN, parse) {
     ss << pddl_file_stream.rdbuf();
     std::string content = ss.str();
 
-    if (auto domain = parse_domain(content)){
-    } else{
-        std::cout << domain.error() <<std::endl;
+    if (auto domain = parse_domain(content)) {
+    } else {
+        std::cout << domain.error() << std::endl;
         ASSERT_TRUE(false);
     }
 
@@ -36,13 +56,12 @@ TEST(DOMAIN, parse_high_level) {
     ss << pddl_file_stream.rdbuf();
     std::string content = ss.str();
 
-    if (auto domain = parse_domain(content)){
-    } else{
-        std::cout << domain.error() <<std::endl;
+    if (auto domain = parse_domain(content)) {
+    } else {
+        std::cout << domain.error() << std::endl;
         ASSERT_TRUE(false);
     }
 
-//    std::cout << domain.value() << std::endl;
 
 }
 
