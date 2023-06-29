@@ -92,17 +92,19 @@ def main():
             param_subs = {pair[0].name.strip('?'): pair[1] for pair in zip(action.parameters, param)}
             action_inst = pddl_parser.parser.instantiate_action(action, param_subs, set(problem.objects))
 
-            param_str = str(param)
-            param_str = param_str.replace(',', '_')
-            param_str = param_str.replace(' ', '')
-            param_str = param_str.replace('(', '')
-            param_str = param_str.replace(')', '')
-            param_str = param_str.replace("'", '')
+            param_str = "_".join(p for p in param)
+            param_str = "_" + param_str
+            # param_str.replace(',', '_')
+            # param_str = param_str.replace(' ', '')
+            # param_str = param_str.replace('(', '')
+            # param_str = param_str.replace(')', '')
+            # param_str = param_str.replace("'", '')
 
             act = ActionInstance()
             act.name = action.name + param_str
 
-            act.pre = parse_preconditions(action_inst.precondtion, kb_template_map) + ';'
+            act.pre = parse_preconditions(action_inst.precondtion, kb_template_map) + parse_observe_preconditions(
+                action_inst.observe, kb_template_map) + ';'
             act.effect = parse_effect(action_inst.effect, kb_template_map)
             if len(action_inst.observe.predicates) > 0:
                 act.observe = parse_observe(action_inst.observe, kb_template_map)
@@ -168,6 +170,17 @@ def parse_observe(cond, kb_template_map):
         raise Exception(f"observe only support predicates")
 
     return out
+
+
+def parse_observe_preconditions(cond, kb_template_map):
+    if len(cond.predicates) == 0:
+        return ""
+    assert (len(cond.predicates) == 1)
+    assert (len(cond.conditions) == 0)
+    assert (cond.op == pddl_parser.parser.AND)
+    pred = cond.predicates[0]
+    index = kb_template_map[str(pred)]
+    return f" && (state.data[{index}]==2)"
 
 
 def parse_preconditions(cond, kb_template_map):
