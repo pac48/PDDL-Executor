@@ -35,6 +35,7 @@ class ActionInstance:
         self.name = ""
         self.pre = ""
         self.effect = ""
+        self.observe = ""
 
 
 def main():
@@ -49,8 +50,6 @@ def main():
     with open(problem_file) as f:
         problem = pddl_parser.parser.parse_problem(f.read())
 
-    print(domain)
-    print(problem)
     domain_types = set(domain.types)
     problem_objects_map = defaultdict(list)
     for object in problem.objects:
@@ -80,6 +79,7 @@ def main():
 
     # get all possible action instances
     all_actions = []
+    all_observe_actions = []
     for action in domain.actions:
         params = action.parameters
         objects = []
@@ -104,7 +104,11 @@ def main():
 
             act.pre = parse_preconditions(action_inst.precondtion, kb_template_map) + ';'
             act.effect = parse_effect(action_inst.effect, kb_template_map)
-            all_actions.append(act)
+            if len(action_inst.observe.predicates) > 0:
+                act.observe = parse_observe(action_inst.observe, kb_template_map)
+                all_observe_actions.append(act)
+            else:
+                all_actions.append(act)
 
     j2_template = Template(templates["pddl_data.hpp"])
 
@@ -113,54 +117,92 @@ def main():
     else:
         size_kb_data = 1 + (len(kb_template) // 1)
 
-    data = {'size_kb_data': size_kb_data, 'actions': all_actions}
+    indexers = []
+    for val in kb_template:
+        val = str(val)
+        val = val.replace(',', '_')
+        val = val.replace(' ', '')
+        val = val.replace('(', '')
+        val = val.replace(')', '')
+        val = val.replace("'", '')
+        indexers.append(val)
+
+    data = {'size_kb_data': size_kb_data, 'actions': all_actions, 'observe_actions': all_observe_actions,
+            'indexers': indexers}
     code = j2_template.render(data, trim_blocks=True)
 
     with open(output_file, 'w') as f:
         f.write(code)
 
 
-def parse_effect(cond, kb_template_map):
+def parse_effect(cond, kb_template_map, truth_val=True):
+    if cond.op == pddl_parser.parser.NOT:
+        assert (len(cond.predicates) == 1)
+        assert (len(cond.conditions) == 0)
+        index = kb_template_map[str(cond.predicates[0])]
+        out = f"state.data[{index}] = 0;\n"
+    elif cond.op == pddl_parser.parser.AND:
+        out = ''
+        for (ind, pred) in enumerate(cond.predicates):
+            index = kb_template_map[str(pred)]
+            out += f"state.data[{index}] = 1;\n"
+        for (ind, sub_cond) in enumerate(cond.conditions):
+            out += f"{parse_effect(sub_cond, kb_template_map)}"
+    else:
+        raise Exception("wrong condition for condition")
+
+    return out
+
+
+def parse_observe(cond, kb_template_map):
     out = ""
+    assert (cond.op == pddl_parser.parser.AND)
     for pred in cond.predicates:
         index = kb_template_map[str(pred)]
-        out += f"state.data[{index}] = 1;\n"
-    for sub_cond in cond.conditions:
-        if sub_cond.op == pddl_parser.parser.NOT and len(sub_cond.predicates) == 1:
-            index = kb_template_map[str(sub_cond.predicates[0])]
-            out += f"state.data[{index}] = 0;\n"
-        else:
-            raise Exception(f"effects only support (and p1 p2... (not p3) (not p4) ..) {cond.op}")
+        out += f"state1.data[{index}] = 1;\n"
+        out += f"state2.data[{index}] = 0;\n"
+    if len(cond.conditions) == 1:
+        cond = cond.conditions[0]
+
+    if len(cond.conditions) > 0:
+        raise Exception(f"observe only support predicates")
 
     return out
 
 
 def parse_preconditions(cond, kb_template_map):
-    out = ""
-    for (ind, pred) in enumerate(cond.predicates):
-        index = kb_template_map[str(pred)]
-        if ind == 0:
-            delim = ""
+    if cond.op == pddl_parser.parser.NOT:
+        assert (len(cond.conditions) == 1 or len(cond.predicates) == 1)
+        assert (len(cond.conditions) == 0 or len(cond.predicates) == 0)
+        if len(cond.conditions) == 1:
+            out = "!(" + parse_preconditions(cond, kb_template_map) + ')'
         else:
-            delim = " && "
-        out += f"{delim}state.data[{index}]"
-
-    if len(cond.conditions) > 0 and len(cond.predicates) > 0:
-        out += " && "
-    for (ind, sub_cond) in enumerate(cond.conditions):
-        if cond.op == pddl_parser.parser.AND:
+            out = "("
+            index = kb_template_map[str(cond.predicates[0])]
+            out += f"state.data[{index}]==0"
+            out += ')'
+    elif cond.op == pddl_parser.parser.AND:
+        out = "("
+        for (ind, pred) in enumerate(cond.predicates):
+            index = kb_template_map[str(pred)]
             if ind == 0:
                 delim = ""
             else:
                 delim = " && "
-        elif cond.op == pddl_parser.parser.NOT:
-            delim = " !"
-        elif cond.op == pddl_parser.parser.FORALL:
-            raise Exception(f"does not support condition FORALL here")
-        else:
-            raise Exception(f"does not support condition {cond.op}")
+            out += f"{delim}state.data[{index}]==1"
 
-        out += f"{delim}({parse_preconditions(sub_cond, kb_template_map)})"
+        if len(cond.conditions) > 0 and len(cond.predicates) > 0:
+            out += " && "
+        for (ind, sub_cond) in enumerate(cond.conditions):
+            if ind == 0:
+                delim = ""
+            else:
+                delim = " && "
+            out += f"{delim}({parse_preconditions(sub_cond, kb_template_map)})"
+        out += ')'
+    else:
+        raise Exception("wrong condition for condition")
+
     return out
 
 
