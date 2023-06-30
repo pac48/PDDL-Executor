@@ -91,12 +91,16 @@ void print_plan(const std::vector<pddl_lib::KBState> &open_list, unsigned int go
                               << next_ind
                               << "\n";
                     next_ind++;
-                } else if (state.associated_state < open_list[state.associated_state].associated_state) {
+                } else if (state.associated_state > open_list[state.associated_state].associated_state) {
                     std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- TRUESON: " << depth << "||"
                               << next_ind << " --- FALSESON: " << depth << "||"
                               << next_ind + 1
                               << "\n";
                     next_ind += 2;
+                } else {
+                    ind--;
+                    assert(state.associated_state != 0);
+                    assert(1 == abs(((int)(state.associated_state)) - ((int)(open_list[state.associated_state].associated_state)) ));
                 }
 
             }
@@ -112,27 +116,45 @@ int main(int argc, char **argv) {
     pddl_lib::KBState state{};
     memset(state.data, 0, sizeof(state.data));
 
+
+//    pddl_lib::indexers::robot_atpioneerhome(state) = 1;
+//    pddl_lib::indexers::door_locationdoor(state) = 1;
+//    // unknown
+//    pddl_lib::indexers::person_atnathandoor(state) = 2;
+//    pddl_lib::indexers::person_decides_to_go_outside_1(state) = 2;
+//    pddl_lib::indexers::person_decides_to_go_outside_2(state) = 2;
+//    pddl_lib::indexers::person_decides_to_return_1(state) = 2;
+//    pddl_lib::indexers::person_decides_to_return_2(state) = 2;
+//    pddl_lib::indexers::person_decides_to_go_to_bed_1(state) = 2;
+//    pddl_lib::indexers::person_decides_to_go_to_bed_2(state) = 2;
+//    pddl_lib::indexers::person_goes_to_bed_after_return_1(state) = 2;
+//    pddl_lib::indexers::person_goes_to_bed_after_return_2(state) = 2;
+
+
     pddl_lib::indexers::robot_atpioneerhome(state) = 1;
-    pddl_lib::indexers::door_locationdoor(state) = 1;
-
+    pddl_lib::indexers::medicine_locationkitchen(state) = 1;
     // unknown
-    pddl_lib::indexers::person_atnathandoor(state) = 2;
-
-    pddl_lib::indexers::person_decides_to_go_outside_1(state) = 2;
-    pddl_lib::indexers::person_decides_to_go_outside_2(state) = 2;
-    pddl_lib::indexers::person_decides_to_return_1(state) = 2;
-    pddl_lib::indexers::person_decides_to_return_2(state) = 2;
-    pddl_lib::indexers::person_decides_to_go_to_bed_1(state) = 2;
-    pddl_lib::indexers::person_decides_to_go_to_bed_2(state) = 2;
-    pddl_lib::indexers::person_goes_to_bed_after_return_1(state) = 2;
-    pddl_lib::indexers::person_goes_to_bed_after_return_2(state) = 2;
+    pddl_lib::indexers::person_atnathancouch(state) = 2;
+    pddl_lib::indexers::person_atnathankitchen(state) = 2;
+    pddl_lib::indexers::person_atnathanhome(state) = 2;
+    pddl_lib::indexers::guide_to_succeeded_attempt_1(state) = 2;
+    pddl_lib::indexers::guide_to_succeeded_attempt_2(state) = 2;
+    pddl_lib::indexers::notify_automated_succeeded(state) = 2;
+    pddl_lib::indexers::notify_recorded_succeeded(state) = 2;
+    //constraints
+    std::array<unsigned char, 23> constraint{};
+    memset(constraint.data(), 0, sizeof(constraint));
+    constraint[pddl_lib::indexers::person_atnathancouch_index()] = 1;
+    constraint[pddl_lib::indexers::person_atnathankitchen_index()] = 1;
+    constraint[pddl_lib::indexers::person_atnathanhome_index()] = 1;
+    std::vector<std::array<unsigned char, 23>> constraints = {constraint};
 
 
     unsigned int max_depth = 0;
     auto start = std::chrono::high_resolution_clock::now();
 
-    std::array<pddl_lib::KBState, 103> new_states{};
-    std::array<int, 103> valid{};
+    std::array<pddl_lib::KBState, 70> new_states{};
+    std::array<int, 70> valid{};
     memset(valid.data(), 0, sizeof(valid));
     memset(new_states.data(), 0, sizeof(new_states));
 
@@ -160,13 +182,14 @@ int main(int argc, char **argv) {
                 print_plan(open_list, counter);
                 break;
             } else {
+//                print_plan(open_list, counter);
                 counter++;
                 continue;
             }
         }
         close_list.insert(open_list[counter]); // TODO it seems like the goal state should not be in the closes list
 
-        pddl_lib::expand(open_list[counter], new_states, valid);
+        pddl_lib::expand(open_list[counter], new_states, valid, constraints);
 
         if ((counter % 1000000) == 0) {
             std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "

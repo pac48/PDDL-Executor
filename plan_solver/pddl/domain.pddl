@@ -1,4 +1,4 @@
-(define (domain midnight_wondering_domain)
+(define (domain paul_shr_conditional)
 
 (:requirements :strips :typing)
 
@@ -9,318 +9,48 @@
 )
 
 (:predicates
-	(robot_at ?v - robot ?lm - landmark)
+	(robot_at ?r - robot ?lm - landmark)
 	(person_at ?p - person ?lm - landmark)
-	(door_location ?lm - landmark)
+	(medicine_location ?lm - landmark)
 
-	;; control flow
+	(asked_caregiver_help ?p - person)
+	(robot_updated_1)
+	(robot_updated_2)
+
 	(init_move_to_landmark)
-	(init_detect_person_left_house_1)
-	(init_detect_person_left_house_2)
-	(init_check_bed_after_return)
-	(init_check_bed_after_return2)
+	(init_guide_person_to_landmark_attempt)
 
-	;; keep track of actions performed
-	(tried_notify_automated)
-	(tried_notify_recorded)
-	(tried_detect_person_left_house_1)
-	(tried_detect_person_left_house_2)
-
-	(called_emergency)
-	(called_caregiver_wondering)
-	(called_caregiver_ask_to_go_to_bed)
-
-	;; unknowns
+	(guide_to_succeeded_attempt_1 )
+	(guide_to_succeeded_attempt_2)
 	(notify_automated_succeeded)
 	(notify_recorded_succeeded)
-	(person_decides_to_go_outside_1)
-	(person_decides_to_go_outside_2)
-	(person_decides_to_return_1)
-	(person_decides_to_return_2)
-	(person_decides_to_go_to_bed_1)
-	(person_decides_to_go_to_bed_2)
-	(person_goes_to_bed_after_return_1)
-	(person_goes_to_bed_after_return_2)
+
+	(tried_guide_person_landmark_1)
+	(tried_guide_person_landmark_2)
+
+	(enable_check_guide_1)
+	(enable_check_guide_2)
 
 	(success)
+
 )
 
-;; Notify message at landmark
-(:action notifyAutomatedMidnightAt
-	:parameters (?r - robot ?p - person ?loc - landmark)
-	:precondition  (and
-                        (robot_at ?r ?loc)
-                        (person_at ?p ?loc)
-                        (not (tried_notify_automated))
-                        (not (init_detect_person_left_house_1))
-                        (not (init_detect_person_left_house_2))
-                        (not (init_check_bed_after_return))
-	        	(not (init_move_to_landmark))
-               	   )
-	:effect (tried_notify_automated)
-)
-
-;; Notify message at landmark
-(:action notifyRecordedMidnightAt
-	:parameters (?r - robot ?p - person ?loc - landmark)
-	:precondition (and
-		        (robot_at ?r ?loc)
-		        (person_at ?p ?loc)
-		        (tried_notify_automated)
-		        (not (person_decides_to_go_to_bed_1))
-		        (not (tried_notify_recorded))
-		        (not (init_detect_person_left_house_1))
-		        (not (init_detect_person_left_house_2))
-		        (not (init_check_bed_after_return))
-	        	(not (init_move_to_landmark))
-               	   )
-	:effect (tried_notify_recorded)
-)
-
-;; detect if person is at location
-(:action DetectPerson
+(:action detectPerson
     :parameters (?r - robot ?p - person ?loc - landmark)
     :precondition (and
     			(robot_at ?r ?loc)
-			(not (init_detect_person_left_house_1))
-            (not (init_detect_person_left_house_2))
-            (not (init_check_bed_after_return))
-        (not (init_move_to_landmark))
+			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
    		 )
     :observe (person_at ?p ?loc)
-)
-
-(:action initDetectPersonLeftHouse1
-    :parameters (?p - person ?r - robot ?loc - landmark)
-    :precondition (and
-    			(tried_notify_automated)
-    			(door_location ?loc)
-    			(robot_at ?r ?loc)
-    			(person_at ?p ?loc)
-	   		(not (init_detect_person_left_house_1))
-            (not (init_detect_person_left_house_2))
-            (not (init_check_bed_after_return))
-        (not (init_move_to_landmark))
-		)
-    :effect (init_detect_person_left_house_1)
-)
-(:action initDetectPersonLeftHouse2
-    :parameters (?p - person ?r - robot ?loc - landmark)
-    :precondition (and
-    			(tried_notify_recorded)
-    			(door_location ?loc)
-    			(robot_at ?r ?loc)
-    			(person_at ?p ?loc)
-	   		(not (init_detect_person_left_house_1))
-            (not (init_detect_person_left_house_2))
-            (not (init_check_bed_after_return))
-        (not (init_move_to_landmark))
-		)
-    :effect (init_detect_person_left_house_2)
-)
-;; detect if person leaves house
-(:action detectPersonLeftHouse1
-    :parameters (?r - robot ?loc - landmark)
-    :precondition (and
-    			(init_detect_person_left_house_1)
-		)
-    :observe (person_decides_to_go_outside_1)
-)
-;; detect if person leaves house
-(:action detectPersonLeftHouse2
-    :parameters (?r - robot ?loc - landmark)
-    :precondition (and
-    			(init_detect_person_left_house_2)
-		)
-    :observe (person_decides_to_go_outside_2)
-)
-
-;; detect human action, either: go to bed, open door, go outside
-(:action personGoOutside1
-    :parameters (?p - person)
-    :precondition (and
-    			(person_decides_to_go_outside_1)
-    			(init_detect_person_left_house_1)
-		)
-    :effect (and
-    		(forall (?loc - landmark) (not (person_at ?p ?loc)))
-    		(not (init_detect_person_left_house_1))
-	    )
-)
-(:action personGoOutside2
-    :parameters (?p - person)
-    :precondition (and
-    			(person_decides_to_go_outside_2)
-    			(init_detect_person_left_house_2)
-		)
-    :effect (and
-    		(forall (?loc - landmark) (not (person_at ?p ?loc)))
-    		(not (init_detect_person_left_house_2))
-	    )
-)
-
-(:action finishDetectPerson1
-    :parameters (?p - person)
-    :precondition (and
-			(init_detect_person_left_house_1)
-			(not (person_decides_to_go_outside_1))
-		)
-    :effect (and
-    	(not (init_detect_person_left_house_1))
-    	(tried_detect_person_left_house_1)
-    )
-)
-(:action finishDetectPerson2
-    :parameters (?p - person)
-    :precondition (and
-			(init_detect_person_left_house_2)
-			(not (person_decides_to_go_outside_2))
-		)
-    :effect (and
-    	(not (init_detect_person_left_house_2))
-    	(tried_detect_person_left_house_2)
-    )
-)
-
-;; check if person went to bed
-(:action checkIfPersonWentToBed1
-    :parameters (?p - person ?loc - landmark)
-    :precondition (and
-    			(door_location ?loc)
-    			(person_at ?p ?loc)
-    			(tried_detect_person_left_house_1)
-		)
-    :observe (person_decides_to_go_to_bed_1)
-)
-
-(:action checkIfPersonWentToBed2
-    :parameters (?p - person ?loc - landmark)
-    :precondition (and
-    			(door_location ?loc)
-    			(person_at ?p ?loc)
-    			(tried_detect_person_left_house_2)
-		)
-    :observe (person_decides_to_go_to_bed_2)
-)
-
-
-;;call caregiver and ask person to go to sleep
-(:action callCaregiverAskToGoToBed
-    :parameters (?p - person)
-    :precondition (and
-    			(tried_notify_automated)
-         		(tried_notify_recorded)
-    			(not (person_decides_to_go_to_bed_2))
-    			(not (person_decides_to_go_to_bed_1))
-		)
-    :effect (called_caregiver_ask_to_go_to_bed)
-)
-
-(:action waitForPersonToReturn1
-    :parameters (?p - person)
-    :precondition (and
-			(forall (?loc - landmark) (not (person_at ?p ?loc)))
-		)
-    :observe (person_decides_to_return_1)
-)
-(:action updatePersonLocation1
-    :parameters (?p - person ?loc - landmark)
-    :precondition (and
-	                (door_location ?loc)
-    			(person_decides_to_return_1)
-		)
-    :effect (person_at ?p ?loc)
-)
-(:action updatePersonLocation2
-    :parameters (?p - person ?loc - landmark)
-    :precondition (and
-	                (door_location ?loc)
-    			(person_decides_to_return_2)
-		)
-    :effect (person_at ?p ?loc)
-)
-
-
-;; call caregiver
-(:action callCaregiverWondering
-    :parameters (?p - person)
-    :precondition (and
-    			(not (person_decides_to_return_1))
-    			(not (init_detect_person_left_house_1))
-                (not (init_detect_person_left_house_2))
-                (not (init_check_bed_after_return))
-            (not (init_move_to_landmark))
-		)
-    :effect (called_caregiver_wondering)
-)
-
-
-(:action waitForPersonToReturn2
-    :parameters (?p - person)
-    :precondition (and
-    			(called_caregiver_wondering)
-			(forall (?loc - landmark) (not (person_at ?p ?loc)))
-		)
-    :observe (person_decides_to_return_2)
-)
-
-
-;; call emergency services
-(:action callEmergency
-    :parameters (?p - person)
-    :precondition (and
-    			(not (person_decides_to_return_2))
-    			(not (init_detect_person_left_house_1))
-                (not (init_detect_person_left_house_2))
-                (not (init_check_bed_after_return))
-            (not (init_move_to_landmark))
-		)
-    :effect (called_emergency)
-)
-
-;; Update success status
-(:action UpdateSuccess2
-	:parameters ()
-	:precondition (and
-		(not (person_decides_to_return_2))
-		(called_emergency)
-		)
-    :effect (success)
-)
-;; Update success status
-(:action UpdateSuccess3
-	:parameters ()
-	:precondition (and
-		(person_decides_to_go_to_bed_1)
-		)
-    :effect (success)
-)
-
-;; Update success status
-(:action UpdateSuccess4
-	:parameters ()
-	:precondition (and
-		(person_decides_to_go_to_bed_2)
-		)
-    :effect (success)
-)
-;; Update success status
-(:action UpdateSuccess5
-	:parameters ()
-	:precondition (and
-		(called_caregiver_ask_to_go_to_bed)
-		)
-    :effect (success)
 )
 
 ;; Init move
 (:action initMoveToLandmark
 	:parameters (?r - robot)
 	:precondition (and
-		        (not (init_detect_person_left_house_1))
-		        (not (init_detect_person_left_house_2))
-		        (not (init_check_bed_after_return))
 			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
 		      )
 	  :effect (and
 		      (forall (?loc - landmark)
@@ -335,96 +65,212 @@
 	:parameters (?r - robot ?to - landmark)
 	:precondition (and
 			(init_move_to_landmark)
+			(not (init_guide_person_to_landmark_attempt))
 		      )
 	:effect (and
                 (robot_at ?r ?to)
-                (not (init_move_to_landmark))
+                (not (enable_check_guide_1))
+                (not (enable_check_guide_2))
+		(not (init_move_to_landmark))
             )
 )
 
 
- ;;Update success status
- (:action InitCheckBedAfterReturn1
- :parameters  (?p - person ?loc - landmark)
-  	:precondition (and
-  		(door_location ?loc)
-         (person_at ?p ?loc)
-		 (person_decides_to_return_1)
-	 	)
-     :effect (init_check_bed_after_return)
+ ;; Init Guide
+(:action InitguidePersonToLandmarkAttempt
+	:parameters (?r - robot ?p - person ?to - landmark)
+	:precondition (and
+			(robot_at ?r ?to)
+			(person_at ?p ?to)
+			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
+		      )
+	  :effect (and
+		      (forall (?loc - landmark)
+			    (not (robot_at ?r ?loc))
+		      )
+		      (init_guide_person_to_landmark_attempt)
+  	        )
 )
 
- ;;notify_check
- (:action CheckBedAfterReturn1
- :parameters ()
-     :precondition (and
-		 (init_check_bed_after_return)
-	 	)
-     :observe (person_goes_to_bed_after_return_1)
-)
-;;Update success status
- (:action UpdateSuccess0
- :parameters (?p - person ?loc - landmark)
-     :precondition (and
-                 (person_goes_to_bed_after_return_1)
-                 )
-     :effect (and
-                 (not (init_check_bed_after_return))
-                 (success))
-)
-;;call caregiver and ask person to go to sleep
-(:action callCaregiverAskToGoToBedAfterReturn1
-    :parameters (?p - person)
-    :precondition (and
-                (init_check_bed_after_return)
-    			(not (person_goes_to_bed_after_return_1))
-		)
+
+;; Guide person from one landmark to another
+(:action guidePersonToLandmarkAttempt1
+	:parameters (?r - robot ?p - person ?to - landmark)
+	:precondition (and
+	                (not (tried_guide_person_landmark_1))
+                        (medicine_location ?to)
+                        (not (init_move_to_landmark))
+			(init_guide_person_to_landmark_attempt)
+                   )
     :effect (and
-    (not (init_check_bed_after_return))
-    (called_caregiver_ask_to_go_to_bed))
+                (robot_at ?r ?to)
+                (tried_guide_person_landmark_1)
+                (enable_check_guide_1)
+		(not (init_guide_person_to_landmark_attempt))
+            )
 )
 
- ;;Update success status
- (:action InitCheckBedAfterReturn2
- :parameters  (?p - person ?loc - landmark)
- 	:precondition (and
- 		(door_location ?loc)
-         (person_at ?p ?loc)
-		 (person_decides_to_return_2)
-	 	)
-     :effect (init_check_bed_after_return2)
+;; Guide person from one landmark to another
+(:action guidePersonToLandmarkAttempt2
+	:parameters (?r - robot ?p - person ?to - landmark)
+	:precondition (and
+                        (tried_guide_person_landmark_1)
+                        (not (tried_guide_person_landmark_2))
+                        (medicine_location ?to)
+                        (not (init_move_to_landmark))
+			(init_guide_person_to_landmark_attempt)
+                   )
+    :effect (and
+                (robot_at ?r ?to)
+                (tried_guide_person_landmark_2)
+                (enable_check_guide_2)
+		(not (init_guide_person_to_landmark_attempt))
+            )
 )
 
- ;;Update success status
- (:action CheckBedAfterReturn2
- :parameters ()
-     :precondition (and
-		 (init_check_bed_after_return2)
-	 	)
-     :observe (person_goes_to_bed_after_return_2)
+;; Notify message at landmark
+(:action checkGuideToSucceeded1
+	:parameters (?loc - landmark)
+	:precondition  (and
+		            (tried_guide_person_landmark_1)
+		            (enable_check_guide_1)
+			    (not (init_move_to_landmark))
+		            (not (init_guide_person_to_landmark_attempt))
+	                )
+	:observe (guide_to_succeeded_attempt_1)
+)
+;; Notify message at landmark
+(:action checkGuideToSucceeded2
+	:parameters (?loc - landmark)
+	:precondition  (and
+	                    (tried_guide_person_landmark_2)
+	                    (enable_check_guide_2)
+	                    (not (init_move_to_landmark))
+			    (not (init_guide_person_to_landmark_attempt))
+	                )
+	:observe (guide_to_succeeded_attempt_2)
+)
+
+
+
+;; Update person location
+(:action UpdatePersonLoc1
+	:parameters (?p - person ?from ?to - landmark)
+	:precondition (and
+	                (guide_to_succeeded_attempt_1)
+	                (person_at ?p ?from)
+	                (medicine_location ?to)
+                        (not (init_move_to_landmark))
+		        (not (init_guide_person_to_landmark_attempt))
+	               )
+    :effect ( and
+                (not (person_at ?p ?from))
+                (person_at ?p ?to)
+            )
+)
+
+;; Update person location
+(:action UpdatePersonLoc2
+	:parameters (?p - person ?from ?to - landmark)
+	:precondition (and
+			(guide_to_succeeded_attempt_2)
+			(person_at ?p ?from)
+			(medicine_location ?to)
+			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
+                   )
+	:effect ( and
+                (not (person_at ?p ?from))
+                (person_at ?p ?to)
+            )
 )
 
 ;; Update success status
-
 (:action UpdateSuccess1
-	:parameters  ()
+	:parameters ()
 	:precondition (and
-		(person_goes_to_bed_after_return_2)
-		(not (person_decides_to_return_1))
-		(called_caregiver_wondering)
-	)
+			(notify_automated_succeeded)
+			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
+		)
     :effect (success)
 )
-;;call caregiver and ask person to go to sleep
-(:action callCaregiverAskToGoToBedAfterReturn2
-    :parameters ()
-    :precondition (and
-                (init_check_bed_after_return2)
-    			(not (person_goes_to_bed_after_return_2))
+;; Update success status
+(:action UpdateSuccess2
+	:parameters ()
+	:precondition (and
+			(notify_recorded_succeeded)
+			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
 		)
-    :effect (and
-    (not (init_check_bed_after_return2))
-    (called_caregiver_ask_to_go_to_bed))
+	:effect (success)
+)
+;; Update success status
+(:action UpdateSuccess3
+	:parameters (?p - person)
+	:precondition (and
+			(asked_caregiver_help ?p)
+			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
+		)
+	:effect (success)
+)
+
+;; Notify message at landmark
+(:action notifyAutomatedMedicineAt
+	:parameters (?r - robot ?p - person ?loc - landmark)
+	:precondition  (and
+                        (robot_at ?r ?loc)
+                        (person_at ?p ?loc)
+                        (medicine_location ?loc)
+			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
+               	   )
+	:observe (notify_automated_succeeded)
+)
+
+;; Notify message at landmark
+(:action notifyRecordedMedicineAt
+	:parameters (?r - robot ?p - person ?loc - landmark)
+	:precondition (and
+		        (not (notify_automated_succeeded))
+		        (robot_at ?r ?loc)
+		        (person_at ?p ?loc)
+		        (medicine_location ?loc)
+			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
+               	   )
+	:observe (notify_recorded_succeeded)
+)
+
+
+;; ask for caregiver to convince person to do something
+(:action askCaregiverHelpMedicine1
+	:parameters (?r - robot ?p - person ?loc - landmark)
+	:precondition (and
+			(not (notify_automated_succeeded))
+			(not (notify_recorded_succeeded))
+			(robot_at ?r ?loc)
+			(person_at ?p ?loc)
+			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
+                   )
+	:effect (asked_caregiver_help ?p)
+)
+
+;; ask for caregiver to convince person to do something
+(:action askCaregiverHelpMedicine2
+	:parameters (?r - robot ?p - person ?loc - landmark)
+	:precondition (and
+			(not (guide_to_succeeded_attempt_1))
+			(not (guide_to_succeeded_attempt_2))
+			(robot_at ?r ?loc)
+			(person_at ?p ?loc)
+			(not (init_move_to_landmark))
+			(not (init_guide_person_to_landmark_attempt))
+                   )
+	:effect (asked_caregiver_help ?p)
 )
 
 

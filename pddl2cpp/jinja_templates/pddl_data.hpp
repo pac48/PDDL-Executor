@@ -74,10 +74,6 @@ namespace std {
 
 namespace pddl_lib {
 
-    void apply_observe_debug(){
-        int o = 0;
-    }
-
 {% for action in actions %}
 namespace {{action.name}} {
     bool check_preconditions(const KBState & state) {
@@ -89,6 +85,12 @@ namespace {{action.name}} {
 }
 {% endfor %}
 
+void apply_observe_debug_1(){
+    int o = 0;
+}
+void apply_observe_debug_2(){
+    int o = 0;
+}
 {% for action in observe_actions %}
 namespace {{action.name}} {
 bool check_preconditions(const KBState & state) {
@@ -97,14 +99,29 @@ bool check_preconditions(const KBState & state) {
 void apply_effect(KBState & state) {
     {{action.effect}}
 }
-void apply_observe(KBState & state1, KBState & state2) {
+void apply_observe(KBState & state1, KBState & state2, const std::vector<std::array<unsigned char, {{size_kb_data}}>> & constraints) {
     {{action.observe}}
-    apply_observe_debug();
+    apply_observe_debug_1();
+    for (const auto &constraint: constraints) {
+        bool none_true = true;
+        unsigned int num_unknown = 0;
+        unsigned int unknown_index = 0;
+        for (unsigned int i = 0ul; i < constraint.size(); i++) {
+            none_true &= (state2.data[i] != 1 || constraint[i] == 0);
+            num_unknown += (state2.data[i] == 2 && constraint[i] == 1);
+            unknown_index = std::max(unknown_index, i*(state2.data[i]==2)*(constraint[i] == 1));
+        }
+        if (num_unknown == 1 && none_true){
+            apply_observe_debug_2();
+            state2.data[unknown_index] = 1;
+        }
+    }
 }
 }
 {% endfor %}
 
-void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*observe_actions|length}}> & new_states, std::array<int, {{actions|length + 2*observe_actions|length}}> & valid){
+void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*observe_actions|length}}> & new_states, std::array<int, {{actions|length + 2*observe_actions|length}}> & valid,
+            const std::vector<std::array<unsigned char, {{size_kb_data}}>> & constraints={}){
 {% for action in actions %}
 if ({{action.name}}::check_preconditions(cur_state)){
         new_states[{{ loop.index - 1}}] = cur_state;
@@ -123,7 +140,7 @@ if ({{action.name}}::check_preconditions(cur_state)){
     new_states[{{actions|length + 2*loop.index - 2 + 1}}].action = {{actions|length + loop.index - 1}};
     {{action.name}}::apply_effect(new_states[{{actions|length + 2*loop.index - 2}}]);
     {{action.name}}::apply_effect(new_states[{{actions|length + 2*loop.index - 2 + 1}}]);
-    {{action.name}}::apply_observe(new_states[{{actions|length + 2*loop.index - 2}}], new_states[{{actions|length + 2*loop.index - 2 + 1}}]);
+    {{action.name}}::apply_observe(new_states[{{actions|length + 2*loop.index - 2}}], new_states[{{actions|length + 2*loop.index - 2 + 1}}], constraints);
     valid[{{actions|length + 2*loop.index - 2}}] = 1;
     valid[{{actions|length + 2*loop.index - 2 + 1}}] = 1;
     new_states[{{actions|length + 2*loop.index - 2}}].associated_state = {{actions|length + 2*loop.index - 2 + 1}};
