@@ -33,17 +33,17 @@ namespace indexers {
     }
 {%- endfor %}
 
-std::string get_action_name(unsigned int index){
+std::vector<std::string> get_action_string(unsigned int index){
 
 {% for action in actions %}
 if (index == {{loop.index -1}}){
-    return "{{action.name}}";
+    return {"{{action.base_name}}"{% for param in action.params %}, "{{param}}"{%- endfor %}};
 }
 {%- endfor %}
 
 {% for action in observe_actions %}
 if (index == {{actions|length + loop.index -1}}){
-    return "{{action.name}}";
+    return {"{{action.base_name}}"{% for param in action.params %}, "{{param}}"{%- endfor %}};
 }
 {%- endfor %}
     throw std::runtime_error("index not in action set");

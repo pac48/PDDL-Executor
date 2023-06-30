@@ -33,9 +33,11 @@ def parse_args():
 class ActionInstance:
     def __init__(self):
         self.name = ""
+        self.base_name = ""
         self.pre = ""
         self.effect = ""
         self.observe = ""
+        self.params = ""
 
 
 def main():
@@ -102,6 +104,8 @@ def main():
 
             act = ActionInstance()
             act.name = action.name + param_str
+            act.base_name = action.name
+            act.params = param
 
             act.pre = parse_preconditions(action_inst.precondtion, kb_template_map) + parse_observe_preconditions(
                 action_inst.observe, kb_template_map) + ';'

@@ -1,16 +1,14 @@
-#include <cstdio>
 #include <unordered_map>
 #include <queue>
 #include <iostream>
 #include <chrono>
 #include <cassert>
+#include <sstream>
 #include "array"
 #include "pddl_problem.hpp"
 
 
 void disable_subtree(std::vector<pddl_lib::KBState> &open_list, pddl_lib::KBState &cur_state) {
-//    return;
-//    assert(cur_state.reached_goal != 1);
     cur_state.reached_goal = -1;
     for (auto child = cur_state.children_begin; child < cur_state.children_end; child++) {
         if (child > 0) {
@@ -38,45 +36,74 @@ bool goal_propagate(std::vector<pddl_lib::KBState> &open_list, unsigned int goal
 }
 
 void print_plan(const std::vector<pddl_lib::KBState> &open_list, unsigned int goal_ind) {
-    const pddl_lib::KBState &goal_state = open_list[goal_ind];
-    assert(goal_state.reached_goal);
+    assert(open_list[goal_ind].reached_goal);
 
-
-    std::unordered_map<int, std::vector<std::string> > map;
+    std::unordered_map<int, std::vector<pddl_lib::KBState> > map;
+    std::unordered_map<int, int> depth_map; // tack the number of values inserted at each depth
     std::queue<unsigned int> q;
-    q.emplace(0);
+    for (auto ind = open_list[0].children_begin; ind < open_list[0].children_end; ind++) {
+        auto &child = open_list[ind];
+        if (child.reached_goal == 1) {
+            q.emplace(ind);
+        }
+    }
     while (!q.empty()) {
         auto &state = open_list[q.front()];
-        auto name = pddl_lib::indexers::get_action_name(state.action);
-        map[state.depth].push_back(name);
+//        if (depth_map.find(state.depth+1) == depth_map.end()) {
+//            depth_map[state.depth+1] = 0;
+//        }
+//        depth_map[state.depth+1]++;
+
+
+        map[state.depth].push_back(open_list[q.front()]);
+
         q.pop();
+        int counter = 0;
         for (auto ind = state.children_begin; ind < state.children_end; ind++) {
             auto &child = open_list[ind];
             if (child.reached_goal == 1) {
                 q.emplace(ind);
+                counter++;
             }
         }
+
+        assert(counter == 0 || counter == 1 || counter == 2);
     }
 
     std::cout << "-------------------------------------------------\n";
-    for (int depth = 1; depth < map.size(); depth++) {
-        const auto &action_names = map[depth];
+    for (int depth = 1; depth <= map.size(); depth++) {
+        const auto &state_set = map[depth];
         int ind = 0;
-        for (const auto &action_name: action_names) {
-            std::cout << depth - 1 << "||" << ind << " --- " << action_name << "\n";
+        int next_ind = 0;
+        for (const auto &state: state_set) {
+            auto name_vec = pddl_lib::indexers::get_action_string(state.action);
+            std::stringstream ss;
+            for (const auto &val: name_vec) {
+                ss << val << " ";
+            }
+            auto action_name = ss.str();
+            if (state.children_end - state.children_begin <= 0) {
+                std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||" << -1
+                          << "\n";
+            } else {
+                if (state.associated_state == 0) {
+                    std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||"
+                              << next_ind
+                              << "\n";
+                    next_ind++;
+                } else if (state.associated_state < open_list[state.associated_state].associated_state) {
+                    std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- TRUESON: " << depth << "||"
+                              << next_ind << " --- FALSESON: " << depth << "||"
+                              << next_ind + 1
+                              << "\n";
+                    next_ind += 2;
+                }
+
+            }
             ind++;
         }
         std::cout << "-------------------------------------------------\n";
     }
-    int o = 0;
-//    auto ind = goal_ind;
-//    while (ind){
-//
-//        ind = open_list[ind].parent;
-//    }
-
-
-
 
 }
 
@@ -172,12 +199,6 @@ int main(int argc, char **argv) {
                 } else {
                     if (new_states[i].data[success_index] == 1) {
                         assert(0);
-                        if (goal_propagate(open_list, counter)) {
-                            assert(0);
-                            std::cout << "fond plan" << std::endl;
-                            print_plan(open_list, counter);
-                            break;
-                        }
                     }
                 }
             }
