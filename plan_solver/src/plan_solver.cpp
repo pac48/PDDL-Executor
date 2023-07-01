@@ -1,10 +1,14 @@
-#include <unordered_map>
-#include <queue>
-#include <iostream>
-#include <chrono>
-#include <cassert>
-#include <sstream>
 #include "array"
+#include <fstream>
+#include <cassert>
+#include <chrono>
+#include <filesystem>
+#include <iostream>
+#include <queue>
+#include <sstream>
+#include <unordered_map>
+
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include "pddl_problem.hpp"
 
 
@@ -100,7 +104,8 @@ void print_plan(const std::vector<pddl_lib::KBState> &open_list, unsigned int go
                 } else {
                     ind--;
                     assert(state.associated_state != 0);
-                    assert(1 == abs(((int)(state.associated_state)) - ((int)(open_list[state.associated_state].associated_state)) ));
+                    assert(1 == abs(((int) (state.associated_state)) -
+                                    ((int) (open_list[state.associated_state].associated_state))));
                 }
 
             }
@@ -111,12 +116,9 @@ void print_plan(const std::vector<pddl_lib::KBState> &open_list, unsigned int go
 
 }
 
-
 int main(int argc, char **argv) {
-    pddl_lib::KBState state{};
-    memset(state.data, 0, sizeof(state.data));
 
-
+//   // midnight
 //    pddl_lib::indexers::robot_atpioneerhome(state) = 1;
 //    pddl_lib::indexers::door_locationdoor(state) = 1;
 //    // unknown
@@ -131,39 +133,82 @@ int main(int argc, char **argv) {
 //    pddl_lib::indexers::person_goes_to_bed_after_return_2(state) = 2;
 
 
-    pddl_lib::indexers::robot_atpioneerhome(state) = 1;
-    pddl_lib::indexers::medicine_locationkitchen(state) = 1;
-    // unknown
-    pddl_lib::indexers::person_atnathancouch(state) = 2;
-    pddl_lib::indexers::person_atnathankitchen(state) = 2;
-    pddl_lib::indexers::person_atnathanhome(state) = 2;
-    pddl_lib::indexers::guide_to_succeeded_attempt_1(state) = 2;
-    pddl_lib::indexers::guide_to_succeeded_attempt_2(state) = 2;
-    pddl_lib::indexers::notify_automated_succeeded(state) = 2;
-    pddl_lib::indexers::notify_recorded_succeeded(state) = 2;
-    //constraints
-    std::array<unsigned char, 23> constraint{};
-    memset(constraint.data(), 0, sizeof(constraint));
-    constraint[pddl_lib::indexers::person_atnathancouch_index()] = 1;
-    constraint[pddl_lib::indexers::person_atnathankitchen_index()] = 1;
-    constraint[pddl_lib::indexers::person_atnathanhome_index()] = 1;
-    std::vector<std::array<unsigned char, 23>> constraints = {constraint};
+//    // medicine
+//    pddl_lib::indexers::robot_atpioneerhome(state) = 1;
+//    pddl_lib::indexers::medicine_locationkitchen(state) = 1;
+//    // unknown
+//    pddl_lib::indexers::person_atnathancouch(state) = 2;
+//    pddl_lib::indexers::person_atnathankitchen(state) = 2;
+//    pddl_lib::indexers::person_atnathanhome(state) = 2;
+//    pddl_lib::indexers::person_atnathanbedroom(state) = 2;
+//    pddl_lib::indexers::person_atnathanliving(state) = 2;
+//    pddl_lib::indexers::person_atnathandinning(state) = 2;
+//    pddl_lib::indexers::person_atnathanhall(state) = 2;
+//    pddl_lib::indexers::guide_to_succeeded_attempt_1(state) = 2;
+//    pddl_lib::indexers::guide_to_succeeded_attempt_2(state) = 2;
+//    pddl_lib::indexers::notify_automated_succeeded(state) = 2;
+//    pddl_lib::indexers::notify_recorded_succeeded(state) = 2;
+//    //constraints
+//    std::array<unsigned char, 35> constraint{};
+//    memset(constraint.data(), 0, sizeof(constraint));
+//    constraint[pddl_lib::indexers::person_atnathancouch_index()] = 1;
+//    constraint[pddl_lib::indexers::person_atnathankitchen_index()] = 1;
+//    constraint[pddl_lib::indexers::person_atnathanhome_index()] = 1;
+//    constraint[pddl_lib::indexers::person_atnathanbedroom_index()] = 1;
+//    constraint[pddl_lib::indexers::person_atnathanliving_index()] = 1;
+//    constraint[pddl_lib::indexers::person_atnathandinning_index()] = 1;
+//    constraint[pddl_lib::indexers::person_atnathanhall_index()] = 1;
+//    std::vector<std::array<unsigned char, 35>> constraints = {constraint};
 
 
-    unsigned int max_depth = 0;
+//    // bomb
+//    pddl_lib::indexers::inp0b0(state) = 2;
+//    pddl_lib::indexers::inp1b0(state) = 2;
+//    pddl_lib::indexers::inp2b0(state) = 2;
+//    pddl_lib::indexers::inp3b0(state) = 2;
+//    pddl_lib::indexers::inp4b0(state) = 2;
+//    pddl_lib::indexers::inp5b0(state) = 2;
+//    pddl_lib::indexers::inp6b0(state) = 2;
+//    pddl_lib::indexers::inp7b0(state) = 2;
+//    pddl_lib::indexers::inp8b0(state) = 2;
+//
+//    std::array<unsigned char, 12> constraint{};
+//    memset(constraint.data(), 0, sizeof(constraint));
+//    constraint[pddl_lib::indexers::inp0b0_index()] = 1;
+//    constraint[pddl_lib::indexers::inp1b0_index()] = 1;
+//    constraint[pddl_lib::indexers::inp2b0_index()] = 1;
+//    constraint[pddl_lib::indexers::inp3b0_index()] = 1;
+//    constraint[pddl_lib::indexers::inp4b0_index()] = 1;
+//    constraint[pddl_lib::indexers::inp5b0_index()] = 1;
+//    constraint[pddl_lib::indexers::inp6b0_index()] = 1;
+//    constraint[pddl_lib::indexers::inp7b0_index()] = 1;
+//    constraint[pddl_lib::indexers::inp8b0_index()] = 1;
+//    std::vector<std::array<unsigned char, 12>> constraints = {constraint};
+
+//    std::vector<std::array<unsigned char, 12>> constraints = {constraint};
+
+    std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("plan_solver");
+    std::filesystem::path test_dir = pkg_dir  / "pddl";
+    std::filesystem::path pddl_file = test_dir / "problem.pddl";
+    std::ifstream f(pddl_file);
+    std::ifstream pddl_file_stream(pddl_file.string().c_str());
+    std::stringstream ss;
+    ss << pddl_file_stream.rdbuf();
+    std::string pddl_str = ss.str();
+    auto [state, new_states, valid, constraints, check_goal] = pddl_lib::initialize_problem(pddl_str);
+
+
     auto start = std::chrono::high_resolution_clock::now();
-
-    std::array<pddl_lib::KBState, 70> new_states{};
-    std::array<int, 70> valid{};
-    memset(valid.data(), 0, sizeof(valid));
-    memset(new_states.data(), 0, sizeof(new_states));
+    unsigned int max_depth = 0;
 
     std::unordered_set<pddl_lib::KBState> close_list;
-    int success_index = pddl_lib::indexers::success_index();
     std::vector<pddl_lib::KBState> open_list;
     open_list.push_back(state);
     auto counter = 0ul;
     while (open_list.size() > counter) {
+//        if (counter >= 10){ //10000000
+//            rebalance(open_list, counter);
+//        }
         if (open_list[counter].reached_goal == -1) {
             counter++;
             continue;
@@ -175,7 +220,7 @@ int main(int argc, char **argv) {
         }
 
         memset(valid.data(), 0, sizeof(valid));
-        if (open_list[counter].data[success_index] == 1) {
+        if (check_goal(open_list[counter])) {
             open_list[counter].reached_goal = 1;
             if (goal_propagate(open_list, counter)) {
                 std::cout << "fond plan" << std::endl;
@@ -183,6 +228,7 @@ int main(int argc, char **argv) {
                 break;
             } else {
 //                print_plan(open_list, counter);
+
                 counter++;
                 continue;
             }
@@ -197,9 +243,14 @@ int main(int argc, char **argv) {
         }
         open_list[counter].children_begin = open_list.size();
         auto i = 0ul;
+        int number_added = 0;
         while (i < valid.size()) {
+//            if (number_added > 3) {
+//                break;
+//            }
             if (valid[i] == 1) {
                 if (close_list.find(new_states[i]) == close_list.end()) {
+                    number_added++;
                     if (new_states[i].associated_state != 0) {
                         new_states[i + 1].associated_state = open_list.size();
                         new_states[i].associated_state = open_list.size() + 1;
@@ -220,7 +271,7 @@ int main(int argc, char **argv) {
                         std::cout << "max_depth: " << max_depth << std::endl;
                     }
                 } else {
-                    if (new_states[i].data[success_index] == 1) {
+                    if (check_goal(new_states[i])) {
                         assert(0);
                     }
                 }

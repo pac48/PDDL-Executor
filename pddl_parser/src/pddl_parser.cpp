@@ -159,15 +159,36 @@ namespace pddl_lib {
             } else if (subsubstrings[0] == "oneof") {
                 Constraint con;
                 con.constraint = CONSTRAINTS::ONEOF;
+                InstantiatedCondition condition;
                 for (const auto &tmp: std::vector<std::string_view>(subsubstrings.begin() + 1, subsubstrings.end())) {
                     if (auto pred = parse_instantiated_predicate(std::string(tmp))) {
-                        con.predicates.insert(pred.value());
+                        condition.predicates.push_back(pred.value());
                     } else {
                         return fmt::format("ERROR line {}: failed to parse oneof predicate \n{}",
                                            get_line_num(content, str),
                                            pred.error());
                     }
                 }
+                con.condition = condition;
+                problem.constraints.push_back(con);
+
+            } else if (subsubstrings[0] == "or") {
+                Constraint con;
+                con.constraint = CONSTRAINTS::OR_CONSTRAINT;
+                InstantiatedCondition condition;
+                for (const auto &tmp: std::vector<std::string_view>(subsubstrings.begin() + 1, subsubstrings.end())) {
+                    if (auto pred = parse_instantiated_predicate(std::string(tmp))) {
+                        condition.predicates.push_back(pred.value());
+                        continue;
+                    }
+                    if (auto cond = parse_instantiated_condition(std::string(tmp))) {
+                        condition.conditions.push_back(cond.value());
+                        continue;
+                    }
+                    return fmt::format("ERROR line {}: failed to parse or condition \n",
+                                       get_line_num(content, str));
+                }
+                con.condition = condition;
                 problem.constraints.push_back(con);
 
             } else {
@@ -188,12 +209,17 @@ namespace pddl_lib {
         if (substrings[0] != ":goal") {
             return fmt::format("ERROR line {}: missing ':goal' keyword", get_line_num(content, substrings[0]));
         }
-        for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
-            if (auto pred = parse_instantiated_predicate(std::string(str))) {
-                problem.goal.insert(pred.value());
-            } else {
-                return fmt::format("ERROR line {}: failed to parse goal predicate \n{}", get_line_num(content, str),
-                                   pred.error());
+        if (auto cond = parse_instantiated_condition(std::string(substrings[1]))) {
+            problem.goal= cond.value();
+        } else{
+            problem.goal.op = OPERATION::AND;
+            for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
+                if (auto pred = parse_instantiated_predicate(std::string(str))) {
+                    problem.goal.predicates.push_back(pred.value());
+                    continue;
+                } else{
+                    return fmt::format("ERROR line {}: failed to parse goal \n", get_line_num(content, str));
+                }
             }
         }
         ind++;
@@ -232,17 +258,16 @@ namespace pddl_lib {
 
         std::tie(section, remaining) = getNextParen(strings[ind]);
         substrings = parseVector(section, {'\t', '\n', ' '});
-        if (substrings[0] != ":requirements") {
-            return fmt::format("ERROR line {}: missing ':requirements' keyword", get_line_num(content, substrings[0]));
-        }
-        for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
-            domain.requirements.emplace_back(str);
-        }
-        ind++;
+        if (substrings[0] == ":requirements") {
+            for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
+                domain.requirements.emplace_back(str);
+            }
+            ind++;
 
+            std::tie(section, remaining) = getNextParen(strings[ind]);
+            substrings = parseVector(section, {'\t', '\n', ' '});
+        }
 
-        std::tie(section, remaining) = getNextParen(strings[ind]);
-        substrings = parseVector(section, {'\t', '\n', ' '});
         if (substrings[0] != ":types") {
             return fmt::format("ERROR line {}: missing ':types' keyword", get_line_num(content, substrings[0]));
         }
@@ -513,6 +538,8 @@ namespace pddl_lib {
             cond.op = OPERATION::OR;
         } else if (strings[0] == "not") {
             cond.op = OPERATION::NOT;
+        } else if (strings[0] == "when") {
+            cond.op = OPERATION::WHEN;
         } else if (strings[0] == "forall") {
             cond.op = OPERATION::FORALL;
             std::tie(section, remaining) = getNextParen(strings[ind]);
@@ -532,6 +559,46 @@ namespace pddl_lib {
                 continue;
             }
             if (auto pred = parse_predicate(std::string(strings[i]), param_to_type_map)) {
+                cond.predicates.emplace_back(pred.value());
+                continue;
+            }
+
+            return tl::unexpected(std::string("ERROR: failed to parse condition"));
+        }
+
+        return cond;
+
+    }
+
+    tl::expected<InstantiatedCondition, std::string>
+    parse_instantiated_condition(const std::string &content,
+                                 const std::unordered_map<std::string, std::string> &param_to_type_map) {
+        std::string_view section;
+        std::string_view remaining;
+        InstantiatedCondition cond;
+
+        std::tie(section, remaining) = getNextParen(content);
+        auto strings = parseVector(section, {'\t', '\n', ' '});
+        if (strings.empty()) {
+            cond.op = OPERATION::AND;
+            return cond;
+        }
+
+        int ind = 1;
+        if (strings[0] == "and") {
+            cond.op = OPERATION::AND;
+        } else if (strings[0] == "not") {
+            cond.op = OPERATION::NOT;
+        } else {
+            return tl::unexpected(std::string("ERROR: failed to parse instantiated condition"));
+        }
+
+        for (int i = ind; i < strings.size(); i++) {
+            if (auto cond2 = parse_instantiated_condition(std::string(strings[i]), param_to_type_map)) {
+                cond.conditions.emplace_back(cond2.value());
+                continue;
+            }
+            if (auto pred = parse_instantiated_predicate(std::string(strings[i]), param_to_type_map)) {
                 cond.predicates.emplace_back(pred.value());
                 continue;
             }
@@ -711,6 +778,25 @@ namespace pddl_lib {
         mutex_.unlock();
     }
 
+    bool check_pred_in_domain(const InstantiatedPredicate &pred,
+                              std::unordered_map<std::string, const Predicate *> name_pred) {
+        auto it = name_pred.find(pred.name);
+        if (it == name_pred.end()) {
+            return false;
+        }
+        auto potential_match = it->second;
+        if (potential_match->parameters.size() != pred.parameters.size()) {
+            return false;
+        }
+        for (int i = 0; i < pred.parameters.size(); i++) {
+            if (pred.parameters[i].type != potential_match->parameters[i].type) {
+                return false;
+            }
+        }
+        return true;
+
+    };
+
     std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
         std::stringstream ss;
         ss << fmt::format("(define (problem {}_problem)\n", domain.name);
@@ -739,50 +825,56 @@ namespace pddl_lib {
         for (const auto &pred: domain.predicates) {
             name_pred[pred.name] = &pred;
         }
-        auto check_pred_in_domain = [name_pred](const InstantiatedPredicate &pred) {
-            auto it = name_pred.find(pred.name);
-            if (it == name_pred.end()) {
-                return false;
-            }
-            auto potential_match = it->second;
-            if (potential_match->parameters.size() != pred.parameters.size()) {
-                return false;
-            }
-            for (int i = 0; i < pred.parameters.size(); i++) {
-                if (pred.parameters[i].type != potential_match->parameters[i].type) {
-                    return false;
-                }
-            }
-            return true;
 
-        };
 
         ss << "(:init\n";
         for (const auto &pred: knownPredicates) {
-            if (check_pred_in_domain(pred)) {
+            if (check_pred_in_domain(pred, name_pred)) {
                 ss << "\t" << pred_to_str_no_type(pred) << "\n";
             }
         }
         for (auto &pred: unknownPredicates) {
-            if (check_pred_in_domain(pred)) {
+            if (check_pred_in_domain(pred, name_pred)) {
                 ss << "\t" << "(unknown " << pred_to_str_no_type(pred) << ")" << "\n";
             }
         }
         for (auto &constraint: unknownPredicates.constraints) {
             assert(constraint.constraint == CONSTRAINTS::ONEOF);
             // remove entire constraint if any of the predicates are missing
-            bool none_missing = true;
-            for (auto &pred: constraint.predicates) {
-                none_missing &= check_pred_in_domain(pred);
+            if (constraint.constraint == CONSTRAINTS::ONEOF) {
+                bool none_missing = true;
+                for (auto &pred: constraint.condition.predicates) {
+                    none_missing &= check_pred_in_domain(pred, name_pred);
+                }
+                if (!none_missing) {
+                    continue;
+                }
+                ss << "\t" << "(oneof";
+                for (auto &pred: constraint.condition.predicates) {
+                    ss << " " << pred_to_str_no_type(pred);
+                }
+                ss << ")\n";
+            } else if (constraint.constraint == CONSTRAINTS::OR_CONSTRAINT) {
+                bool none_missing = true;
+                std::function<void(
+                        const InstantiatedCondition &condition)> tmp_check = [&none_missing, &tmp_check, name_pred](
+                        const InstantiatedCondition &condition) {
+                    for (auto &pred: condition.predicates) {
+                        none_missing &= check_pred_in_domain(pred, name_pred);
+                    }
+                    for (auto &cond: condition.conditions) {
+                        tmp_check(cond);
+                    }
+                };
+                tmp_check(constraint.condition);
+                if (!none_missing) {
+                    continue;
+                }
+                ss << "\t" << "(or";
+                ss << " " << constraint.condition;
+                ss << ")\n";
             }
-            if (!none_missing) {
-                continue;
-            }
-            ss << "\t" << "(oneof";
-            for (auto &pred: constraint.predicates) {
-                ss << " " << pred_to_str_no_type(pred);
-            }
-            ss << ")\n";
+
         }
         ss << ")\n";
 
@@ -857,7 +949,7 @@ namespace pddl_lib {
             auto constraint = unknownPredicates.constraints[ind];
             if (constraint.constraint == CONSTRAINTS::ONEOF) {
                 std::vector<InstantiatedPredicate> preds;
-                for (const auto &pred_con: constraint.predicates) {
+                for (const auto &pred_con: constraint.condition.predicates) {
                     if (unknownPredicates.concurrent_find({pred_con})) {
                         preds.push_back(pred_con);
                     }
@@ -869,6 +961,9 @@ namespace pddl_lib {
                     continue;
                 }
 
+            } else if (constraint.constraint == CONSTRAINTS::OR_CONSTRAINT) {
+                // TODO
+                assert(0);
             } else {
                 throw std::runtime_error("Only CONSTRAINTS::ONEOF constraint is supported");
             }
@@ -971,6 +1066,9 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::Condition &condConst)
     } else if (cond.op == pddl_lib::OPERATION::NOT) {
         os << "(not ";
         term = " ";
+    } else if (cond.op == pddl_lib::OPERATION::WHEN) {
+        os << "(when ";
+        term = " ";
     } else if (cond.op == pddl_lib::OPERATION::FORALL) {
         os << "(forall (" << cond.parameters[0].name << " - " << cond.parameters[0].type << ")\n";
         term = "\n";
@@ -1027,11 +1125,16 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedCondition
     } else if (cond.op == pddl_lib::OPERATION::NOT) {
         os << "(not ";
         term = " ";
+    } else if (cond.op == pddl_lib::OPERATION::WHEN) {
+        os << "(when ";
+        term = " ";
     } else if (cond.op == pddl_lib::OPERATION::FORALL) {
         os << "(forall (" << cond.parameters[0].name << " - " << cond.parameters[0].type << ")\n";
         term = "\n";
-        std::function<void(pddl_lib::InstantiatedCondition &cond, std::vector<pddl_lib::InstantiatedParameter>)> sub_pred;
-        sub_pred = [&sub_pred](pddl_lib::InstantiatedCondition &cond, std::vector<pddl_lib::InstantiatedParameter> params) {
+        std::function<void(pddl_lib::InstantiatedCondition &cond,
+                           std::vector<pddl_lib::InstantiatedParameter>)> sub_pred;
+        sub_pred = [&sub_pred](pddl_lib::InstantiatedCondition &cond,
+                               std::vector<pddl_lib::InstantiatedParameter> params) {
             for (auto &pred: cond.predicates) {
                 for (auto &pred_param: pred.parameters) {
                     for (auto &param: params) {
@@ -1088,11 +1191,14 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedPredicate
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Domain &domain) {
     os << fmt::format("(define (domain {})\n", domain.name);
 
-    os << "(:requirements\n";
-    for (auto &req: domain.requirements) {
-        os << fmt::format("\t{}\n", req);
+    if (!domain.requirements.empty()) {
+        os << "(:requirements\n";
+        for (auto &req: domain.requirements) {
+            os << fmt::format("\t{}\n", req);
+        }
+        os << ")\n";
     }
-    os << ")\n";
+
 
     os << "(:types\n";
     for (auto &type: domain.types) {
@@ -1163,31 +1269,31 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::Problem &problem) {
 
     for (auto &cond: problem.constraints) {
         os << "\t";
-        assert(cond.constraint == pddl_lib::CONSTRAINTS::ONEOF);
-        os << "(oneof";
-        for (const auto &pred: cond.predicates) {
-            os << " (" << pred.name;
-            for (const auto &param: pred.parameters) {
-                os << param;
+        if (cond.constraint == pddl_lib::CONSTRAINTS::ONEOF) {
+            os << "(oneof";
+            for (const auto &pred: cond.condition.predicates) {
+                os << " (" << pred.name;
+                for (const auto &param: pred.parameters) {
+                    os << param;
+                }
+                os << ")";
             }
             os << ")";
+            os << "\n";
+        } else if (cond.constraint == pddl_lib::CONSTRAINTS::OR_CONSTRAINT) {
+            os << "(or";
+            for (const auto &c: cond.condition.conditions) {
+                os << " " << c;
+            }
+            os << ")";
+            os << "\n";
         }
-        os << ")";
-        os << "\n";
     }
 
     os << ")\n";
 
     os << "(:goal\n";
-    for (auto &pred: problem.goal) {
-        os << "\t";
-        os << "(" << pred.name;
-        for (auto &param: pred.parameters) {
-            os << param;
-        }
-        os << ")";
-        os << "\n";
-    }
+    os << problem.goal;
     os << ")\n";
 
     os << ")\n";

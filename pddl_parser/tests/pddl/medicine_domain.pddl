@@ -1,72 +1,36 @@
-(define (domain letseat)
-
-  (:requirements :typing)
-
-  (:types
-    location locatable - object
-		bot cupcake - locatable
-    robot - bot
-  )
-
-  (:predicates
-		(on ?obj - locatable ?loc - location)
-		(holding ?arm - locatable ?cupcake - locatable)
-    (arm_empty)
-    (path ?location1 - location ?location2 - location)
-  )
+(define (domain blocksworld)
+(:types block)
+(:predicates (clear ?x - block)
+             (on-table ?x - block)
+             (on ?x - block ?y - block))
 
 
-  (:action pick_up
-    :parameters
-     (?arm - bot
-      ?cupcake - locatable
-      ?loc - location)
-    :precondition
-     (and
-        (on ?arm ?loc)
-        (on ?cupcake ?loc)
-        (arm_empty)
-      )
-    :effect
-     (and
-        (not (on ?cupcake ?loc))
-        (holding ?arm ?cupcake)
-        (not (arm_empty))
-     )
-  )
 
-  (:action drop
-    :parameters
-     (?arm - bot
-      ?cupcake - locatable
-      ?loc - location)
-    :precondition
-     (and
-        (on ?arm ?loc)
-        (holding ?arm ?cupcake)
-      )
-    :effect
-     (and
-        (on ?cupcake ?loc)
-        (arm_empty)
-        (not (holding ?arm ?cupcake))
-     )
-  )
+  (:action senseON
+   :parameters (?b1 - block ?b2 - block)
+   :observe (on ?b1 ?b2))
 
-  (:action move
-    :parameters
-     (?arm - bot
-      ?from - location
-      ?to - location)
-    :precondition
-     (and
-      (on ?arm ?from)
-      (path ?from ?to)
-     )
-    :effect
-     (and
-      (not (on ?arm ?from))
-      (on ?arm ?to)
-     )
-  )
-)
+  (:action senseCLEAR
+   :parameters (?b1 - block)
+   :observe (clear ?b1))
+
+  (:action senseONTABLE
+   :parameters (?b1 - block)
+   :observe (on-table ?b1))
+
+(:action move-b-to-b
+  :parameters (?bm - block ?bf - block ?bt - block)
+  :precondition (and (clear ?bm) (clear ?bt) (on ?bm ?bf))
+  :effect (and (not (clear ?bt)) (not (on ?bm ?bf))
+               (on ?bm ?bt) (clear ?bf)))
+
+(:action move-to-t
+  :parameters (?b - block ?bf - block)
+  :precondition (and (clear ?b) (on ?b ?bf))
+  :effect (and (on-table ?b) (not (on ?b ?bf)) (clear ?bf)))
+
+(:action move-t-to-b
+  :parameters (?bm - block ?bt - block)
+  :precondition (and (clear ?bm) (clear ?bt) (on-table ?bm))
+  :effect (and (not (clear ?bt )) (not (on-table ?bm))
+               (on ?bm ?bt))))

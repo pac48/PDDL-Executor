@@ -71,7 +71,7 @@ namespace pddl_lib {
            )").def("__str__", [](const pddl_lib::Constraint &con) {
                     return "TODO";
                 }).def_readwrite("constraint", &pddl_lib::Constraint::constraint)
-                .def_readwrite("predicates", &pddl_lib::Constraint::predicates);
+                .def_readwrite("condition", &pddl_lib::Constraint::condition);
     }
 
     void init_Domain(py::module &m) {
@@ -118,7 +118,8 @@ namespace pddl_lib {
                 .def_readwrite("objects", &pddl_lib::Problem::objects)
                 .def_readwrite("init", &pddl_lib::Problem::init)
                 .def_readwrite("unknowns", &pddl_lib::Problem::unknowns)
-                .def_readwrite("constraints", &pddl_lib::Problem::constraints);
+                .def_readwrite("constraints", &pddl_lib::Problem::constraints)
+                .def_readwrite("goal", &pddl_lib::Problem::goal);
         m.def("parse_problem", &pddl_lib::parse_problem_py, "parse problem from string",
               py::arg("content"));
     }
@@ -379,6 +380,7 @@ namespace pddl_lib {
                 .value("OR", pddl_lib::OR)
                 .value("NOT", pddl_lib::NOT)
                 .value("FORALL", pddl_lib::FORALL)
+                .value("WHEN", pddl_lib::WHEN)
                 .export_values();
     }
 
@@ -387,6 +389,7 @@ namespace pddl_lib {
   The CONSTRAINTS class from parser.
 									     )")
                 .value("ONEOF", pddl_lib::ONEOF)
+                .value("OR", pddl_lib::OR_CONSTRAINT)
                 .export_values();
     }
 

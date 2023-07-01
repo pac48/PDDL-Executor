@@ -96,14 +96,10 @@ def main():
 
             param_str = "_".join(p for p in param)
             param_str = "_" + param_str
-            # param_str.replace(',', '_')
-            # param_str = param_str.replace(' ', '')
-            # param_str = param_str.replace('(', '')
-            # param_str = param_str.replace(')', '')
-            # param_str = param_str.replace("'", '')
 
             act = ActionInstance()
             act.name = action.name + param_str
+            act.name = act.name.replace('-', '_')
             act.base_name = action.name
             act.params = param
 
@@ -127,14 +123,18 @@ def main():
     for val in kb_template:
         val = str(val)
         val = val.replace(',', '_')
+        val = val.replace('-', '_')
         val = val.replace(' ', '')
         val = val.replace('(', '')
         val = val.replace(')', '')
         val = val.replace("'", '')
         indexers.append(val)
 
+    goal_condition = parse_preconditions(problem.goal, kb_template_map)
+    problem_initialization = "\n".join(""+f'func_map["{pred}"] = {index};' for pred, index in kb_template_map.items())
+
     data = {'size_kb_data': size_kb_data, 'actions': all_actions, 'observe_actions': all_observe_actions,
-            'indexers': indexers}
+            'indexers': indexers, 'goal_condition': goal_condition, 'problem_initialization': problem_initialization}
     code = j2_template.render(data, trim_blocks=True)
 
     with open(output_file, 'w') as f:
@@ -154,6 +154,12 @@ def parse_effect(cond, kb_template_map, truth_val=True):
             out += f"state.data[{index}] = 1;\n"
         for (ind, sub_cond) in enumerate(cond.conditions):
             out += f"{parse_effect(sub_cond, kb_template_map)}"
+    elif cond.op == pddl_parser.parser.WHEN:
+        assert (len(cond.predicates) == 2)
+        assert (len(cond.conditions) == 0)
+        index1 = kb_template_map[str(cond.predicates[0])]
+        index2 = kb_template_map[str(cond.predicates[1])]
+        out = f"if (state.data[{index1}]==1)" + "{" + f" state.data[{index2}]=1; " + "}"
     else:
         raise Exception("wrong condition for condition")
 
@@ -199,7 +205,7 @@ def parse_preconditions(cond, kb_template_map):
             out += f"state.data[{index}]==0"
             out += ')'
     elif cond.op == pddl_parser.parser.AND:
-        out = "("
+        out = ""
         for (ind, pred) in enumerate(cond.predicates):
             index = kb_template_map[str(pred)]
             if ind == 0:
@@ -216,9 +222,12 @@ def parse_preconditions(cond, kb_template_map):
             else:
                 delim = " && "
             out += f"{delim}({parse_preconditions(sub_cond, kb_template_map)})"
-        out += ')'
+        if len(out) > 0:
+            out = '(' + out + ')'
+        else:
+            out = 'true'
     else:
-        raise Exception("wrong condition for condition")
+        raise Exception("wrong condition type")
 
     return out
 

@@ -1,14 +1,19 @@
 #include <cstddef>
 #include <unordered_set>
 #include <array>
+#include <tuple>
 #include <cstring>
 #include <stdexcept>
+#include "pddl_parser/pddl_parser.hpp"
 
 #pragma once
 
 namespace pddl_lib {
 
     struct KBState {
+        KBState(){
+            memset(data, 0, sizeof(data));
+        }
         unsigned int depth = 0;
         unsigned int action = 0;
         unsigned int associated_state = 0;
@@ -22,6 +27,107 @@ namespace pddl_lib {
             return std::memcmp(data, other.data, {{size_kb_data}}) == 0;
         }
     };
+
+    std::function<bool(KBState &)> create_constraint(const Constraint& constraint, std::unordered_map<std::string, unsigned int> func_map){
+        if (constraint.constraint == CONSTRAINTS::ONEOF){
+            assert(constraint.condition.conditions.empty());
+            std::vector<unsigned int> inds;
+            for (const auto& pred : constraint.condition.predicates){
+                std::stringstream ss;
+                ss << pred;
+                inds.push_back(func_map[ss.str()]);
+            }
+            return [inds](KBState & state){
+                unsigned int num_unknowns = 0;
+                unsigned int num_true = 0;
+                for (const auto& ind : inds){
+                    num_true += state.data[ind]==1;
+                    num_unknowns += state.data[ind]==2;
+                }
+//                assert(num_true < 2);
+                if(num_true > 1){
+                    return false;
+                }
+
+                if (num_true==1){
+                    for (const auto& ind : inds){
+                        state.data[ind] = state.data[ind]*(state.data[ind]==1);
+                    }
+                } else if (num_true==0 && num_unknowns==1){
+                    for (const auto& ind : inds){
+                        state.data[ind] = state.data[ind]==1 || state.data[ind]==2;
+                    }
+                }
+                return true;
+            };
+
+        } else if (constraint.constraint == CONSTRAINTS::OR_CONSTRAINT){
+            assert(constraint.condition.conditions.size() == 2);
+            std::vector<std::pair<unsigned int, unsigned char>> conds;
+            for (const auto & pred  : constraint.condition.predicates){
+                std::stringstream ss;
+                ss << pred;
+                conds.push_back({func_map[ss.str()], 1});
+            }
+            for (const auto & cond  : constraint.condition.conditions){
+                assert(cond.op == OPERATION::NOT);
+                assert(cond.predicates.size()==1);
+                std::stringstream ss;
+                ss << cond.predicates[0];
+                conds.push_back({func_map[ss.str()], 0});
+            }
+            assert(conds.size()==2);
+
+            return [conds](KBState & state){
+                auto cond_1 = conds[0];
+                auto cond_2 = conds[1];
+                if(state.data[cond_1.first] == 2 && state.data[cond_2.first]==0){
+                    state.data[cond_1.first] = cond_1.second;
+                } else if (state.data[cond_1.first] == 0 && state.data[cond_2.first]==2){
+                    state.data[cond_2.first] = cond_2.second;
+                } else if (state.data[cond_1.first] == 0 && state.data[cond_2.first]==0){
+//                    assert(0); TODO is this needed?
+                    return false;
+                }
+                return true;
+            };
+
+
+        } else{
+            throw std::runtime_error("Constraint not supported");
+        }
+    }
+
+
+    std::tuple<KBState, std::array<KBState, {{actions|length + 2*observe_actions|length}}>, std::array<int, {{actions|length + 2*observe_actions|length}}>,
+    std::vector<std::function<bool(KBState &)>>, std::function<bool (const KBState&)>> initialize_problem(const std::string& problem_str){
+        pddl_lib::KBState state{};
+        std::array<KBState, {{actions|length + 2*observe_actions|length}}> new_states{};
+        std::array<int, {{actions|length + 2*observe_actions|length}}> valid{};
+        memset(valid.data(), 0, sizeof(valid));
+        memset(new_states.data(), 0, sizeof(new_states));
+        auto problem = pddl_lib::parse_problem(problem_str).value();
+        std::unordered_map<std::string, unsigned int> func_map;
+        std::function<bool (const KBState&)> check_goal;
+        std::vector<std::function<bool (KBState &)>> constraints{};
+        {{problem_initialization}}
+        for (const auto& pred : problem.init){
+            std::stringstream ss;
+            ss << pred;
+            state.data[func_map.at(ss.str())] = 1;
+        }
+        for (const auto& pred : problem.unknowns){
+            std::stringstream ss;
+            ss << pred;
+            state.data[func_map.at(ss.str())] = 2;
+        }
+        for (const auto& constraint : problem.constraints){
+            constraints.push_back(create_constraint(constraint, func_map));
+        }
+        check_goal = [](const KBState state){return {{goal_condition}}; };
+
+        return {state, new_states, valid, constraints, check_goal};
+    }
 
 namespace indexers {
 {% for val in indexers %}
@@ -99,29 +205,31 @@ bool check_preconditions(const KBState & state) {
 void apply_effect(KBState & state) {
     {{action.effect}}
 }
-void apply_observe(KBState & state1, KBState & state2, const std::vector<std::array<unsigned char, {{size_kb_data}}>> & constraints) {
+void apply_observe(KBState & state1, KBState & state2, int & valid1, int & valid2, const std::vector<std::function<bool(KBState &)>> & constraints) {
     {{action.observe}}
     apply_observe_debug_1();
-    for (const auto &constraint: constraints) {
-        bool none_true = true;
-        unsigned int num_unknown = 0;
-        unsigned int unknown_index = 0;
-        for (unsigned int i = 0ul; i < constraint.size(); i++) {
-            none_true &= (state2.data[i] != 1 || constraint[i] == 0);
-            num_unknown += (state2.data[i] == 2 && constraint[i] == 1);
-            unknown_index = std::max(unknown_index, i*(state2.data[i]==2)*(constraint[i] == 1));
-        }
-        if (num_unknown == 1 && none_true){
-            apply_observe_debug_2();
-            state2.data[unknown_index] = 1;
-        }
+    for (auto &constraint: constraints) {
+        valid1 = constraint(state1);
+        valid2 = constraint(state2);
+//        bool none_true = true;
+//        unsigned int num_unknown = 0;
+//        unsigned int unknown_index = 0;
+//        for (unsigned int i = 0ul; i < constraint.size(); i++) {
+//            none_true &= (state2.data[i] != 1 || constraint[i] == 0);
+//            num_unknown += (state2.data[i] == 2 && constraint[i] == 1);
+//            unknown_index = std::max(unknown_index, i*(state2.data[i]==2)*(constraint[i] == 1));
+//        }
+//        if (num_unknown == 1 && none_true){
+//            apply_observe_debug_2();
+//            state2.data[unknown_index] = 1;
+//        }
     }
 }
 }
 {% endfor %}
 
 void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*observe_actions|length}}> & new_states, std::array<int, {{actions|length + 2*observe_actions|length}}> & valid,
-            const std::vector<std::array<unsigned char, {{size_kb_data}}>> & constraints={}){
+            const std::vector<std::function<bool(KBState &)>> & constraints={}){
 {% for action in actions %}
 if ({{action.name}}::check_preconditions(cur_state)){
         new_states[{{ loop.index - 1}}] = cur_state;
@@ -140,9 +248,10 @@ if ({{action.name}}::check_preconditions(cur_state)){
     new_states[{{actions|length + 2*loop.index - 2 + 1}}].action = {{actions|length + loop.index - 1}};
     {{action.name}}::apply_effect(new_states[{{actions|length + 2*loop.index - 2}}]);
     {{action.name}}::apply_effect(new_states[{{actions|length + 2*loop.index - 2 + 1}}]);
-    {{action.name}}::apply_observe(new_states[{{actions|length + 2*loop.index - 2}}], new_states[{{actions|length + 2*loop.index - 2 + 1}}], constraints);
     valid[{{actions|length + 2*loop.index - 2}}] = 1;
     valid[{{actions|length + 2*loop.index - 2 + 1}}] = 1;
+    {{action.name}}::apply_observe(new_states[{{actions|length + 2*loop.index - 2}}], new_states[{{actions|length + 2*loop.index - 2 + 1}}],
+                                   valid[{{actions|length + 2*loop.index - 2}}], valid[{{actions|length + 2*loop.index - 2 + 1}}], constraints);
     new_states[{{actions|length + 2*loop.index - 2}}].associated_state = {{actions|length + 2*loop.index - 2 + 1}};
     new_states[{{actions|length + 2*loop.index - 2+1}}].associated_state = {{actions|length + 2*loop.index - 2}};
 }

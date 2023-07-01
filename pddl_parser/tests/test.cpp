@@ -37,6 +37,7 @@ TEST(DOMAIN, parse) {
     std::string content = ss.str();
 
     if (auto domain = parse_domain(content)) {
+        std::cout << domain.value() << std::endl;
     } else {
         std::cout << domain.error() << std::endl;
         ASSERT_TRUE(false);
@@ -104,12 +105,14 @@ TEST(KB, convert_To_problem) {
     kb.unknownPredicates.insert({"guide_to_succeeded_attempt_2", {}});
     kb.unknownPredicates.insert({"notify_automated_succeeded", {}});
     kb.unknownPredicates.insert({"notify_recorded_succeeded", {}});
+    InstantiatedCondition cond = {{},{},
+                          {{"person_at", {nathan, couch}},
+                                  {"person_at", {nathan, kitchen}},
+                                  {"person_at", {nathan, home}}, {}}};
 
-    kb.unknownPredicates.constraints.push_back({CONSTRAINTS::ONEOF,
-                                                {{"person_at", {nathan, couch}},
-                                                 {"person_at", {nathan, kitchen}},
-                                                 {"person_at", {nathan, home}}
-                                                }
+    kb.unknownPredicates.constraints.push_back({
+                                           CONSTRAINTS::ONEOF,
+                                           cond
                                                });
 
 //    std::cout << kb.convert_to_problem(domain) << std::endl;

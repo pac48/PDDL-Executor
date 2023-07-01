@@ -13,11 +13,11 @@
 namespace pddl_lib {
 // types
     enum OPERATION {
-        AND, OR, FORALL, NOT
+        AND, OR, FORALL, NOT, WHEN
     };
 
     enum CONSTRAINTS {
-        ONEOF
+        ONEOF, OR_CONSTRAINT
     };
 
     struct Parameter {
@@ -153,8 +153,7 @@ namespace pddl_lib {
 
     struct Constraint {
         CONSTRAINTS constraint;
-        std::unordered_set<InstantiatedPredicate> predicates;
-
+        InstantiatedCondition condition;
     };
 
     struct Problem {
@@ -164,7 +163,7 @@ namespace pddl_lib {
         std::unordered_set<InstantiatedPredicate> init;
         std::unordered_set<InstantiatedPredicate> unknowns;
         std::vector<Constraint> constraints;
-        std::unordered_set<InstantiatedPredicate> goal;
+        InstantiatedCondition goal;
 
         std::string str();
 
@@ -266,6 +265,10 @@ namespace pddl_lib {
 
     tl::expected<Condition, std::string>
     parse_condition(const std::string &content,
+                    const std::unordered_map<std::string, std::string> &param_to_type_map = {});
+
+    tl::expected<InstantiatedCondition, std::string>
+    parse_instantiated_condition(const std::string &content,
                     const std::unordered_map<std::string, std::string> &param_to_type_map = {});
 
     InstantiatedPredicate
