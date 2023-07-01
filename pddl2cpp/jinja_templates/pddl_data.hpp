@@ -45,7 +45,7 @@ namespace pddl_lib {
                     num_unknowns += state.data[ind]==2;
                 }
 //                assert(num_true < 2);
-                if(num_true > 1){
+                if (num_true > 1 || (num_true == 0 && num_unknowns == 0)) {
                     return false;
                 }
 
@@ -53,7 +53,8 @@ namespace pddl_lib {
                     for (const auto& ind : inds){
                         state.data[ind] = state.data[ind]*(state.data[ind]==1);
                     }
-                } else if (num_true==0 && num_unknowns==1){
+                } else
+                if (num_true==0 && num_unknowns==1){
                     for (const auto& ind : inds){
                         state.data[ind] = state.data[ind]==1 || state.data[ind]==2;
                     }
@@ -209,8 +210,8 @@ void apply_observe(KBState & state1, KBState & state2, int & valid1, int & valid
     {{action.observe}}
     apply_observe_debug_1();
     for (auto &constraint: constraints) {
-        valid1 = constraint(state1);
-        valid2 = constraint(state2);
+        valid1 = constraint(state1)*constraint(state2);
+        valid2 = valid1;
 //        bool none_true = true;
 //        unsigned int num_unknown = 0;
 //        unsigned int unknown_index = 0;

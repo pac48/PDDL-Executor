@@ -1,136 +1,95 @@
-(define (problem BW-rand-11)
-(:domain blocksworld)
-(:objects b1 b2 b3 b4 b5 b6 b7 b8 b9 b10 b11 - block)
+(define (problem midnight_wondering)
+(:domain midnight_wondering_domain)
+(:objects
+    bed kitchen couch home door outside - Landmark
+    nathan - Person
+    t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 - Time
+    automated_msg recorded call_caregiver_outside call_caregiver_bed_msg call_emergency - Msg
+    give_up caregiver_call emergency_call automated_reminder caregiver_call_bed - ActionInstance
+)
 (:init
-(on-table b3)
-(on b5 b3)
-(unknown (on b10 b5))
-(unknown (clear b10))
-(unknown (on b10 b2))
-(unknown (on b2 b5))
-(unknown (clear b2))
-(unknown (on b2 b10))
-(or
-(not (on b10 b2))
-(not (on b2 b10))
+
+	  ;; needed actions
+    (DetectPerson_enabled)
+    ;; (GiveReminder_enabled)
+    (MakeCall_enabled)
+    (WaitForPersonToGoToLocation_enabled)
+
+    (current_time t1)
+    (next_time t1 t2)
+    (next_time t2 t3)
+    (next_time t3 t4)
+    (next_time t4 t5)
+    (next_time t5 t6)
+    (next_time t6 t7)
+    (next_time t7 t8)
+    (next_time t8 t9)
+    (next_time t9 t10)
+    (time_limit t10)
+
+    (robot_at kitchen)
+    (person_at t1 nathan kitchen)
+    (person_at t5 nathan outside)
+    (person_at t7 nathan bed)
+    (unknown (person_at t2 nathan outside))
+    (unknown (person_at t2 nathan door))
+    (unknown (person_at t2 nathan bed))
+    (unknown (person_at t3 nathan outside))
+    (unknown (person_at t3 nathan door))
+    (unknown (person_at t3 nathan bed))
+    ;;(unknown (person_at t4 nathan outside))
+    ;;(unknown (person_at t4 nathan door))
+    ;;(unknown (person_at t4 nathan bed))
+    (oneof (person_at t2 nathan door) (person_at t2 nathan outside) (person_at t2 nathan bed) )
+    (oneof (person_at t3 nathan door) (person_at t3 nathan outside) (person_at t3 nathan bed) )
+    ;;(oneof (person_at t4 nathan door) (person_at t4 nathan outside) (person_at t4 nathan bed) )
+
+    (traversable bed kitchen)
+    (traversable kitchen bed)
+    (traversable door kitchen)
+    (traversable kitchen door)
+    (door_location door)
+    (bed_location bed)
+
+    ;;success states
+    (message_given_success call_emergency)
+    (message_given_success call_caregiver_bed_msg)
+    (person_at_success nathan bed)
+
+    ;; specify which actions must come before others
+    (blocks caregiver_call emergency_call)
+    (blocks automated_reminder caregiver_call_bed)
+    ;;(blocks emergency_call give_up)
+    ;;(blocks automated_reminder give_up)
+
+
+    ;; specify valid input argument combinations for all actions
+    (valid_message caregiver_call call_caregiver_outside)
+    (valid_message emergency_call call_emergency)
+    (valid_message caregiver_call_bed call_caregiver_bed_msg)
+    (valid_message automated_reminder automated_msg)
+
+    ;; specify world state constraints for all actions
+    (person_location_constraint caregiver_call nathan outside)
+    (robot_location_constraint caregiver_call door)
+
+    (person_location_constraint automated_reminder nathan door)
+    (robot_location_constraint automated_reminder door)
+
+    (person_location_constraint emergency_call nathan outside)
+    (person_location_constraint emergency_call nathan outside)
+    (robot_location_constraint emergency_call door)
+
+    (not_person_location_constraint caregiver_call_bed nathan bed)
+
+    ;;types
+    (call_action_type caregiver_call)
+    (call_action_type emergency_call)
+    (call_action_type caregiver_call_bed)
+    (give_up_action_type give_up)
+
+
 )
-(or
-(not (on b2 b10))
-(not (on b10 b2))
+(:goal (success)
 )
-(oneof
-(clear b10)
-(clear b2)
-)
-(oneof
-(on b10 b5)
-(on b2 b5)
-)
-(oneof
-(on b10 b5)
-(on b10 b2)
-)
-(oneof
-(on b2 b5)
-(on b2 b10)
-)
-(oneof
-(clear b10)
-(on b2 b10)
-)
-(oneof
-(clear b2)
-(on b10 b2)
-)
-(unknown (on-table b8))
-(unknown (clear b8))
-(unknown (on b8 b4))
-(unknown (on-table b4))
-(unknown (clear b4))
-(unknown (on b4 b8))
-(or
-(not (on b8 b4))
-(not (on b4 b8))
-)
-(or
-(not (on b4 b8))
-(not (on b8 b4))
-)
-(oneof
-(clear b8)
-(clear b4)
-)
-(oneof
-(on-table b8)
-(on-table b4)
-)
-(oneof
-(on-table b8)
-(on b8 b4)
-)
-(oneof
-(on-table b4)
-(on b4 b8)
-)
-(oneof
-(clear b8)
-(on b4 b8)
-)
-(oneof
-(clear b4)
-(on b8 b4)
-)
-(on-table b9)
-(on b11 b9)
-(on b6 b11)
-(unknown (on b1 b6))
-(unknown (clear b1))
-(unknown (on b1 b7))
-(unknown (on b7 b6))
-(unknown (clear b7))
-(unknown (on b7 b1))
-(or
-(not (on b1 b7))
-(not (on b7 b1))
-)
-(or
-(not (on b7 b1))
-(not (on b1 b7))
-)
-(oneof
-(clear b1)
-(clear b7)
-)
-(oneof
-(on b1 b6)
-(on b7 b6)
-)
-(oneof
-(on b1 b6)
-(on b1 b7)
-)
-(oneof
-(on b7 b6)
-(on b7 b1)
-)
-(oneof
-(clear b1)
-(on b7 b1)
-)
-(oneof
-(clear b7)
-(on b1 b7)
-)
-)
-(:goal
-(and
-(on b1 b9)
-(on b2 b11)
-(on b3 b5)
-(on b4 b8)
-(on b5 b10)
-(on b7 b2)
-(on b9 b4)
-(on b10 b6))
-)
-)
+)  

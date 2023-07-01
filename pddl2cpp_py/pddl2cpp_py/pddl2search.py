@@ -198,11 +198,11 @@ def parse_preconditions(cond, kb_template_map):
         assert (len(cond.conditions) == 1 or len(cond.predicates) == 1)
         assert (len(cond.conditions) == 0 or len(cond.predicates) == 0)
         if len(cond.conditions) == 1:
-            out = "!(" + parse_preconditions(cond, kb_template_map) + ')'
+            out = "!(" + parse_preconditions(cond.conditions[0], kb_template_map) + ')'
         else:
             out = "("
             index = kb_template_map[str(cond.predicates[0])]
-            out += f"state.data[{index}]==0"
+            out += f"state.data[{index}]!=1"
             out += ')'
     elif cond.op == pddl_parser.parser.AND:
         out = ""

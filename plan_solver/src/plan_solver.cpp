@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
 //    std::vector<std::array<unsigned char, 12>> constraints = {constraint};
 
     std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("plan_solver");
-    std::filesystem::path test_dir = pkg_dir  / "pddl";
+    std::filesystem::path test_dir = pkg_dir / "pddl";
     std::filesystem::path pddl_file = test_dir / "problem.pddl";
     std::ifstream f(pddl_file);
     std::ifstream pddl_file_stream(pddl_file.string().c_str());
@@ -206,15 +206,10 @@ int main(int argc, char **argv) {
     open_list.push_back(state);
     auto counter = 0ul;
     while (open_list.size() > counter) {
-//        if (counter >= 10){ //10000000
-//            rebalance(open_list, counter);
+//        if (open_list.size() - counter > 500000) {
+//            counter = open_list.size() - 500000/2;
 //        }
         if (open_list[counter].reached_goal == -1) {
-            counter++;
-            continue;
-        }
-        if (open_list[counter].reached_goal == 1) {
-            assert(0);
             counter++;
             continue;
         }
@@ -227,15 +222,18 @@ int main(int argc, char **argv) {
                 print_plan(open_list, counter);
                 break;
             } else {
-//                print_plan(open_list, counter);
-
                 counter++;
                 continue;
             }
         }
-        close_list.insert(open_list[counter]); // TODO it seems like the goal state should not be in the closes list
 
+        // TODO I am not sure if this is safe to enable
+        if (close_list.find(open_list[counter]) != close_list.end()) {
+            counter++;
+            continue;
+        }
         pddl_lib::expand(open_list[counter], new_states, valid, constraints);
+        close_list.insert(open_list[counter]); // TODO it seems like the goal state should not be in the closes list
 
         if ((counter % 1000000) == 0) {
             std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
@@ -245,7 +243,7 @@ int main(int argc, char **argv) {
         auto i = 0ul;
         int number_added = 0;
         while (i < valid.size()) {
-//            if (number_added > 3) {
+//            if (number_added > 2) {
 //                break;
 //            }
             if (valid[i] == 1) {
