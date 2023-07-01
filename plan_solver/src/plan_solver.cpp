@@ -71,7 +71,7 @@ void print_plan(const std::vector<pddl_lib::KBState> &open_list, unsigned int go
             }
         }
 
-        assert(counter == 0 || counter == 1 || counter == 2);
+//        assert(counter == 0 || counter == 1 || counter == 2); TODO enable after done debug print
     }
 
     std::cout << "-------------------------------------------------\n";
@@ -196,18 +196,20 @@ int main(int argc, char **argv) {
     ss << pddl_file_stream.rdbuf();
     std::string pddl_str = ss.str();
     auto [state, new_states, valid, constraints, check_goal] = pddl_lib::initialize_problem(pddl_str);
-
+    auto valid_data = valid.data();
+    const auto valid_size = valid.size();
 
     auto start = std::chrono::high_resolution_clock::now();
     unsigned int max_depth = 0;
+    bool plan_found = false;
 
     std::unordered_set<pddl_lib::KBState> close_list;
     std::vector<pddl_lib::KBState> open_list;
     open_list.push_back(state);
     auto counter = 0ul;
     while (open_list.size() > counter) {
-//        if (open_list.size() - counter > 500000) {
-//            counter = open_list.size() - 500000/2;
+//        if (open_list.size() - counter > 2000000) {
+//            counter = open_list.size() - 2000000/2;
 //        }
         if (open_list[counter].reached_goal == -1) {
             counter++;
@@ -218,6 +220,7 @@ int main(int argc, char **argv) {
         if (check_goal(open_list[counter])) {
             open_list[counter].reached_goal = 1;
             if (goal_propagate(open_list, counter)) {
+                plan_found = true;
                 std::cout << "fond plan" << std::endl;
                 print_plan(open_list, counter);
                 break;
@@ -232,8 +235,9 @@ int main(int argc, char **argv) {
             counter++;
             continue;
         }
-        pddl_lib::expand(open_list[counter], new_states, valid, constraints);
         close_list.insert(open_list[counter]); // TODO it seems like the goal state should not be in the closes list
+
+        pddl_lib::expand(open_list[counter], new_states, valid, constraints);
 
         if ((counter % 1000000) == 0) {
             std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
@@ -242,11 +246,11 @@ int main(int argc, char **argv) {
         open_list[counter].children_begin = open_list.size();
         auto i = 0ul;
         int number_added = 0;
-        while (i < valid.size()) {
-//            if (number_added > 2) {
+        while (i < valid_size) {
+//            if (number_added > 3) {
 //                break;
 //            }
-            if (valid[i] == 1) {
+            if (*(valid_data+i) == 1) {
                 if (close_list.find(new_states[i]) == close_list.end()) {
                     number_added++;
                     if (new_states[i].associated_state != 0) {
@@ -268,10 +272,6 @@ int main(int argc, char **argv) {
                         max_depth = new_states[i].depth;
                         std::cout << "max_depth: " << max_depth << std::endl;
                     }
-                } else {
-                    if (check_goal(new_states[i])) {
-                        assert(0);
-                    }
                 }
             }
             i++;
@@ -279,6 +279,14 @@ int main(int argc, char **argv) {
         open_list[counter].children_end = open_list.size(); // exclusive
         counter++;
     }
+
+//    if (!plan_found){
+//        counter--;
+//        for (auto & val : open_list){
+//            val.reached_goal = true;
+//        }
+//        print_plan(open_list, counter);
+//    }
 
     std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
               << open_list.size() << std::endl;

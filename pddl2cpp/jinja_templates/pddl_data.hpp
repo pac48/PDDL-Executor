@@ -10,6 +10,7 @@
 
 namespace pddl_lib {
 
+    unsigned int subgraph_counter = 0;
     struct KBState {
         KBState(){
             memset(data, 0, sizeof(data));
@@ -22,9 +23,10 @@ namespace pddl_lib {
         unsigned int parent;
         char reached_goal = 0;
         unsigned char data[{{size_kb_data}}];
+        unsigned int subgraph = 0;
 
         bool operator==(const KBState & other) const{
-            return std::memcmp(data, other.data, {{size_kb_data}}) == 0;
+            return std::memcmp(data, other.data, {{size_kb_data}}) == 0 && subgraph == other.subgraph;
         }
     };
 
@@ -49,11 +51,11 @@ namespace pddl_lib {
                     return false;
                 }
 
-                if (num_true==1){
+                if (num_true==1 && num_unknowns > 0){
                     for (const auto& ind : inds){
                         state.data[ind] = state.data[ind]*(state.data[ind]==1);
                     }
-                } else
+                }
                 if (num_true==0 && num_unknowns==1){
                     for (const auto& ind : inds){
                         state.data[ind] = state.data[ind]==1 || state.data[ind]==2;
@@ -174,7 +176,7 @@ namespace std {
                 hashValue = (hashValue * prime) ^ obj.data[i];
             }
 
-            return hashValue;
+            return hashValue ^ obj.subgraph;
         }
     };
 }
@@ -255,6 +257,9 @@ if ({{action.name}}::check_preconditions(cur_state)){
                                    valid[{{actions|length + 2*loop.index - 2}}], valid[{{actions|length + 2*loop.index - 2 + 1}}], constraints);
     new_states[{{actions|length + 2*loop.index - 2}}].associated_state = {{actions|length + 2*loop.index - 2 + 1}};
     new_states[{{actions|length + 2*loop.index - 2+1}}].associated_state = {{actions|length + 2*loop.index - 2}};
+    subgraph_counter++;
+    new_states[{{actions|length + 2*loop.index - 2}}].subgraph = subgraph_counter;
+    new_states[{{actions|length + 2*loop.index - 2+1}}].subgraph = subgraph_counter;
 }
 {% endfor %}
 }

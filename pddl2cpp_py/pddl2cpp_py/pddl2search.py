@@ -103,8 +103,9 @@ def main():
             act.base_name = action.name
             act.params = param
 
+            tmp = parse_preconditions_unknowns(action_inst.precondtion, kb_template_map)
             act.pre = parse_preconditions(action_inst.precondtion, kb_template_map) + parse_observe_preconditions(
-                action_inst.observe, kb_template_map) + ';'
+                action_inst.observe, kb_template_map) + " && " + tmp + ';'
             act.effect = parse_effect(action_inst.effect, kb_template_map)
             if len(action_inst.observe.predicates) > 0:
                 act.observe = parse_observe(action_inst.observe, kb_template_map)
@@ -131,7 +132,7 @@ def main():
         indexers.append(val)
 
     goal_condition = parse_preconditions(problem.goal, kb_template_map)
-    problem_initialization = "\n".join(""+f'func_map["{pred}"] = {index};' for pred, index in kb_template_map.items())
+    problem_initialization = "\n".join("" + f'func_map["{pred}"] = {index};' for pred, index in kb_template_map.items())
 
     data = {'size_kb_data': size_kb_data, 'actions': all_actions, 'observe_actions': all_observe_actions,
             'indexers': indexers, 'goal_condition': goal_condition, 'problem_initialization': problem_initialization}
@@ -193,6 +194,28 @@ def parse_observe_preconditions(cond, kb_template_map):
     return f" && (state.data[{index}]==2)"
 
 
+def parse_preconditions_unknowns(cond, kb_template_map):
+    out = ""
+    for (ind, pred) in enumerate(cond.predicates):
+        index = kb_template_map[str(pred)]
+        if ind == 0:
+            delim = ""
+        else:
+            delim = " && "
+        out += f"{delim}state.data[{index}]!=2"
+
+    if len(cond.conditions) > 0 and len(cond.predicates) > 0:
+        out += " && "
+    for (ind, sub_cond) in enumerate(cond.conditions):
+        if ind == 0:
+            delim = ""
+        else:
+            delim = " && "
+        out += f"{delim}{parse_preconditions_unknowns(sub_cond, kb_template_map)}"
+
+    return out
+
+
 def parse_preconditions(cond, kb_template_map):
     if cond.op == pddl_parser.parser.NOT:
         assert (len(cond.conditions) == 1 or len(cond.predicates) == 1)
@@ -202,7 +225,7 @@ def parse_preconditions(cond, kb_template_map):
         else:
             out = "("
             index = kb_template_map[str(cond.predicates[0])]
-            out += f"state.data[{index}]!=1"
+            out += f"state.data[{index}]==0"
             out += ')'
     elif cond.op == pddl_parser.parser.AND:
         out = ""
