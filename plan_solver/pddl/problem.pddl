@@ -20,5 +20,5 @@
 
 )
 
-(:goal (success))
+(:goal (and (success) (robot_at pioneer home) ) )
 )

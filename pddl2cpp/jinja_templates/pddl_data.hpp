@@ -101,6 +101,32 @@ namespace pddl_lib {
         }
     }
 
+  std::function<bool(const KBState &)> create_goal(const InstantiatedCondition& goal, std::unordered_map<std::string, unsigned int> func_map){
+    assert(goal.conditions.size()==0);
+    std::vector<std::pair<unsigned int, unsigned char>> conds;
+    for (const auto & pred  : goal.predicates){
+      std::stringstream ss;
+      ss << pred;
+      conds.push_back({func_map[ss.str()], 1});
+    }
+    for (const auto & cond  : goal.conditions){
+      assert(cond.op == OPERATION::NOT);
+      assert(cond.predicates.size()==1);
+      std::stringstream ss;
+      ss << cond.predicates[0];
+      conds.push_back({func_map[ss.str()], 0});
+    }
+
+    return [conds](const KBState & state){
+      bool val = true;
+      for (const auto& c : conds ){
+        val &= state.data[c.first]==c.second;
+      }
+      return val;
+    };
+
+  }
+
 
     std::tuple<KBState, std::array<KBState, {{actions|length + 2*observe_actions|length}}>, std::array<int, {{actions|length + 2*observe_actions|length}}>,
     std::vector<std::function<bool(KBState &)>>, std::function<bool (const KBState&)>> initialize_problem(const std::string& problem_str){
@@ -127,8 +153,8 @@ namespace pddl_lib {
         for (const auto& constraint : problem.constraints){
             constraints.push_back(create_constraint(constraint, func_map));
         }
-        check_goal = [](const KBState state){return {{goal_condition}}; };
 
+        check_goal = create_goal(problem.goal, func_map);
         return {state, new_states, valid, constraints, check_goal};
     }
 

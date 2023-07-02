@@ -131,11 +131,10 @@ def main():
         val = val.replace("'", '')
         indexers.append(val)
 
-    goal_condition = parse_preconditions(problem.goal, kb_template_map)
     problem_initialization = "\n".join("" + f'func_map["{pred}"] = {index};' for pred, index in kb_template_map.items())
 
     data = {'size_kb_data': size_kb_data, 'actions': all_actions, 'observe_actions': all_observe_actions,
-            'indexers': indexers, 'goal_condition': goal_condition, 'problem_initialization': problem_initialization}
+            'indexers': indexers, 'problem_initialization': problem_initialization}
     code = j2_template.render(data, trim_blocks=True)
 
     with open(output_file, 'w') as f:
