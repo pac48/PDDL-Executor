@@ -117,76 +117,6 @@ void print_plan(const std::vector<pddl_lib::KBState> &open_list, unsigned int go
 }
 
 int main(int argc, char **argv) {
-
-//   // midnight
-//    pddl_lib::indexers::robot_atpioneerhome(state) = 1;
-//    pddl_lib::indexers::door_locationdoor(state) = 1;
-//    // unknown
-//    pddl_lib::indexers::person_atnathandoor(state) = 2;
-//    pddl_lib::indexers::person_decides_to_go_outside_1(state) = 2;
-//    pddl_lib::indexers::person_decides_to_go_outside_2(state) = 2;
-//    pddl_lib::indexers::person_decides_to_return_1(state) = 2;
-//    pddl_lib::indexers::person_decides_to_return_2(state) = 2;
-//    pddl_lib::indexers::person_decides_to_go_to_bed_1(state) = 2;
-//    pddl_lib::indexers::person_decides_to_go_to_bed_2(state) = 2;
-//    pddl_lib::indexers::person_goes_to_bed_after_return_1(state) = 2;
-//    pddl_lib::indexers::person_goes_to_bed_after_return_2(state) = 2;
-
-
-//    // medicine
-//    pddl_lib::indexers::robot_atpioneerhome(state) = 1;
-//    pddl_lib::indexers::medicine_locationkitchen(state) = 1;
-//    // unknown
-//    pddl_lib::indexers::person_atnathancouch(state) = 2;
-//    pddl_lib::indexers::person_atnathankitchen(state) = 2;
-//    pddl_lib::indexers::person_atnathanhome(state) = 2;
-//    pddl_lib::indexers::person_atnathanbedroom(state) = 2;
-//    pddl_lib::indexers::person_atnathanliving(state) = 2;
-//    pddl_lib::indexers::person_atnathandinning(state) = 2;
-//    pddl_lib::indexers::person_atnathanhall(state) = 2;
-//    pddl_lib::indexers::guide_to_succeeded_attempt_1(state) = 2;
-//    pddl_lib::indexers::guide_to_succeeded_attempt_2(state) = 2;
-//    pddl_lib::indexers::notify_automated_succeeded(state) = 2;
-//    pddl_lib::indexers::notify_recorded_succeeded(state) = 2;
-//    //constraints
-//    std::array<unsigned char, 35> constraint{};
-//    memset(constraint.data(), 0, sizeof(constraint));
-//    constraint[pddl_lib::indexers::person_atnathancouch_index()] = 1;
-//    constraint[pddl_lib::indexers::person_atnathankitchen_index()] = 1;
-//    constraint[pddl_lib::indexers::person_atnathanhome_index()] = 1;
-//    constraint[pddl_lib::indexers::person_atnathanbedroom_index()] = 1;
-//    constraint[pddl_lib::indexers::person_atnathanliving_index()] = 1;
-//    constraint[pddl_lib::indexers::person_atnathandinning_index()] = 1;
-//    constraint[pddl_lib::indexers::person_atnathanhall_index()] = 1;
-//    std::vector<std::array<unsigned char, 35>> constraints = {constraint};
-
-
-//    // bomb
-//    pddl_lib::indexers::inp0b0(state) = 2;
-//    pddl_lib::indexers::inp1b0(state) = 2;
-//    pddl_lib::indexers::inp2b0(state) = 2;
-//    pddl_lib::indexers::inp3b0(state) = 2;
-//    pddl_lib::indexers::inp4b0(state) = 2;
-//    pddl_lib::indexers::inp5b0(state) = 2;
-//    pddl_lib::indexers::inp6b0(state) = 2;
-//    pddl_lib::indexers::inp7b0(state) = 2;
-//    pddl_lib::indexers::inp8b0(state) = 2;
-//
-//    std::array<unsigned char, 12> constraint{};
-//    memset(constraint.data(), 0, sizeof(constraint));
-//    constraint[pddl_lib::indexers::inp0b0_index()] = 1;
-//    constraint[pddl_lib::indexers::inp1b0_index()] = 1;
-//    constraint[pddl_lib::indexers::inp2b0_index()] = 1;
-//    constraint[pddl_lib::indexers::inp3b0_index()] = 1;
-//    constraint[pddl_lib::indexers::inp4b0_index()] = 1;
-//    constraint[pddl_lib::indexers::inp5b0_index()] = 1;
-//    constraint[pddl_lib::indexers::inp6b0_index()] = 1;
-//    constraint[pddl_lib::indexers::inp7b0_index()] = 1;
-//    constraint[pddl_lib::indexers::inp8b0_index()] = 1;
-//    std::vector<std::array<unsigned char, 12>> constraints = {constraint};
-
-//    std::vector<std::array<unsigned char, 12>> constraints = {constraint};
-
     std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("plan_solver");
     std::filesystem::path test_dir = pkg_dir / "pddl";
     std::filesystem::path pddl_file = test_dir / "problem.pddl";
@@ -206,7 +136,7 @@ int main(int argc, char **argv) {
     std::unordered_set<pddl_lib::KBState> close_list;
     std::vector<pddl_lib::KBState> open_list;
     open_list.push_back(state);
-    auto counter = 0ul;
+    unsigned int counter = 0;
     while (open_list.size() > counter) {
 //        if (open_list.size() - counter > 2000000) {
 //            counter = open_list.size() - 2000000/2;
@@ -244,7 +174,7 @@ int main(int argc, char **argv) {
                       << open_list.size() << std::endl;
         }
         open_list[counter].children_begin = open_list.size();
-        auto i = 0ul;
+        unsigned int i = 0;
         int number_added = 0;
         while (i < valid_size) {
 //            if (number_added > 3) {

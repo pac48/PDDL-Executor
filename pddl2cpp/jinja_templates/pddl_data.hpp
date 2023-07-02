@@ -214,18 +214,6 @@ void apply_observe(KBState & state1, KBState & state2, int & valid1, int & valid
     for (auto &constraint: constraints) {
         valid1 = constraint(state1)*constraint(state2);
         valid2 = valid1;
-//        bool none_true = true;
-//        unsigned int num_unknown = 0;
-//        unsigned int unknown_index = 0;
-//        for (unsigned int i = 0ul; i < constraint.size(); i++) {
-//            none_true &= (state2.data[i] != 1 || constraint[i] == 0);
-//            num_unknown += (state2.data[i] == 2 && constraint[i] == 1);
-//            unknown_index = std::max(unknown_index, i*(state2.data[i]==2)*(constraint[i] == 1));
-//        }
-//        if (num_unknown == 1 && none_true){
-//            apply_observe_debug_2();
-//            state2.data[unknown_index] = 1;
-//        }
     }
 }
 }
