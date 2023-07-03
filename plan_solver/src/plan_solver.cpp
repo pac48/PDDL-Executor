@@ -13,6 +13,9 @@
 
 
 void disable_subtree(std::vector<pddl_lib::KBState> &open_list, pddl_lib::KBState &cur_state) {
+    if (cur_state.reached_goal == 1) {
+        return;
+    }
     cur_state.reached_goal = -1;
     for (auto child = cur_state.children_begin; child < cur_state.children_end; child++) {
         if (child > 0) {
@@ -44,32 +47,36 @@ void print_plan(const std::vector<pddl_lib::KBState> &open_list, unsigned int go
 
     std::unordered_map<int, std::vector<pddl_lib::KBState> > map;
     std::unordered_map<int, int> depth_map; // tack the number of values inserted at each depth
-    std::queue<unsigned int> q;
+    std::queue<std::pair<unsigned int, unsigned int>> q;
     for (auto ind = open_list[0].children_begin; ind < open_list[0].children_end; ind++) {
         auto &child = open_list[ind];
         if (child.reached_goal == 1) {
-            q.emplace(ind);
+            q.push({open_list[0].depth + 1, ind});
         }
     }
     while (!q.empty()) {
-        auto &state = open_list[q.front()];
-//        if (depth_map.find(state.depth+1) == depth_map.end()) {
-//            depth_map[state.depth+1] = 0;
-//        }
-//        depth_map[state.depth+1]++;
-
-
-        map[state.depth].push_back(open_list[q.front()]);
-
+        auto state = open_list[q.front().second];
+        auto depth = q.front().first;
         q.pop();
-        int counter = 0;
+
+//        auto state_depth = state.depth;
+        if (state.linked_goal != 0) {
+            state = open_list[state.linked_goal];
+            depth--;
+//            state.children_begin = state.linked_goal;
+//            state.children_end = state.children_begin + 1;
+        }
         for (auto ind = state.children_begin; ind < state.children_end; ind++) {
             auto &child = open_list[ind];
             if (child.reached_goal == 1) {
-                q.emplace(ind);
-                counter++;
+                q.push({depth + 1, ind});
             }
         }
+
+//            q.push({state.depth + 1, state.linked_goal});
+
+
+        map[depth].push_back(state);
 
 //        assert(counter == 0 || counter == 1 || counter == 2); TODO enable after done debug print
     }
@@ -86,6 +93,9 @@ void print_plan(const std::vector<pddl_lib::KBState> &open_list, unsigned int go
                 ss << val << " ";
             }
             auto action_name = ss.str();
+            if (action_name == "DetectPersonLocation t4 nathan bed ") {
+                int o = 0;
+            }
             if (state.children_end - state.children_begin <= 0) {
                 std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||" << -1
                           << "\n";
@@ -133,7 +143,7 @@ int main(int argc, char **argv) {
     unsigned int max_depth = 0;
     bool plan_found = false;
 
-    std::unordered_set<pddl_lib::KBState> close_list;
+    std::unordered_map<pddl_lib::KBState, unsigned int> close_list;
     std::vector<pddl_lib::KBState> open_list;
     open_list.push_back(state);
     unsigned int counter = 0;
@@ -141,6 +151,18 @@ int main(int argc, char **argv) {
         if (open_list[counter].reached_goal == -1) {
             counter++;
             continue;
+        }
+        if (open_list[counter].reached_goal == 1) {
+            counter++;
+            continue;
+        }
+        // TODO I am not sure if this is safe to enable
+//        if (close_list.find(open_list[counter]) != close_list.end()) {
+//            counter++;
+//            continue;
+//        }
+        if (open_list[counter].reached_goal != 1) {
+            close_list[open_list[counter]] = counter; // TODO it seems like the goal state should not be in the closes list
         }
 
         memset(valid.data(), 0, sizeof(valid));
@@ -157,28 +179,23 @@ int main(int argc, char **argv) {
             }
         }
 
-        // TODO I am not sure if this is safe to enable
-        if (close_list.find(open_list[counter]) != close_list.end()) {
-            counter++;
-            continue;
-        }
-        close_list.insert(open_list[counter]); // TODO it seems like the goal state should not be in the closes list
-
         pddl_lib::expand(open_list[counter], new_states, valid, constraints);
 
         if ((counter % 1000000) == 0) {
             std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
                       << open_list.size() << std::endl;
         }
-        open_list[counter].children_begin = open_list.size();
         unsigned int num_added = 0;
         unsigned int open_list_base_size = open_list.size();
+        unsigned int solution = 0;
         for (unsigned int i = 0; i < valid_size; i++) {
             if (*(valid_data + i) == 1) {
-                if (close_list.find(new_states[i]) == close_list.end()) {
+                auto it = close_list.find(new_states[i]);
+                if (it == close_list.end() || open_list[it->second].reached_goal != 1) {
                     if (new_states[i].associated_state != 0) {
                         unsigned int num_skipped = i - num_added;
-                        new_states[i].associated_state = open_list_base_size + (new_states[i].associated_state - num_skipped);
+                        new_states[i].associated_state =
+                                open_list_base_size + (new_states[i].associated_state - num_skipped);
                     }
                     new_states[i].depth = open_list[counter].depth + 1;
                     new_states[i].parent = counter;
@@ -188,11 +205,32 @@ int main(int argc, char **argv) {
                         std::cout << "max_depth: " << max_depth << std::endl;
                     }
                     num_added++;
+                } else {
+                    assert(open_list[it->second].reached_goal==1);
+                    if (open_list[open_list[it->second].parent].reached_goal==1){ //  && it->first.associated_state==0
+                        solution = it->second;
+                        break;
+                    }
                 }
             }
         }
-        open_list[counter].children_end = open_list.size(); // exclusive
+        if (solution == 0) {
+            open_list[counter].children_begin = open_list_base_size;
+            open_list[counter].children_end = open_list.size(); // exclusive
+        } else {
+            open_list[counter].linked_goal = open_list[solution].parent;
+            open_list[counter].reached_goal = 1;
+            if (goal_propagate(open_list, counter)) {
+                plan_found = true;
+                std::cout << "fond plan" << std::endl;
+                print_plan(open_list, counter);
+                return 0;
+            }
+
+        }
+
         counter++;
+
     }
 
 //    if (!plan_found){

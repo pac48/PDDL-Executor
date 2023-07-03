@@ -20,13 +20,14 @@ namespace pddl_lib {
         unsigned int associated_state = 0;
         unsigned int children_begin = 0;
         unsigned int children_end = 0;
+        unsigned int linked_goal = 0;
         unsigned int parent;
         char reached_goal = 0;
         unsigned char data[{{size_kb_data}}];
         unsigned int subgraph = 0;
 
         bool operator==(const KBState & other) const{
-            return std::memcmp(data, other.data, {{size_kb_data}}) == 0 && subgraph == other.subgraph;
+            return std::memcmp(data, other.data, {{size_kb_data}}) == 0;// && subgraph == other.subgraph;
         }
     };
 
@@ -202,7 +203,7 @@ namespace std {
                 hashValue = (hashValue * prime) ^ obj.data[i];
             }
 
-            return hashValue ^ obj.subgraph;
+            return hashValue;// ^ obj.subgraph;
         }
     };
 }
