@@ -103,6 +103,7 @@ def main():
             act.base_name = action.name
             act.params = param
 
+
             tmp = parse_preconditions_unknowns(action_inst.precondtion, kb_template_map)
             act.pre = parse_preconditions(action_inst.precondtion, kb_template_map) + parse_observe_preconditions(
                 action_inst.observe, kb_template_map) + " && " + tmp + ';'
