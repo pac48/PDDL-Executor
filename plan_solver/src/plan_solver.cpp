@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
     std::unordered_set<pddl_lib::KBState> close_list;
     std::vector<pddl_lib::KBState> open_list;
     open_list.push_back(state);
-    auto counter = 0ul;
+    unsigned int counter = 0;
     while (open_list.size() > counter) {
         if (open_list[counter].reached_goal == -1) {
             counter++;
