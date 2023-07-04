@@ -3,10 +3,11 @@
 (:objects
     bed door outside - Landmark
     nathan - Person
-    t1 t2 t3 t4 t5 t6 - Time
+    t1 t2 t3 t4 t5  - Time
     ;; t6 t7 t8 t9 t10 - Time
     automated_msg recorded_msg call_caregiver_outside_msg call_caregiver_bed_msg call_emergency_msg - Msg
-    give_up caregiver_call emergency_call automated_reminder recorded_reminder caregiver_call_bed - ActionInstance
+    ;;give_up
+    caregiver_call emergency_call automated_reminder recorded_reminder caregiver_call_bed - ActionInstance
 )
 (:init
 
@@ -25,7 +26,7 @@
     ;;(next_time t7 t8)
     ;;(next_time t8 t9)
     ;;(next_time t9 t10)
-    (time_limit t6)
+    ;;(time_limit t6)
 
     (robot_at bed)
     (person_at t1 nathan door)
@@ -75,8 +76,6 @@
     (blocks caregiver_call emergency_call)
     (blocks automated_reminder recorded_reminder)
     (blocks recorded_reminder caregiver_call_bed)
-    ;;(blocks emergency_call give_up)
-
 
     ;; specify valid input argument combinations for all actions
     (valid_message caregiver_call call_caregiver_outside_msg)
@@ -87,7 +86,7 @@
 
     ;; specify world state constraints for all actions
     (person_location_constraint caregiver_call nathan outside)
-    (robot_location_constraint caregiver_call door)
+    ;;(robot_location_constraint caregiver_call door)
 
     (person_location_constraint automated_reminder nathan door)
 
@@ -96,15 +95,19 @@
     (person_location_constraint emergency_call nathan outside)
     ;;(robot_location_constraint emergency_call door)
 
-    (not_person_location_constraint caregiver_call_bed nathan bed)
+    ;;(not_person_location_constraint caregiver_call_bed nathan bed)
+    (person_location_constraint caregiver_call_bed nathan door)
+
 
     ;;types
     (call_action_type caregiver_call)
     (call_action_type emergency_call)
     (call_action_type caregiver_call_bed)
-    (give_up_action_type give_up)
-
+    ;;(give_up_action_type give_up)
+    (reminder_action_type recorded_reminder)
+    (reminder_action_type automated_reminder)
 
 )
-(:goal (success) )
+(:goal (and (success)  ) )
+
 )

@@ -34,7 +34,8 @@
 
   ;; action types
   (call_action_type ?a - ActionInstance)
-  (give_up_action_type ?a - ActionInstance)
+  ;;(give_up_action_type ?a - ActionInstance)
+  (reminder_action_type ?a - ActionInstance)
 
   ;; enforce action sequence dependencies
   (blocks ?a1 ?a2 - ActionInstance)
@@ -77,6 +78,7 @@
     :parameters (?a - ActionInstance ?t - Time ?p - Person ?m - Msg)
     :precondition (and
             (GiveReminder_enabled)
+            (reminder_action_type ?a)
             (current_time ?t)
             (valid_message ?a ?m)
             (not (should_tick))
@@ -112,22 +114,12 @@
 (:action DetectPersonLocation
     :parameters (?t - Time ?p - Person ?loc - Landmark)
     :precondition (and
-                    (not (should_tick))
-    		            (DetectPerson_enabled)
                     (current_time ?t)
+                    (not (should_tick))
+                    (DetectPerson_enabled)
 	                )
     :observe (person_at ?t ?p ?loc)
 )
-
-;;(:action WaitForPersonToGoToLocation
-;;    :parameters (?tc - Time ?tn - Time ?p - Person ?loc - Landmark)
-;;    :precondition (and
-;;                    (WaitForPersonToGoToLocation_enabled)
-;;                    (current_time ?tc)
-;;                    (next_time ?tc ?tn)
-;;		)
-;;     :observe (person_at ?tn ?p ?loc)
-;;)
 
 ;; Move to any landmark, avoiding terrain
 (:action moveToLandmark
@@ -145,9 +137,9 @@
     :parameters (?a - ActionInstance ?t - Time ?p - Person ?m - Msg)
     :precondition (and
             (MakeCall_enabled)
+            (call_action_type ?a)
             (current_time ?t)
             (valid_message ?a ?m)
-            (call_action_type ?a)
             (not (should_tick))
             ;; certain action instances block others, for example, we must call caregiver before calling emergency
             (forall (?ai - ActionInstance)
@@ -174,53 +166,28 @@
     :effect (and (message_given ?m)  (executed_action ?a) (should_tick) )
 )
 
-
-;; Update success status
-(:action UpdateSuccess
-	:parameters (?t - Time ?p - Person ?loc - Landmark)
-	:precondition (and
-	                (current_time ?t)
-                  (bed_location ?loc)
-                  (person_at ?t ?p ?loc)
-                )
-    :effect (success)
-)
-
 ;; Update success status
 (:action MessageGivenSuccess
-	:parameters (?m - Msg)
+	:parameters ()
 	:precondition (and
-                  (message_given_success ?m)
-                  (message_given ?m)
-                )
+	                (not
+                        (forall (?m - Msg)
+                          (not (and (message_given_success ?m) (message_given ?m) ) )
+                        )
+                    )
+                  )
     :effect (success)
 )
 
 ;; Update success status
 (:action PersonAtSuccess
-	:parameters (?t - Time ?p - Person ?loc - Landmark)
+	:parameters (?p - Person ?t - Time ?loc - Landmark)
 	:precondition (and
 	                (current_time ?t)
-                  (person_at_success ?p ?loc)
-                  (person_at ?t ?p ?loc)
-                )
-    :effect (success)
-)
-
-;; Update success status
-(:action GiveUpAction
-  :parameters (?p - Person  ?a - ActionInstance ?t - Time)
-	:precondition (and
-	                (give_up_action_type ?a)
-	                (current_time ?t)
-	                (time_limit ?t)
-                  (forall (?ai - ActionInstance)
-                    (not (and (blocks ?ai ?a)  (not (executed_action ?ai) ) ) )
+	                (person_at ?t ?p ?loc)
+	                (person_at_success ?p ?loc)
                   )
-                )
     :effect (success)
 )
-
-
 
 )
