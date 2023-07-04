@@ -158,11 +158,11 @@ int main(int argc, char **argv) {
         }
 
         // TODO I am not sure if this is safe to enable
-        if (close_list.find(open_list[counter]) != close_list.end()) {
-            counter++;
-            continue;
-        }
-        close_list.insert(open_list[counter]); // TODO it seems like the goal state should not be in the closes list
+//        if (close_list.find(open_list[counter]) != close_list.end()) {
+//            counter++;
+//            continue;
+//        }
+//        close_list.insert(open_list[counter]); // TODO it seems like the goal state should not be in the closes list
 
         pddl_lib::expand(open_list[counter], new_states, valid, constraints);
 
@@ -183,12 +183,15 @@ int main(int argc, char **argv) {
                     new_states[i].depth = open_list[counter].depth + 1;
                     new_states[i].parent = counter;
                     open_list.push_back(new_states[i]);
+                    close_list.insert(new_states[i]);
                     if (new_states[i].depth > max_depth) {
                         max_depth = new_states[i].depth;
                         std::cout << "max_depth: " << max_depth << std::endl;
                     }
                     num_added++;
                 }
+            } else{
+              break;
             }
         }
         open_list[counter].children_end = open_list.size(); // exclusive

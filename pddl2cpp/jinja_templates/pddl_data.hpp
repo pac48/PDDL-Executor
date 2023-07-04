@@ -211,10 +211,10 @@ namespace pddl_lib {
 
 {% for action in actions %}
 namespace {{action.name}} {
-    bool check_preconditions(const KBState & state) {
+    inline bool check_preconditions(const KBState & state) {
         return {{action.pre}}
     }
-    void apply_effect(KBState & state) {
+    inline void apply_effect(KBState & state) {
         {{action.effect}}
     }
 }
@@ -247,33 +247,37 @@ void apply_observe(KBState & state1, KBState & state2, int & valid1, int & valid
 
 void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*observe_actions|length}}> & new_states, std::array<int, {{actions|length + 2*observe_actions|length}}> & valid,
             const std::vector<std::function<bool(KBState &)>> & constraints={}){
+  int num = 0;
 {% for action in actions %}
 if ({{action.name}}::check_preconditions(cur_state)){
-        new_states[{{ loop.index - 1}}] = cur_state;
-        new_states[{{ loop.index - 1}}].action = {{ loop.index - 1}};
-        new_states[{{ loop.index - 1}}].associated_state = 0;
-        {{action.name}}::apply_effect(new_states[{{ loop.index - 1}}]);
-        valid[{{ loop.index - 1}}] = 1;
+        new_states[num] = cur_state;
+        new_states[num].action = {{ loop.index - 1}};
+        new_states[num].associated_state = 0;
+        {{action.name}}::apply_effect(new_states[num]);
+        valid[num] = 1;
+        num++;
 }
 {% endfor %}
 
 {% for action in observe_actions %}
 if ({{action.name}}::check_preconditions(cur_state)){
-    new_states[{{actions|length + 2*loop.index - 2}}] = cur_state;
-    new_states[{{actions|length + 2*loop.index - 2 + 1}}] = cur_state;
-    new_states[{{actions|length + 2*loop.index - 2}}].action = {{actions|length + loop.index - 1}};
-    new_states[{{actions|length + 2*loop.index - 2 + 1}}].action = {{actions|length + loop.index - 1}};
-    {{action.name}}::apply_effect(new_states[{{actions|length + 2*loop.index - 2}}]);
-    {{action.name}}::apply_effect(new_states[{{actions|length + 2*loop.index - 2 + 1}}]);
-    valid[{{actions|length + 2*loop.index - 2}}] = 1;
-    valid[{{actions|length + 2*loop.index - 2 + 1}}] = 1;
-    {{action.name}}::apply_observe(new_states[{{actions|length + 2*loop.index - 2}}], new_states[{{actions|length + 2*loop.index - 2 + 1}}],
-                                   valid[{{actions|length + 2*loop.index - 2}}], valid[{{actions|length + 2*loop.index - 2 + 1}}], constraints);
-    new_states[{{actions|length + 2*loop.index - 2}}].associated_state = {{actions|length + 2*loop.index - 2 + 1}};
-    new_states[{{actions|length + 2*loop.index - 2+1}}].associated_state = {{actions|length + 2*loop.index - 2}};
+    new_states[num] = cur_state;
+    new_states[num+1] = cur_state;
+    new_states[num].action = {{actions|length + loop.index - 1}};
+    new_states[num+1].action = {{actions|length + loop.index - 1}};
+    {{action.name}}::apply_effect(new_states[num]);
+    {{action.name}}::apply_effect(new_states[num+1]);
+    valid[num] = 1;
+    valid[num+1] = 1;
+    {{action.name}}::apply_observe(new_states[num], new_states[num+1],
+                                   valid[num], valid[num+1], constraints);
+    new_states[num].associated_state = num+1;
+    new_states[num+1].associated_state = num;
     subgraph_counter++;
-    new_states[{{actions|length + 2*loop.index - 2}}].subgraph = subgraph_counter;
-    new_states[{{actions|length + 2*loop.index - 2+1}}].subgraph = subgraph_counter;
+    new_states[num].subgraph = subgraph_counter;
+    new_states[num+1].subgraph = subgraph_counter;
+
+    num += 2;
 }
 {% endfor %}
 }
