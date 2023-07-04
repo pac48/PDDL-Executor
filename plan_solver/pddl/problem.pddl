@@ -1,7 +1,7 @@
 (define (problem midnight_wondering)
 (:domain midnight_wondering_domain)
 (:objects
-    bed door outside - Landmark
+    bed door outside home - Landmark
     nathan - Person
     t1 t2 t3 t4 t5  - Time
     ;; t6 t7 t8 t9 t10 - Time
@@ -28,7 +28,8 @@
     ;;(next_time t9 t10)
     ;;(time_limit t6)
 
-    (robot_at bed)
+    ;;(robot_at bed)
+    (robot_at home)
     (person_at t1 nathan door)
     (unknown (person_at t2 nathan outside))
     (unknown (person_at t2 nathan door))
@@ -51,6 +52,7 @@
     ;;(unknown (person_at t8 nathan outside))
     ;;(unknown (person_at t8 nathan door))
     ;;(unknown (person_at t8 nathan bed))
+    ;;(oneof (person_at t1 nathan door) (person_at t1 nathan outside) (person_at t1 nathan bed) )
     (oneof (person_at t2 nathan door) (person_at t2 nathan outside) (person_at t2 nathan bed) )
     (oneof (person_at t3 nathan door) (person_at t3 nathan outside) (person_at t3 nathan bed) )
     (oneof (person_at t4 nathan door) (person_at t4 nathan outside) (person_at t4 nathan bed) )
@@ -59,10 +61,11 @@
     ;;(oneof (person_at t7 nathan door) (person_at t7 nathan outside) (person_at t7 nathan bed) )
     ;;(oneof (person_at t8 nathan door) (person_at t8 nathan outside) (person_at t8 nathan bed) )
 
-    (traversable bed door)
-    (traversable door bed)
-    (traversable door outside)
-    (traversable outside door)
+    (traversable home door)
+    ;;(traversable door home)
+    ;;(traversable door bed)
+    ;;(traversable door outside)
+    ;;(traversable outside door)
 
     (door_location door)
     (bed_location bed)
@@ -76,6 +79,9 @@
     (blocks caregiver_call emergency_call)
     (blocks automated_reminder recorded_reminder)
     (blocks recorded_reminder caregiver_call_bed)
+
+    ;; domain specific time blocking
+    ;; (blocks_detect_person automated_reminder t3)
 
     ;; specify valid input argument combinations for all actions
     (valid_message caregiver_call call_caregiver_outside_msg)

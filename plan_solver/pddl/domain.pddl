@@ -15,7 +15,7 @@
 	(robot_at ?lm - Landmark)
 	(person_at ?t - Time ?p - Person ?lm - Landmark)
 	;; physical constants
-	(traversable ?to ?from - Landmark)
+	(traversable ?from ?to - Landmark)
 	(bed_location ?lm - Landmark)
 	(door_location ?lm - Landmark)
 
@@ -39,6 +39,7 @@
 
   ;; enforce action sequence dependencies
   (blocks ?a1 ?a2 - ActionInstance)
+  (blocks_detect_person ?a1 - ActionInstance  ?t - Time)
   (executed_action ?a - ActionInstance)
 
   ;; enforce that actions are called with valid object instances
@@ -117,6 +118,10 @@
                     (current_time ?t)
                     (not (should_tick))
                     (DetectPerson_enabled)
+                    ;; probably delete this
+                    (forall (?ai - ActionInstance)
+                        (not (and (blocks_detect_person ?ai ?t)  (not (executed_action ?ai) ) ) )
+                    )
 	                )
     :observe (person_at ?t ?p ?loc)
 )
@@ -127,7 +132,7 @@
 	:precondition (and
 	                (not (should_tick))
 	                (robot_at ?from)
-	                (traversable ?to ?from)
+	                (traversable ?from ?to)
 	          )
 	:effect (and (robot_at ?to) (not (robot_at ?from)) (should_tick) )
 )

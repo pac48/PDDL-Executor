@@ -271,8 +271,8 @@ if ({{action.name}}::check_preconditions(cur_state)){
     valid[num+1] = 1;
     {{action.name}}::apply_observe(new_states[num], new_states[num+1],
                                    valid[num], valid[num+1], constraints);
-    new_states[num].associated_state = num+1;
-    new_states[num+1].associated_state = num;
+    new_states[num].associated_state = num+1+1;
+    new_states[num+1].associated_state = num+1;
     subgraph_counter++;
     new_states[num].subgraph = subgraph_counter;
     new_states[num+1].subgraph = subgraph_counter;

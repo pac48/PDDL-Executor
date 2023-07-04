@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
         if (it == close_list.end()) {
           if (new_states[i].associated_state != 0) {
             unsigned int num_skipped = i - num_added;
-            new_states[i].associated_state = open_list_base_size + (new_states[i].associated_state - num_skipped);
+            new_states[i].associated_state = open_list_base_size + (new_states[i].associated_state - 1 - num_skipped);
           }
           new_states[i].depth = open_list[counter].depth + 1;
           new_states[i].parent = counter;
