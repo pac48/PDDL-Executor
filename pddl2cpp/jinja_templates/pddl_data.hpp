@@ -89,7 +89,6 @@ namespace pddl_lib {
                 } else if (state.data[cond_1.first] == 0 && state.data[cond_2.first]==2){
                     state.data[cond_2.first] = cond_2.second;
                 } else if (state.data[cond_1.first] == 0 && state.data[cond_2.first]==0){
-//                    assert(0); TODO is this needed?
                     return false;
                 }
                 return true;
@@ -182,6 +181,20 @@ if (index == {{actions|length + loop.index -1}}){
 }
 {%- endfor %}
     throw std::runtime_error("index not in action set");
+}
+
+std::string get_state_string(const KBState & state){
+    std::stringstream ss;
+{% for val in indexers %}
+if (state.data[{{loop.index -1 }}]==1){
+    ss << "{{val}}\n";
+}
+if (state.data[{{loop.index -1 }}]==2){
+    ss << "unknown({{val}})\n";
+}
+{%- endfor %}
+
+return ss.str();
 }
 
 } // indexers

@@ -7,7 +7,10 @@
 	Landmark
 	Msg
 	Time
-	ActionInstance
+	CallAction
+	ReminderAction
+	GuideAction
+	GoToPersonAction
 )
 
 (:predicates
@@ -28,25 +31,25 @@
 
 	;; enable/disable actions
   (DetectPerson_enabled)
+  (UpdatePersonLocation_enabled)
   (GiveReminder_enabled)
   (MakeCall_enabled)
   (WaitForPersonToGoToLocation_enabled)
 
-  ;; action types
-  (call_action_type ?a - ActionInstance)
-  ;;(give_up_action_type ?a - ActionInstance)
-  (reminder_action_type ?a - ActionInstance)
-
   ;; enforce action sequence dependencies
-  (blocks ?a1 ?a2 - ActionInstance)
-  (blocks_detect_person ?a1 - ActionInstance  ?t - Time)
-  (executed_action ?a - ActionInstance)
+  (call_blocks_call ?a1 ?a2 - CallAction)
+  (reminder_blocks_reminder ?a1 ?a2 - ReminderAction)
+  (reminder_blocks_call ?a1 - ReminderAction ?a2 - CallAction)
+
+  (executed_call ?a - CallAction)
+  (executed_reminder ?a - ReminderAction)
+  (executed_guide ?a - GuideAction)
+  (executed_go_to_person ?a - GoToPersonAction)
 
   ;; enforce that actions are called with valid object instances
-  (valid_message ?a - ActionInstance ?m - Msg)
-  (valid_landmark ?a - ActionInstance ?loc - Landmark)
-  (valid_person ?a - ActionInstance ?p - Person)
-  (valid_time ?a - ActionInstance ?t - Time)
+  (valid_reminder_message ?a - ReminderAction ?m - Msg)
+  (valid_call_message ?a - CallAction ?m - Msg)
+  (valid_guide_message ?a - GuideAction ?m - Msg)
 
   ;; time management predicates
   (should_tick)
@@ -55,10 +58,13 @@
   (time_limit ?t - Time)
 
   ;; constraints on the state of the world. object instances here refer to non-input instances
-  (person_location_constraint ?a - ActionInstance ?p - Person ?loc - Landmark)
-  (not_person_location_constraint ?a - ActionInstance ?p - Person ?loc - Landmark)
-  (robot_location_constraint ?a - ActionInstance ?loc - Landmark)
-  (message_given_constraint ?a - ActionInstance ?m - Msg)
+  (call_person_location_constraint ?a - CallAction ?p - Person ?loc - Landmark)
+  (reminder_person_location_constraint ?a - ReminderAction ?p - Person ?loc - Landmark)
+  (guide_person_location_constraint ?a - GuideAction ?p - Person ?loc - Landmark)
+
+  (call_not_person_location_constraint ?a - CallAction ?p - Person ?loc - Landmark)
+  (reminder_not_person_location_constraint ?a - ReminderAction ?p - Person ?loc - Landmark)
+  (guide_not_person_location_constraint ?a - GuideAction ?p - Person ?loc - Landmark)
 
 	(success)
 )
@@ -76,40 +82,69 @@
 
 ;;give reminder
 (:action GiveReminder
-    :parameters (?a - ActionInstance ?t - Time ?p - Person ?m - Msg)
+    :parameters (?a - ReminderAction ?t - Time ?p - Person ?m - Msg)
     :precondition (and
             (GiveReminder_enabled)
-            (reminder_action_type ?a)
             (current_time ?t)
-            (valid_message ?a ?m)
+            (valid_reminder_message ?a ?m)
             (not (should_tick))
-            (not
-              (forall (?loc - Landmark)
-                (not (and (person_at ?t ?p ?loc) (robot_at ?loc)) )
-              )
-            )
-
+            (not (executed_reminder ?a))
+            ;;(not
+            ;;  (forall (?loc - Landmark)
+            ;;    (not (and (person_at ?t ?p ?loc) (robot_at ?loc)) )
+            ;;  )
+            ;;)
             ;; certain action instances block others, for example, we must call caregiver before calling emergency
-            (forall (?ai - ActionInstance)
-              (not (and (blocks ?ai ?a)  (not (executed_action ?ai) ) ) )
+            (forall (?ai - ReminderAction)
+              (not (and (reminder_blocks_reminder ?ai ?a)  (not (executed_reminder ?ai) ) ) )
             )
             ;; certain things must be true about the world state for the specific action instance
             ;; this condition enforces that the person is at the location specified in person_location_constraint
             (forall (?loc - Landmark)
-              (not (and (not (person_at ?t ?p ?loc)) (person_location_constraint ?a ?p ?loc) ) )
+              (not (and (not (person_at ?t ?p ?loc)) (reminder_person_location_constraint ?a ?p ?loc) ) )
             )
-           ;; this condition enforces that the robot is at the location specified in robot_location_constraint
+            ;; this condition enforces that the person is not at the location specified in not_person_location_constraint
             (forall (?loc - Landmark)
-              (not (and (not (robot_at ?loc)) (robot_location_constraint ?a ?loc) ) )
-            )
-           ;; this condition enforces that other messages have already been given
-            (forall (?mi - Msg)
-              (not (and (not (message_given ?mi)) (message_given_constraint ?a ?mi) ) )
+              (not (and (person_at ?t ?p ?loc) (reminder_not_person_location_constraint ?a ?p ?loc) ) )
             )
 		)
-    :effect (and (message_given ?m)  (executed_action ?a)  (should_tick) )
+    :effect (and (message_given ?m)  (executed_reminder ?a)  (should_tick) )
 )
 
+
+;; Move to the landmark that the person is currently at
+;;(:action GoToPerson
+;;	:parameters (?a - GoToPersonAction ?from - Landmark ?to - Landmark ?tc - Time ?p - Person)
+;;	:precondition (and
+;;	                (not (executed_go_to_person ?a))
+;;	                (not (should_tick))
+;;	                (current_time ?tc)
+;;	                (robot_at ?from)
+;;	                (not (person_at ?tc ?p ?from))
+;;	                (person_at ?tc ?p ?to)
+;;	                ;;(traversable ?from ?to)
+;;	          )
+;;	:effect (and (robot_at ?to) (not (robot_at ?from))  (executed_go_to_person ?a)  (should_tick) )
+;;)
+
+;; guide person to new location
+;;(:action GuidePersonTo
+;;    :parameters (?a - GuideAction ?p - Person ?from - Landmark ?to - Landmark)
+;;    :precondition (and
+;;                    ;;TODO (DetectPerson_enabled)
+;;                    (not (should_tick))
+;;                    (not (executed_guide ?a))
+;;                    (forall (?tn - Time)
+;;                      (forall (?tc - Time)
+;;                         (not (and (and (current_time ?tc) (next_time ?tc ?tn))  (not (and  (person_at ?tc ?p ?from) (robot_at ?from) ) ) ) )
+;;                      )
+;;                    )
+;;                    (forall (?ai - CallAction)
+;;                      (not (and (call_blocks_call ?ai ?a)  (not (executed_call ?ai) ) ) )
+;;                    )
+;;	                )
+;;	:effect (and (robot_at ?to) (not (robot_at ?from)) (should_tick) (executed_guide ?a) )
+;;)
 
 ;; detect if person is at location
 (:action DetectPersonLocation
@@ -118,13 +153,27 @@
                     (current_time ?t)
                     (not (should_tick))
                     (DetectPerson_enabled)
-                    ;; probably delete this
-                    (forall (?ai - ActionInstance)
-                        (not (and (blocks_detect_person ?ai ?t)  (not (executed_action ?ai) ) ) )
-                    )
 	                )
     :observe (person_at ?t ?p ?loc)
 )
+
+;; update person location
+;;(:action UpdatePersonLocation
+;;    :parameters (?tp - Time ?tc - Time ?p - Person ?loc - Landmark)
+;;    :precondition (and
+;;                    (UpdatePersonLocation_enabled)
+;;                    (not (should_tick))
+;;                    (current_time ?tc)
+;;                    (next_time ?tp ?tc)
+;;                    (person_at ?tp ?p ?loc)
+;;                    (forall (?lm - Landmark)
+;;                      (not (person_at ?tc ?p ?lm))
+;;                    )
+;;	                )
+;;    :effect (person_at ?tc ?p ?loc)
+;;)
+
+
 
 ;; Move to any landmark, avoiding terrain
 (:action moveToLandmark
@@ -139,36 +188,31 @@
 
 ;;make call
 (:action MakeCall
-    :parameters (?a - ActionInstance ?t - Time ?p - Person ?m - Msg)
+    :parameters (?a - CallAction ?t - Time ?p - Person ?m - Msg)
     :precondition (and
             (MakeCall_enabled)
-            (call_action_type ?a)
             (current_time ?t)
-            (valid_message ?a ?m)
+            (valid_call_message ?a ?m)
             (not (should_tick))
+            (not (executed_call ?a))
             ;; certain action instances block others, for example, we must call caregiver before calling emergency
-            (forall (?ai - ActionInstance)
-              (not (and (blocks ?ai ?a)  (not (executed_action ?ai) ) ) )
+            (forall (?ai - CallAction)
+              (not (and (call_blocks_call ?ai ?a)  (not (executed_call ?ai) ) ) )
+            )
+            (forall (?ai - ReminderAction)
+              (not (and (reminder_blocks_call ?ai ?a)  (not (executed_reminder ?ai) ) ) )
             )
             ;; certain things must be true about the world state for the specific action instance
             ;; this condition enforces that the person is at the location specified in person_location_constraint
             (forall (?loc - Landmark)
-              (not (and (not (person_at ?t ?p ?loc)) (person_location_constraint ?a ?p ?loc) ) )
+              (not (and (not (person_at ?t ?p ?loc)) (call_person_location_constraint ?a ?p ?loc) ) )
             )
             ;; this condition enforces that the person is not at the location specified in not_person_location_constraint
             (forall (?loc - Landmark)
-              (not (and (not (person_at ?t ?p ?loc)) (not_person_location_constraint ?a ?p ?loc) ) )
-            )
-           ;; this condition enforces that the robot is at the location specified in robot_location_constraint
-            (forall (?loc - Landmark)
-              (not (and (not (robot_at ?loc)) (robot_location_constraint ?a ?loc) ) )
-            )
-           ;; this condition enforces that other messages have already been given
-            (forall (?mi - Msg)
-              (not (and (not (message_given ?mi)) (message_given_constraint ?a ?mi) ) )
+              (not (and (person_at ?t ?p ?loc) (call_not_person_location_constraint ?a ?p ?loc) ) )
             )
 		)
-    :effect (and (message_given ?m)  (executed_action ?a) (should_tick) )
+    :effect (and (message_given ?m)  (executed_call ?a) (should_tick) )
 )
 
 ;; Update success status
@@ -191,6 +235,27 @@
 	                (current_time ?t)
 	                (person_at ?t ?p ?loc)
 	                (person_at_success ?p ?loc)
+                  )
+    :effect (success)
+)
+
+;; Update success status
+(:action PersonAvoidedAtSuccess
+	:parameters ()
+	:precondition (and
+                  (forall (?a - GuideAction)
+                     (executed_guide ?a)
+                   )
+                  )
+    :effect (success)
+)
+
+;; Update success status
+(:action SuccessDEBUG
+	:parameters (?t - Time)
+	:precondition (and
+	                  (current_time ?t)
+                    (time_limit ?t)
                   )
     :effect (success)
 )
