@@ -39,7 +39,7 @@ function(generate_search_header LIB_NAME)
   endif()
 
   # Make the include directory
-  set(OUTPUT_FILE_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}/include/)
+  set(OUTPUT_FILE_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}/include)
   file(MAKE_DIRECTORY ${OUTPUT_FILE_DIR})
 
   # Set the domain file parameter to be relative to the current source dir
@@ -54,10 +54,10 @@ function(generate_search_header LIB_NAME)
   # Generate the header for the library
   add_custom_command(
     OUTPUT ${HEADER_FILE}
-    COMMAND ${pddl2cpp_BIN} ${HEADER_FILE} ${DOMAIN_FILE} ${PROBLEM_FILE}
+    COMMAND ${pddl2search_BIN} ${HEADER_FILE} ${DOMAIN_FILE} ${PROBLEM_FILE}
     DEPENDS ${DOMAIN_FILE} ${PROBLEM_FILE} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../jinja_templates/pddl_data.hpp
     COMMENT
-    "Running `{pddl2cpp_BIN} ${HEADER_FILE} ${DOMAIN_FILE} ${PROBLEM_FILE}`"
+    "Running `{pddl2search_BIN} ${HEADER_FILE} ${DOMAIN_FILE} ${PROBLEM_FILE}`"
     VERBATIM
   )
 

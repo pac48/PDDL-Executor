@@ -12,7 +12,6 @@
 
 	;; needed actions
     (DetectPerson_enabled)
-    (UpdatePersonLocation_enabled)
     (GiveReminder_enabled)
     (MakeCall_enabled)
 
