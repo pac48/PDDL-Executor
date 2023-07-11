@@ -109,10 +109,10 @@ public:
 void print_plan(const OpenList &open_list, unsigned int goal_ind) {
     assert(open_list[goal_ind].reached_goal);
 
-    std::unordered_map<unsigned int, std::vector<pddl_lib::KBState*> > map;
+    std::unordered_map<unsigned int, std::vector<pddl_lib::KBState *> > map;
     std::unordered_map<int, int> depth_map; // tack the number of values inserted at each depth
-    std::queue<pddl_lib::KBState*> q;
-    for (const auto &child : open_list[0].children) {
+    std::queue<pddl_lib::KBState *> q;
+    for (const auto &child: open_list[0].children) {
         if (child->reached_goal == 1) {
             q.emplace(child);
         }
@@ -124,7 +124,7 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
 
         q.pop();
         int counter = 0;
-        for (const auto & child : state->children) {
+        for (const auto &child: state->children) {
             if (child->reached_goal == 1) {
                 q.emplace(child);
                 counter++;
@@ -176,7 +176,37 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
 
 }
 
-bool goal_search(pddl_lib::KBState & state){
+bool goal_search(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState *> &checked_states) {
+    if (checked_states.find(state) != checked_states.end()) {
+//        assert(state->reached_goal == 0);
+        return state->reached_goal == 1;
+    }
+    if (state->reached_goal == 1) {// && state->associated_state == nullptr) {
+        return true;
+    }
+//    if (state->reached_goal == 1 && state->associated_state != nullptr && state->associated_state->reached_goal == 1) {
+//        return true;
+//    }
+    checked_states.insert(state);
+    for (const auto &child: state->children) {
+        bool reached = goal_search(child, checked_states);
+        if (reached && child->associated_state == nullptr) {
+            state->reached_goal = 1;
+            return true;
+        }
+        if (reached && child->associated_state != nullptr) {
+//            checked_states.insert(child->associated_state);
+            reached = goal_search(child->associated_state, checked_states);
+//            checked_states.erase(child->associated_state);
+            if (reached) {
+                state->reached_goal = 1;
+                return true;
+            }
+        }
+    }
+    checked_states.erase(state);
+    assert(state->reached_goal == false);
+    state->reached_goal = 0;
 
     return false;
 }
@@ -197,11 +227,12 @@ int main(int argc, char **argv) {
     bool plan_found = false;
 
     std::unordered_set<pddl_lib::KBState *> close_list;
+    std::unordered_set<unsigned int> depth_check;
     OpenList open_list;
     open_list.push_back(init_state);
     unsigned int counter = 0;
     while (open_list.size() > counter) {
-        pddl_lib::KBState & cur_state =  open_list[counter];
+        pddl_lib::KBState &cur_state = open_list[counter];
         if (cur_state.reached_goal == -1) {
             counter++;
             continue;
@@ -211,12 +242,21 @@ int main(int argc, char **argv) {
             cur_state.reached_goal = 1;
 //            std::cout << "new goal found" << std::endl;
 //            if (goal_propagate(open_list, counter)) {
-            if (goal_search(open_list[0])) {
-                plan_found = true;
-                std::cout << "fond plan" << std::endl;
-                print_plan(open_list, counter);
-                break;
+            bool should_check = open_list.size() == counter + 1;// || depth_check.find(max_depth) == depth_check.end();
+            if (should_check) {
+                std::unordered_set<pddl_lib::KBState *> checked_states;
+                std::cout << "checking goal" << std::endl;
+//                for (int i = 0; i < 100; i++) {
+//                    goal_search(&open_list[0], checked_states);
+//                }
+                if (goal_search(&open_list[0], checked_states)) {
+                    plan_found = true;
+                    std::cout << "found plan" << std::endl;
+                    print_plan(open_list, counter);
+                    break;
+                }
             } else {
+                depth_check.insert(max_depth);
                 counter++;
                 continue;
             }
@@ -229,17 +269,18 @@ int main(int argc, char **argv) {
         }
         unsigned int num_added = 0;
         unsigned int open_list_base_size = open_list.size();
-        for (auto & potential_new_state : new_states) {
+        for (auto &potential_new_state: new_states) {
             if (potential_new_state.valid) {
                 auto it = close_list.find(&potential_new_state);
                 if (it == close_list.end()) {
-                    if (potential_new_state.associated_state != nullptr && !potential_new_state.associated_state->valid) {
+                    if (potential_new_state.associated_state != nullptr &&
+                        !potential_new_state.associated_state->valid) {
                         assert(0); // I do not think this can occur
-                        potential_new_state.valid = 0;
-                        continue;
+//                        potential_new_state.valid = 0;
+//                        continue;
                     }
                     open_list.push_back(potential_new_state);
-                    auto & new_state = open_list.back();
+                    auto &new_state = open_list.back();
                     new_state.depth = cur_state.depth + 1;
 //                    new_states[i].parent = counter;
                     close_list.insert(&new_state);
@@ -250,10 +291,11 @@ int main(int argc, char **argv) {
                         new_state.associated_state->associated_state = &new_state;
 
                         auto it2 = close_list.find(new_state.associated_state);
-                        if (it2 != close_list.end()){
-                            new_state.associated_state->valid = 0;
+                        if (it2 != close_list.end()) {
+//                            potential_new_state.associated_state->valid = 0; // set to zero to prevent it from being added
                             new_state.associated_state = *it2;
                             assert(new_state.associated_state != nullptr);
+                            assert((*it2)->associated_state == &new_state);
                         }
                     }
 
@@ -262,6 +304,8 @@ int main(int argc, char **argv) {
                         std::cout << "max_depth: " << max_depth << std::endl;
                     }
                     num_added++;
+                } else{
+                    cur_state.children.push_back(*it);
                 }
             } else {
                 break;
