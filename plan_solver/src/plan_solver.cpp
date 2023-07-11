@@ -7,12 +7,85 @@
 #include <queue>
 #include <sstream>
 #include <unordered_map>
+#include <list>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include "pddl_problem.hpp"
 
 
-void disable_subtree(std::vector<pddl_lib::KBState> &open_list, pddl_lib::KBState &cur_state) {
+constexpr int CHUNK_SIZE = 128 * 16;
+struct Chunk {
+    std::array<pddl_lib::KBState, CHUNK_SIZE> memory;
+};
+
+class OpenList {
+private:
+    size_t size_ = 0;
+    std::list<Chunk> list_;
+
+    Chunk &get_chunk(size_t index) {
+        if (index >= list_.size() * CHUNK_SIZE) {
+            throw std::runtime_error("index out of bounds");
+        }
+        auto it = list_.begin();
+        while (index > CHUNK_SIZE > 0 && it != list_.end()) {
+            index -= CHUNK_SIZE;
+            it++;
+        }
+        return *it;
+    }
+
+    [[nodiscard]] const Chunk &get_chunk(size_t index) const {
+        if (index >= list_.size() * CHUNK_SIZE) {
+            throw std::runtime_error("index out of bounds");
+        }
+        auto it = list_.begin();
+        while (index > CHUNK_SIZE > 0 && it != list_.end()) {
+            index -= CHUNK_SIZE;
+            it++;
+        }
+        return *it;
+    }
+
+public:
+
+    const pddl_lib::KBState &operator[](size_t index) const {
+        return get_chunk(index).memory[index % CHUNK_SIZE];
+    }
+
+    pddl_lib::KBState &operator[](size_t index) {
+        return get_chunk(index).memory[index % CHUNK_SIZE];
+    }
+
+    void push_back(pddl_lib::KBState state) {
+        if (size_ == list_.size() * CHUNK_SIZE) {    // need new chunk
+            list_.emplace_back();
+        }
+//        std::cout << size_ <<"\n";
+        Chunk &chunk = list_.back();
+        chunk.memory[size_ % CHUNK_SIZE] = state;
+        size_++;
+    }
+
+    pddl_lib::KBState &back() {
+        Chunk &chunk = list_.back();
+        return chunk.memory[(size_ - 1) % CHUNK_SIZE];
+    }
+
+    size_t size() {
+        return size_;
+    }
+
+//    using std::list<Chunk>::push_back;
+//    using std::list<Chunk>::back;
+// push_back
+// back
+//    operator[]
+
+};
+
+
+void disable_subtree(OpenList &open_list, pddl_lib::KBState &cur_state) {
     cur_state.reached_goal = -1;
     for (auto child = cur_state.children_begin; child < cur_state.children_end; child++) {
         if (child > 0) {
@@ -21,7 +94,7 @@ void disable_subtree(std::vector<pddl_lib::KBState> &open_list, pddl_lib::KBStat
     }
 }
 
-bool goal_propagate(std::vector<pddl_lib::KBState> &open_list, unsigned int goal_ind) {
+bool goal_propagate(OpenList &open_list, unsigned int goal_ind) {
     if (goal_ind == 0) {
         return true;
     }
@@ -39,7 +112,7 @@ bool goal_propagate(std::vector<pddl_lib::KBState> &open_list, unsigned int goal
     return goal_propagate(open_list, goal_state.parent);
 }
 
-void print_plan(const std::vector<pddl_lib::KBState> &open_list, unsigned int goal_ind) {
+void print_plan(const OpenList &open_list, unsigned int goal_ind) {
     assert(open_list[goal_ind].reached_goal);
 
     std::unordered_map<int, std::vector<pddl_lib::KBState> > map;
@@ -135,8 +208,7 @@ int main(int argc, char **argv) {
     bool plan_found = false;
 
     std::unordered_set<pddl_lib::KBState *> close_list;
-    std::vector<pddl_lib::KBState> open_list;
-    open_list.reserve(1E7); //TODO this is absolutely a problem
+    OpenList open_list;
     open_list.push_back(state);
     unsigned int counter = 0;
     while (open_list.size() > counter) {
