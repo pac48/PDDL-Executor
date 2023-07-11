@@ -28,7 +28,7 @@ private:
             throw std::runtime_error("index out of bounds");
         }
         auto it = list_.begin();
-        while (index > CHUNK_SIZE > 0 && it != list_.end()) {
+        while (index >= CHUNK_SIZE && it != list_.end()) {
             index -= CHUNK_SIZE;
             it++;
         }
@@ -40,7 +40,7 @@ private:
             throw std::runtime_error("index out of bounds");
         }
         auto it = list_.begin();
-        while (index > CHUNK_SIZE > 0 && it != list_.end()) {
+        while (index >= CHUNK_SIZE && it != list_.end()) {
             index -= CHUNK_SIZE;
             it++;
         }
@@ -112,6 +112,7 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
     std::unordered_map<unsigned int, std::vector<pddl_lib::KBState *> > map;
     std::unordered_map<int, int> depth_map; // tack the number of values inserted at each depth
     std::queue<pddl_lib::KBState *> q;
+    std::unordered_set<pddl_lib::KBState *> close_list;
     for (const auto &child: open_list[0].children) {
         if (child->reached_goal == 1) {
             q.emplace(child);
@@ -119,10 +120,13 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
     }
     while (!q.empty()) {
         auto state = q.front();
-
         map[state->depth].push_back(q.front());
-
         q.pop();
+        if (close_list.find(state) != close_list.end()) {
+            continue;
+        }
+        close_list.insert(state);
+
         int counter = 0;
         for (const auto &child: state->children) {
             if (child->reached_goal == 1) {
@@ -181,9 +185,12 @@ bool goal_search(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState 
 //        assert(state->reached_goal == 0);
         return state->reached_goal == 1;
     }
-    if (state->reached_goal == 1) {// && state->associated_state == nullptr) {
+    if (state->reached_goal == 1) {
         return true;
     }
+//    if (state->reached_goal == 1  && state->associated_state == nullptr) {
+//        return true;
+//    }
 //    if (state->reached_goal == 1 && state->associated_state != nullptr && state->associated_state->reached_goal == 1) {
 //        return true;
 //    }
@@ -230,19 +237,23 @@ int main(int argc, char **argv) {
     std::unordered_set<unsigned int> depth_check;
     OpenList open_list;
     open_list.push_back(init_state);
+    close_list.insert(&open_list.back());
     unsigned int counter = 0;
     while (open_list.size() > counter) {
         pddl_lib::KBState &cur_state = open_list[counter];
-        if (cur_state.reached_goal == -1) {
+        if (cur_state.reached_goal == 1) {
             counter++;
             continue;
+        }
+        if (counter != 0) {
+            assert(&cur_state != &open_list[0]);
         }
 
         if (check_goal(cur_state)) {
             cur_state.reached_goal = 1;
 //            std::cout << "new goal found" << std::endl;
 //            if (goal_propagate(open_list, counter)) {
-            bool should_check = open_list.size() == counter + 1;// || depth_check.find(max_depth) == depth_check.end();
+            bool should_check = open_list.size() == counter + 1 || depth_check.find(max_depth) == depth_check.end();
             if (should_check) {
                 std::unordered_set<pddl_lib::KBState *> checked_states;
                 std::cout << "checking goal" << std::endl;
@@ -255,20 +266,20 @@ int main(int argc, char **argv) {
                     print_plan(open_list, counter);
                     break;
                 }
-            } else {
-                depth_check.insert(max_depth);
-                counter++;
-                continue;
             }
+            depth_check.insert(max_depth);
+            counter++;
+            continue;
+
         }
+        assert(cur_state.reached_goal == 0);
         pddl_lib::expand(cur_state, new_states, constraints);
 
         if ((counter % 1000000) == 0) {
             std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
                       << open_list.size() << std::endl;
         }
-        unsigned int num_added = 0;
-        unsigned int open_list_base_size = open_list.size();
+
         for (auto &potential_new_state: new_states) {
             if (potential_new_state.valid) {
                 auto it = close_list.find(&potential_new_state);
@@ -286,6 +297,7 @@ int main(int argc, char **argv) {
                     close_list.insert(&new_state);
                     cur_state.children.push_back(&new_state);
 
+
                     if (new_state.associated_state != nullptr) {
                         assert(new_state.associated_state->associated_state != nullptr);
                         new_state.associated_state->associated_state = &new_state;
@@ -293,6 +305,7 @@ int main(int argc, char **argv) {
                         auto it2 = close_list.find(new_state.associated_state);
                         if (it2 != close_list.end()) {
 //                            potential_new_state.associated_state->valid = 0; // set to zero to prevent it from being added
+                            pddl_lib::KBState tmp = new_state;
                             new_state.associated_state = *it2;
                             assert(new_state.associated_state != nullptr);
                             assert((*it2)->associated_state == &new_state);
@@ -303,8 +316,7 @@ int main(int argc, char **argv) {
                         max_depth = new_state.depth;
                         std::cout << "max_depth: " << max_depth << std::endl;
                     }
-                    num_added++;
-                } else{
+                } else {
                     cur_state.children.push_back(*it);
                 }
             } else {
