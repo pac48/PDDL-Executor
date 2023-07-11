@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 
     std::unordered_set<pddl_lib::KBState *> close_list;
     std::vector<pddl_lib::KBState> open_list;
-    open_list.reserve(1E7);
+    open_list.reserve(1E7); //TODO this is absolutely a problem
     open_list.push_back(state);
     unsigned int counter = 0;
     while (open_list.size() > counter) {
@@ -159,12 +159,6 @@ int main(int argc, char **argv) {
                 continue;
             }
         }
-
-        // TODO I am not sure if this is safe to enable
-//        if (close_list.find(open_list[counter]) != close_list.end()) {
-//            counter++;
-//            continue;
-//        }
 
         pddl_lib::expand(open_list[counter], new_states, valid, constraints);
 

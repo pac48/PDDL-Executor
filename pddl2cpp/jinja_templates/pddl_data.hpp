@@ -28,9 +28,9 @@ namespace pddl_lib {
         bool operator==(const KBState & other) const{
             return std::memcmp(data, other.data, {{size_kb_data}}) == 0; // && subgraph == other.subgraph;
         }
-        bool operator==(const KBState* & other) const{
-            return std::memcmp(data, other->data, {{size_kb_data}}) == 0; // && subgraph == other.subgraph;
-        }
+//        bool operator==(const KBState* & other) const{
+//            return std::memcmp(data, other->data, {{size_kb_data}}) == 0; // && subgraph == other.subgraph;
+//        }
     };
 
     std::function<bool(KBState &)> create_constraint(const Constraint& constraint, std::unordered_map<std::string, unsigned int> func_map){
@@ -205,20 +205,27 @@ return ss.str();
 
 namespace std {
     template<>
-    struct hash<pddl_lib::KBState> {
-        std::size_t operator()(const pddl_lib::KBState &obj) const {
+    struct equal_to<pddl_lib::KBState*>{
+        bool operator()(const pddl_lib::KBState * state1, const pddl_lib::KBState *state2) const {
+            return std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0;
+        }
+    };
+
+    template<>
+    struct hash<pddl_lib::KBState*> {
+        std::size_t operator()(const pddl_lib::KBState* obj) const {
             std::size_t hashValue = 0;
-            std::size_t* data = (std::size_t*) obj.data;
+            std::size_t* data = (std::size_t*) obj->data;
             constexpr std::size_t prime = 1099511628211;  // A large prime number
 
             for (size_t i = 0; i < {{size_kb_data}}/64; ++i) {
                 hashValue = (hashValue * prime) ^ data[i];
             }
             for (size_t i = 64*({{size_kb_data}}/64); i < {{size_kb_data}}; ++i) {
-                hashValue = (hashValue * prime) ^ obj.data[i];
+                hashValue = (hashValue * prime) ^ obj->data[i];
             }
 
-            return hashValue;// ^ obj.subgraph;
+            return hashValue;
         }
     };
 }
