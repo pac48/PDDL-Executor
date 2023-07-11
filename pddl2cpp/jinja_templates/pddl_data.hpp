@@ -26,7 +26,10 @@ namespace pddl_lib {
         unsigned int subgraph = 0;
 
         bool operator==(const KBState & other) const{
-            return std::memcmp(data, other.data, {{size_kb_data}}) == 0 && subgraph == other.subgraph;
+            return std::memcmp(data, other.data, {{size_kb_data}}) == 0; // && subgraph == other.subgraph;
+        }
+        bool operator==(const KBState* & other) const{
+            return std::memcmp(data, other->data, {{size_kb_data}}) == 0; // && subgraph == other.subgraph;
         }
     };
 
@@ -215,7 +218,7 @@ namespace std {
                 hashValue = (hashValue * prime) ^ obj.data[i];
             }
 
-            return hashValue ^ obj.subgraph;
+            return hashValue;// ^ obj.subgraph;
         }
     };
 }
@@ -286,7 +289,7 @@ if ({{action.name}}::check_preconditions(cur_state)){
                                    valid[num], valid[num+1], constraints);
     new_states[num].associated_state = num+1+1;
     new_states[num+1].associated_state = num+1;
-    subgraph_counter++;
+//    subgraph_counter++;
     new_states[num].subgraph = subgraph_counter;
     new_states[num+1].subgraph = subgraph_counter;
 

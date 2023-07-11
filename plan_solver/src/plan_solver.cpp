@@ -134,8 +134,9 @@ int main(int argc, char **argv) {
     unsigned int max_depth = 0;
     bool plan_found = false;
 
-    std::unordered_map<pddl_lib::KBState, unsigned int> close_list;
+    std::unordered_set<pddl_lib::KBState *> close_list;
     std::vector<pddl_lib::KBState> open_list;
+    open_list.reserve(1E7);
     open_list.push_back(state);
     unsigned int counter = 0;
     while (open_list.size() > counter) {
@@ -147,6 +148,7 @@ int main(int argc, char **argv) {
         memset(valid.data(), 0, sizeof(valid));
         if (check_goal(open_list[counter])) {
             open_list[counter].reached_goal = 1;
+//            std::cout << "new goal found" << std::endl;
             if (goal_propagate(open_list, counter)) {
                 plan_found = true;
                 std::cout << "fond plan" << std::endl;
@@ -163,7 +165,6 @@ int main(int argc, char **argv) {
 //            counter++;
 //            continue;
 //        }
-//        close_list.insert(open_list[counter]); // TODO it seems like the goal state should not be in the closes list
 
         pddl_lib::expand(open_list[counter], new_states, valid, constraints);
 
@@ -176,7 +177,7 @@ int main(int argc, char **argv) {
         unsigned int open_list_base_size = open_list.size();
         for (unsigned int i = 0; i < valid_size; i++) {
             if (*(valid_data + i) == 1) {
-                auto it = close_list.find(new_states[i]);
+                auto it = close_list.find(&new_states[i]);
                 if (it == close_list.end()) {
                     if (new_states[i].associated_state != 0) {
                         unsigned int num_skipped = i - num_added;
@@ -185,8 +186,8 @@ int main(int argc, char **argv) {
                     }
                     new_states[i].depth = open_list[counter].depth + 1;
                     new_states[i].parent = counter;
-                    close_list[new_states[i]] = open_list.size();
                     open_list.push_back(new_states[i]);
+                    close_list.insert(&open_list.back());
                     if (new_states[i].depth > max_depth) {
                         max_depth = new_states[i].depth;
                         std::cout << "max_depth: " << max_depth << std::endl;
