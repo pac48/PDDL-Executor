@@ -76,70 +76,57 @@ public:
         return size_;
     }
 
-//    using std::list<Chunk>::push_back;
-//    using std::list<Chunk>::back;
-// push_back
-// back
-//    operator[]
-
 };
 
 
-void disable_subtree(OpenList &open_list, pddl_lib::KBState &cur_state) {
-    cur_state.reached_goal = -1;
-    for (auto child = cur_state.children_begin; child < cur_state.children_end; child++) {
-        if (child > 0) {
-            disable_subtree(open_list, open_list[child]);
-        }
-    }
-}
+//void disable_subtree(OpenList &open_list, pddl_lib::KBState &cur_state) {
+//    cur_state.reached_goal = -1;
+//    for (auto child = cur_state.children; child < cur_state.children_end; child++) {
+//        if (child > 0) {
+//            disable_subtree(open_list, open_list[child]);
+//        }
+//    }
+//}
 
-bool goal_propagate(OpenList &open_list, unsigned int goal_ind) {
-    if (goal_ind == 0) {
-        return true;
-    }
-    pddl_lib::KBState &goal_state = open_list[goal_ind];
-    if (goal_state.associated_state != 0 && open_list[goal_state.associated_state].reached_goal != 1) {
-        return false;
-    }
-    auto &goal_parent = open_list[goal_state.parent];
-    goal_parent.reached_goal = 1;
-    for (auto child = goal_parent.children_begin; child < goal_parent.children_end; child++) {
-        if (child > 0 && child != goal_ind && child != goal_state.associated_state) {
-            disable_subtree(open_list, open_list[child]);
-        }
-    }
-    return goal_propagate(open_list, goal_state.parent);
-}
+//bool goal_propagate(OpenList &open_list, unsigned int goal_ind) {
+//    if (goal_ind == 0) {
+//        return true;
+//    }
+//    pddl_lib::KBState &goal_state = open_list[goal_ind];
+//    if (goal_state.associated_state != 0 && open_list[goal_state.associated_state].reached_goal != 1) {
+//        return false;
+//    }
+//    auto &goal_parent = open_list[goal_state.parent];
+//    goal_parent.reached_goal = 1;
+//    for (auto child = goal_parent.children_begin; child < goal_parent.children_end; child++) {
+//        if (child > 0 && child != goal_ind && child != goal_state.associated_state) {
+//            disable_subtree(open_list, open_list[child]);
+//        }
+//    }
+//    return goal_propagate(open_list, goal_state.parent);
+//}
 
 void print_plan(const OpenList &open_list, unsigned int goal_ind) {
     assert(open_list[goal_ind].reached_goal);
 
-    std::unordered_map<int, std::vector<pddl_lib::KBState> > map;
+    std::unordered_map<unsigned int, std::vector<pddl_lib::KBState*> > map;
     std::unordered_map<int, int> depth_map; // tack the number of values inserted at each depth
-    std::queue<unsigned int> q;
-    for (auto ind = open_list[0].children_begin; ind < open_list[0].children_end; ind++) {
-        auto &child = open_list[ind];
-        if (child.reached_goal == 1) {
-            q.emplace(ind);
+    std::queue<pddl_lib::KBState*> q;
+    for (const auto &child : open_list[0].children) {
+        if (child->reached_goal == 1) {
+            q.emplace(child);
         }
     }
     while (!q.empty()) {
-        auto &state = open_list[q.front()];
-//        if (depth_map.find(state.depth+1) == depth_map.end()) {
-//            depth_map[state.depth+1] = 0;
-//        }
-//        depth_map[state.depth+1]++;
+        auto state = q.front();
 
-
-        map[state.depth].push_back(open_list[q.front()]);
+        map[state->depth].push_back(q.front());
 
         q.pop();
         int counter = 0;
-        for (auto ind = state.children_begin; ind < state.children_end; ind++) {
-            auto &child = open_list[ind];
-            if (child.reached_goal == 1) {
-                q.emplace(ind);
+        for (const auto & child : state->children) {
+            if (child->reached_goal == 1) {
+                q.emplace(child);
                 counter++;
             }
         }
@@ -153,22 +140,22 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
         int ind = 0;
         int next_ind = 0;
         for (const auto &state: state_set) {
-            auto name_vec = pddl_lib::indexers::get_action_string(state.action);
+            auto name_vec = pddl_lib::indexers::get_action_string(state->action);
             std::stringstream ss;
             for (const auto &val: name_vec) {
                 ss << val << " ";
             }
             auto action_name = ss.str();
-            if (state.children_end - state.children_begin <= 0) {
+            if (state->children.size() == 0) {
                 std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||" << -1
                           << "\n";
             } else {
-                if (state.associated_state == 0) {
+                if (state->associated_state == nullptr) {
                     std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||"
                               << next_ind
                               << "\n";
                     next_ind++;
-                } else if (state.associated_state > open_list[state.associated_state].associated_state) {
+                } else if (state->associated_state > state->associated_state->associated_state) {
                     std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- TRUESON: " << depth << "||"
                               << next_ind << " --- FALSESON: " << depth << "||"
                               << next_ind + 1
@@ -176,9 +163,8 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
                     next_ind += 2;
                 } else {
                     ind--;
-                    assert(state.associated_state != 0);
-                    assert(1 == abs(((int) (state.associated_state)) -
-                                    ((int) (open_list[state.associated_state].associated_state))));
+                    assert(state->associated_state != nullptr);
+//                    assert(1 == abs(((int) (state.associated_state)) - ((int) (open_list[state.associated_state].associated_state))));
                 }
 //          std::cout << pddl_lib::indexers::get_state_string(state);
 
@@ -190,6 +176,11 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
 
 }
 
+bool goal_search(pddl_lib::KBState & state){
+
+    return false;
+}
+
 int main(int argc, char **argv) {
     std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("plan_solver");
     std::filesystem::path test_dir = pkg_dir / "pddl";
@@ -199,9 +190,7 @@ int main(int argc, char **argv) {
     std::stringstream ss;
     ss << pddl_file_stream.rdbuf();
     std::string pddl_str = ss.str();
-    auto [state, new_states, valid, constraints, check_goal] = pddl_lib::initialize_problem(pddl_str);
-    auto valid_data = valid.data();
-    const auto valid_size = valid.size();
+    auto [init_state, new_states, constraints, check_goal] = pddl_lib::initialize_problem(pddl_str);
 
     auto start = std::chrono::high_resolution_clock::now();
     unsigned int max_depth = 0;
@@ -209,19 +198,20 @@ int main(int argc, char **argv) {
 
     std::unordered_set<pddl_lib::KBState *> close_list;
     OpenList open_list;
-    open_list.push_back(state);
+    open_list.push_back(init_state);
     unsigned int counter = 0;
     while (open_list.size() > counter) {
-        if (open_list[counter].reached_goal == -1) {
+        pddl_lib::KBState & cur_state =  open_list[counter];
+        if (cur_state.reached_goal == -1) {
             counter++;
             continue;
         }
 
-        memset(valid.data(), 0, sizeof(valid));
-        if (check_goal(open_list[counter])) {
-            open_list[counter].reached_goal = 1;
+        if (check_goal(cur_state)) {
+            cur_state.reached_goal = 1;
 //            std::cout << "new goal found" << std::endl;
-            if (goal_propagate(open_list, counter)) {
+//            if (goal_propagate(open_list, counter)) {
+            if (goal_search(open_list[0])) {
                 plan_found = true;
                 std::cout << "fond plan" << std::endl;
                 print_plan(open_list, counter);
@@ -231,31 +221,44 @@ int main(int argc, char **argv) {
                 continue;
             }
         }
-
-        pddl_lib::expand(open_list[counter], new_states, valid, constraints);
+        pddl_lib::expand(cur_state, new_states, constraints);
 
         if ((counter % 1000000) == 0) {
             std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
                       << open_list.size() << std::endl;
         }
-        open_list[counter].children_begin = open_list.size();
         unsigned int num_added = 0;
         unsigned int open_list_base_size = open_list.size();
-        for (unsigned int i = 0; i < valid_size; i++) {
-            if (*(valid_data + i) == 1) {
-                auto it = close_list.find(&new_states[i]);
+        for (auto & potential_new_state : new_states) {
+            if (potential_new_state.valid) {
+                auto it = close_list.find(&potential_new_state);
                 if (it == close_list.end()) {
-                    if (new_states[i].associated_state != 0) {
-                        unsigned int num_skipped = i - num_added;
-                        new_states[i].associated_state =
-                                open_list_base_size + (new_states[i].associated_state - 1 - num_skipped);
+                    if (potential_new_state.associated_state != nullptr && !potential_new_state.associated_state->valid) {
+                        assert(0); // I do not think this can occur
+                        potential_new_state.valid = 0;
+                        continue;
                     }
-                    new_states[i].depth = open_list[counter].depth + 1;
-                    new_states[i].parent = counter;
-                    open_list.push_back(new_states[i]);
-                    close_list.insert(&open_list.back());
-                    if (new_states[i].depth > max_depth) {
-                        max_depth = new_states[i].depth;
+                    open_list.push_back(potential_new_state);
+                    auto & new_state = open_list.back();
+                    new_state.depth = cur_state.depth + 1;
+//                    new_states[i].parent = counter;
+                    close_list.insert(&new_state);
+                    cur_state.children.push_back(&new_state);
+
+                    if (new_state.associated_state != nullptr) {
+                        assert(new_state.associated_state->associated_state != nullptr);
+                        new_state.associated_state->associated_state = &new_state;
+
+                        auto it2 = close_list.find(new_state.associated_state);
+                        if (it2 != close_list.end()){
+                            new_state.associated_state->valid = 0;
+                            new_state.associated_state = *it2;
+                            assert(new_state.associated_state != nullptr);
+                        }
+                    }
+
+                    if (new_state.depth > max_depth) {
+                        max_depth = new_state.depth;
                         std::cout << "max_depth: " << max_depth << std::endl;
                     }
                     num_added++;
@@ -264,7 +267,7 @@ int main(int argc, char **argv) {
                 break;
             }
         }
-        open_list[counter].children_end = open_list.size(); // exclusive
+
         counter++;
     }
 

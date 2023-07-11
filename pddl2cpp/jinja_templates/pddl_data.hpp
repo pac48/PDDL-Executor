@@ -15,15 +15,14 @@ namespace pddl_lib {
         KBState(){
             memset(data, 0, sizeof(data));
         }
+        unsigned char data[{{size_kb_data}}];
         unsigned int depth = 0;
         unsigned int action = 0;
-        unsigned int associated_state = 0;
-        unsigned int children_begin = 0;
-        unsigned int children_end = 0;
-        unsigned int parent;
+        KBState* associated_state = {};
+        std::vector<KBState*> children = {};
         char reached_goal = 0;
-        unsigned char data[{{size_kb_data}}];
-        unsigned int subgraph = 0;
+        char valid = 0;
+//        unsigned int subgraph = 0;
 
         bool operator==(const KBState & other) const{
             return std::memcmp(data, other.data, {{size_kb_data}}) == 0; // && subgraph == other.subgraph;
@@ -130,12 +129,10 @@ namespace pddl_lib {
   }
 
 
-    std::tuple<KBState, std::array<KBState, {{actions|length + 2*observe_actions|length}}>, std::array<int, {{actions|length + 2*observe_actions|length}}>,
+    std::tuple<KBState, std::array<KBState, {{actions|length + 2*observe_actions|length}}>,
     std::vector<std::function<bool(KBState &)>>, std::function<bool (const KBState&)>> initialize_problem(const std::string& problem_str){
         pddl_lib::KBState state{};
         std::array<KBState, {{actions|length + 2*observe_actions|length}}> new_states{};
-        std::array<int, {{actions|length + 2*observe_actions|length}}> valid{};
-        memset(valid.data(), 0, sizeof(valid));
         memset(new_states.data(), 0, sizeof(new_states));
         auto problem = pddl_lib::parse_problem(problem_str).value();
         std::unordered_map<std::string, unsigned int> func_map;
@@ -157,7 +154,7 @@ namespace pddl_lib {
         }
 
         check_goal = create_goal(problem.goal, func_map);
-        return {state, new_states, valid, constraints, check_goal};
+        return {state, new_states, constraints, check_goal};
     }
 
 namespace indexers {
@@ -207,7 +204,15 @@ namespace std {
     template<>
     struct equal_to<pddl_lib::KBState*>{
         bool operator()(const pddl_lib::KBState * state1, const pddl_lib::KBState *state2) const {
-            return std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0;
+            if (state1->associated_state == nullptr && state2->associated_state == nullptr){
+                return std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0;
+            } else if ((state1->associated_state == nullptr && state2->associated_state != nullptr)
+                       || (state1->associated_state != nullptr && state2->associated_state == nullptr) ){
+                return false;
+            } else{
+                return (std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0)
+                       && (std::memcmp(state1->associated_state->data, state2->associated_state->data, {{size_kb_data}}) == 0);
+            }
         }
     };
 
@@ -257,32 +262,36 @@ bool check_preconditions(const KBState & state) {
 void apply_effect(KBState & state) {
     {{action.effect}}
 }
-void apply_observe(KBState & state1, KBState & state2, int & valid1, int & valid2, const std::vector<std::function<bool(KBState &)>> & constraints) {
+void apply_observe(KBState & state1, KBState & state2, const std::vector<std::function<bool(KBState &)>> & constraints) {
     {{action.observe}}
     apply_observe_debug_1();
     for (auto &constraint: constraints) {
-        valid1 = constraint(state1)*constraint(state2);
-        valid2 = valid1;
+        auto valid = constraint(state1)*constraint(state2);
+        state1.valid = valid;
+        state2.valid = valid;
     }
 }
 }
 {% endfor %}
 
-void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*observe_actions|length}}> & new_states, std::array<int, {{actions|length + 2*observe_actions|length}}> & valid,
+void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*observe_actions|length}}> & new_states,
             const std::vector<std::function<bool(KBState &)>> & constraints={}){
   int num = 0;
 {% for action in actions %}
+new_states[num].valid = 0;
 if ({{action.name}}::check_preconditions(cur_state)){
         new_states[num] = cur_state;
         new_states[num].action = {{ loop.index - 1}};
-        new_states[num].associated_state = 0;
+        new_states[num].associated_state = nullptr;
         {{action.name}}::apply_effect(new_states[num]);
-        valid[num] = 1;
+        new_states[num].valid = 1;
         num++;
 }
 {% endfor %}
 
 {% for action in observe_actions %}
+    new_states[num].valid = 0;
+    new_states[num+1].valid = 0;
 if ({{action.name}}::check_preconditions(cur_state)){
     new_states[num] = cur_state;
     new_states[num+1] = cur_state;
@@ -290,16 +299,9 @@ if ({{action.name}}::check_preconditions(cur_state)){
     new_states[num+1].action = {{actions|length + loop.index - 1}};
     {{action.name}}::apply_effect(new_states[num]);
     {{action.name}}::apply_effect(new_states[num+1]);
-    valid[num] = 1;
-    valid[num+1] = 1;
-    {{action.name}}::apply_observe(new_states[num], new_states[num+1],
-                                   valid[num], valid[num+1], constraints);
-    new_states[num].associated_state = num+1+1;
-    new_states[num+1].associated_state = num+1;
-//    subgraph_counter++;
-    new_states[num].subgraph = subgraph_counter;
-    new_states[num+1].subgraph = subgraph_counter;
-
+    {{action.name}}::apply_observe(new_states[num], new_states[num+1], constraints);
+    new_states[num].associated_state = &new_states[num+1];
+    new_states[num+1].associated_state = &new_states[num];
     num += 2;
 }
 {% endfor %}
