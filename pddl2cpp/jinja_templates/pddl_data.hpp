@@ -280,7 +280,7 @@ void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*o
             const std::vector<std::function<bool(KBState &)>> & constraints={}){
   int num = 0;
 {% for action in actions %}
-new_states[num].valid = 0;
+new_states[{{ loop.index - 1}}].valid = 0;
 if ({{action.name}}::check_preconditions(cur_state)){
         new_states[num] = cur_state;
         new_states[num].action = {{ loop.index - 1}};
@@ -295,8 +295,8 @@ if ({{action.name}}::check_preconditions(cur_state)){
 {% endfor %}
 
 {% for action in observe_actions %}
-    new_states[num].valid = 0;
-    new_states[num+1].valid = 0;
+    new_states[{{actions|length + 2*loop.index - 2}}].valid = 0;
+    new_states[{{actions|length + 2*loop.index - 1}}].valid = 0;
 if ({{action.name}}::check_preconditions(cur_state)){
     new_states[num] = cur_state;
     new_states[num+1] = cur_state;

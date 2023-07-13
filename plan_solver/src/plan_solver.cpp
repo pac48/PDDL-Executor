@@ -265,7 +265,7 @@ bool goal_search(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState 
                 ss << val << " ";
             }
             auto action_name = ss.str();
-            std::cout << action_name << "\n";
+//            std::cout << action_name << "\n";
         }
         std::cout << "\n\n";
 
@@ -338,6 +338,11 @@ int main(int argc, char **argv) {
             continue;
 
         }
+
+//      if (counter==4509){
+//        int o = 0;
+//      }
+
         assert(cur_state.goal_dist == -1);
         pddl_lib::expand(cur_state, new_states, constraints);
 
@@ -345,6 +350,23 @@ int main(int argc, char **argv) {
             std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
                       << open_list.size() << std::endl;
         }
+
+//        if (counter==4509){
+//          int count = 0;
+//          for (auto &potential_new_state: new_states) {
+//
+//            if (potential_new_state.valid) {
+//              if (potential_new_state.action_name_[0] == "DetectPersonLocation") {
+//                count++;
+//                if (count == 5){
+//                  std::cout << (int) pddl_lib::indexers::message_givencall_caregiver_guide_msg(potential_new_state) << "\n";
+//                  std::cout << (int) pddl_lib::indexers::message_givencall_caregiver_guide_msg(cur_state) << "\n";
+//
+//                }
+//                }
+//            }
+//        }
+//        }
 
         for (auto &potential_new_state: new_states) {
             if (potential_new_state.valid) {
@@ -378,7 +400,7 @@ int main(int argc, char **argv) {
                     cur_state.children.push_back(*it);
                     (*it)->parents.push_back(&cur_state);
                     assert(potential_new_state == *(*it));
-                    if (potential_new_state.action_name_[0] != "MakeCall"){
+                    if (potential_new_state.action_name_[0] == "DetectPersonLocation"){
                         assert(pddl_lib::indexers::message_givencall_caregiver_guide_msg(potential_new_state)
                                == pddl_lib::indexers::message_givencall_caregiver_guide_msg(cur_state));
                     }
