@@ -276,21 +276,20 @@ void recurse(pddl_lib::KBState *const state, std::vector<pddl_lib::KBState *> &g
     }
 }
 
-bool goal_search(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState *> &checked_states) {
-    std::vector<pddl_lib::KBState *> goals;
+bool goal_search(std::vector<pddl_lib::KBState *>& goals) {
     std::unordered_set<pddl_lib::KBState *> checked;
-    recurse(state, goals, checked);
+//    recurse(state, goals, checked);
     std::sort(goals.begin(), goals.end(), [](const pddl_lib::KBState *a, const pddl_lib::KBState *b) {
         return a->depth < b->depth;
     });
-    bool valid = false;
+    std::unordered_set<pddl_lib::KBState *> checked_states;
     for (const auto &goal: goals) {
         if (goal_propagate(goal, checked_states)) {
-            valid = true;
+            return true; //TODO maybe should continue checking?
         }
     }
 
-    return valid;
+    return false;
 }
 
 int main(int argc, char **argv) {
@@ -310,6 +309,7 @@ int main(int argc, char **argv) {
     int num_goals = 0;
 
     std::unordered_set<pddl_lib::KBState *> close_list;
+    std::vector<pddl_lib::KBState *> goals;
     std::unordered_set<unsigned int> depth_check;
     OpenList open_list;
     open_list.push_back(init_state);
@@ -320,6 +320,7 @@ int main(int argc, char **argv) {
 
         if (check_goal(cur_state)) {
             cur_state.goal_dist = 0;
+            goals.push_back(&cur_state);
             num_goals++;
 //            std::cout << "new goal found" << std::endl;
 //            if (goal_propagate(open_list, counter)) {
@@ -330,7 +331,7 @@ int main(int argc, char **argv) {
 //                for (int i = 0; i < 100; i++) {
 //                    goal_search(&open_list[0], checked_states);
 //                }
-                if (goal_search(&open_list[0], checked_states)) {
+                if (goal_search(goals)) {
                     plan_found = true;
                     std::cout << "found plan" << std::endl;
                     print_plan(open_list, counter);
@@ -354,7 +355,6 @@ int main(int argc, char **argv) {
         for (auto &potential_new_state: new_states) {
             if (potential_new_state.valid) {
                 auto it = close_list.find(&potential_new_state);
-//                std::cout << potential_new_state.action_name_[0] << "\n";
                 if (it == close_list.end()) {
                     open_list.push_back(potential_new_state);
                     auto &new_state = open_list.back();

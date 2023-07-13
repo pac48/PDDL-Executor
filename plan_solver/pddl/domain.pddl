@@ -8,6 +8,7 @@
 	Msg
 	Time
 	CallAction
+	WaitAction
 	ReminderAction
 	GuideAction
 	GoToPersonAction
@@ -42,11 +43,13 @@
     (call_blocks_call ?a1 ?a2 - CallAction)
     (reminder_blocks_reminder ?a1 ?a2 - ReminderAction)
     (reminder_blocks_call ?a1 - ReminderAction ?a2 - CallAction)
+    (wait_blocks_wait ?a1 - WaitAction ?a2 - WaitAction)
 
     (executed_call ?a - CallAction)
     (executed_reminder ?a - ReminderAction)
     (executed_guide ?a - GuideAction)
     (executed_go_to_person ?a - GoToPersonAction)
+    (executed_wait ?a - WaitAction)
 
     ;; enforce that actions are called with valid object instances
     (valid_reminder_message ?a - ReminderAction ?m - Msg)
@@ -221,11 +224,15 @@
 
 ;; Wait for timestep
 (:action Wait
-	:parameters ()
+	:parameters (?a - WaitAction)
 	:precondition (and
 	                (not (should_tick))
+	                (not (executed_wait ?a))
+                  (forall (?ai - WaitAction)
+                    (not (and (wait_blocks_wait ?ai ?a)  (not (executed_wait ?ai) ) ) )
+                  )
 	             )
-	:effect (and (should_tick) )
+	:effect (and (should_tick) (executed_wait ?a) )
 )
 
 ;; Move to any landmark, avoiding terrain
