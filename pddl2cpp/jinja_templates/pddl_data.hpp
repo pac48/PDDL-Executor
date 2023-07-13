@@ -206,15 +206,15 @@ namespace std {
     template<>
     struct equal_to<pddl_lib::KBState*>{
         bool operator()(const pddl_lib::KBState * state1, const pddl_lib::KBState *state2) const {
-            if (state1->associated_state == nullptr && state2->associated_state == nullptr){
+//            if (state1->associated_state == nullptr && state2->associated_state == nullptr){
                 return  state1->action == state2->action && std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0;
-            } else if ((state1->associated_state == nullptr && state2->associated_state != nullptr)
-                       || (state1->associated_state != nullptr && state2->associated_state == nullptr) ){
-                return false;
-            } else{
-                return state1->action == state2->action && (std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0)
-                       && (std::memcmp(state1->associated_state->data, state2->associated_state->data, {{size_kb_data}}) == 0);
-            }
+//            } else if ((state1->associated_state == nullptr && state2->associated_state != nullptr)
+//                       || (state1->associated_state != nullptr && state2->associated_state == nullptr) ){
+//                return false;
+//            } else{
+//                return state1->action == state2->action && (std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0)
+//                       && (std::memcmp(state1->associated_state->data, state2->associated_state->data, {{size_kb_data}}) == 0);
+//            }
         }
     };
 

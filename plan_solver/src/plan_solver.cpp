@@ -19,67 +19,67 @@ struct Chunk {
     std::array<pddl_lib::KBState, CHUNK_SIZE> memory;
 };
 
-//class OpenList {
-//private:
-//    size_t size_ = 0;
-//    std::list<Chunk> list_;
-//
-//    Chunk &get_chunk(size_t index) {
-//        if (index >= list_.size() * CHUNK_SIZE) {
-//            throw std::runtime_error("index out of bounds");
-//        }
-//        auto it = list_.begin();
-//        while (index >= CHUNK_SIZE && it != list_.end()) {
-//            index -= CHUNK_SIZE;
-//            it++;
-//        }
-//        return *it;
-//    }
-//
-//    [[nodiscard]] const Chunk &get_chunk(size_t index) const {
-//        if (index >= list_.size() * CHUNK_SIZE) {
-//            throw std::runtime_error("index out of bounds");
-//        }
-//        auto it = list_.begin();
-//        while (index >= CHUNK_SIZE && it != list_.end()) {
-//            index -= CHUNK_SIZE;
-//            it++;
-//        }
-//        return *it;
-//    }
-//
-//public:
-//
-//    const pddl_lib::KBState &operator[](size_t index) const {
-//        return get_chunk(index).memory[index % CHUNK_SIZE];
-//    }
-//
-//    pddl_lib::KBState &operator[](size_t index) {
-//        return get_chunk(index).memory[index % CHUNK_SIZE];
-//    }
-//
-//    void push_back(pddl_lib::KBState state) {
-//        if (size_ == list_.size() * CHUNK_SIZE) {    // need new chunk
-//            list_.emplace_back();
-//        }
-////        std::cout << size_ <<"\n";
-//        Chunk &chunk = list_.back();
-//        chunk.memory[size_ % CHUNK_SIZE] = state;
-//        size_++;
-//    }
-//
-//    pddl_lib::KBState &back() {
-//        Chunk &chunk = list_.back();
-//        return chunk.memory[(size_ - 1) % CHUNK_SIZE];
-//    }
-//
-//    size_t size() {
-//        return size_;
-//    }
-//
-//};
+class OpenList {
+private:
+    size_t size_ = 0;
+    std::list<Chunk> list_;
 
-typedef std::vector<pddl_lib::KBState> OpenList;
+    Chunk &get_chunk(size_t index) {
+        if (index >= list_.size() * CHUNK_SIZE) {
+            throw std::runtime_error("index out of bounds");
+        }
+        auto it = list_.begin();
+        while (index >= CHUNK_SIZE && it != list_.end()) {
+            index -= CHUNK_SIZE;
+            it++;
+        }
+        return *it;
+    }
+
+    [[nodiscard]] const Chunk &get_chunk(size_t index) const {
+        if (index >= list_.size() * CHUNK_SIZE) {
+            throw std::runtime_error("index out of bounds");
+        }
+        auto it = list_.begin();
+        while (index >= CHUNK_SIZE && it != list_.end()) {
+            index -= CHUNK_SIZE;
+            it++;
+        }
+        return *it;
+    }
+
+public:
+
+    const pddl_lib::KBState &operator[](size_t index) const {
+        return get_chunk(index).memory[index % CHUNK_SIZE];
+    }
+
+    pddl_lib::KBState &operator[](size_t index) {
+        return get_chunk(index).memory[index % CHUNK_SIZE];
+    }
+
+    void push_back(pddl_lib::KBState state) {
+        if (size_ == list_.size() * CHUNK_SIZE) {    // need new chunk
+            list_.emplace_back();
+        }
+//        std::cout << size_ <<"\n";
+        Chunk &chunk = list_.back();
+        chunk.memory[size_ % CHUNK_SIZE] = state;
+        size_++;
+    }
+
+    pddl_lib::KBState &back() {
+        Chunk &chunk = list_.back();
+        return chunk.memory[(size_ - 1) % CHUNK_SIZE];
+    }
+
+    size_t size() {
+        return size_;
+    }
+
+};
+
+//typedef std::vector<pddl_lib::KBState> OpenList;
 
 
 std::vector<pddl_lib::KBState*> get_best_child(const pddl_lib::KBState * state){
@@ -132,7 +132,6 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
             assert(child->goal_dist != -1);
             q.emplace(child);
         }
-//        assert(counter == 0 || counter == 1 || counter == 2); TODO enable after done debug print
     }
 
     std::cout << "-------------------------------------------------\n";
@@ -319,22 +318,11 @@ int main(int argc, char **argv) {
     std::unordered_set<pddl_lib::KBState *> close_list;
     std::unordered_set<unsigned int> depth_check;
     OpenList open_list;
-    open_list.reserve(8 * 8 * 8 * 8 * 8 * 8 * 8);
     open_list.push_back(init_state);
     close_list.insert(&open_list.back());
     unsigned int counter = 0;
     while (open_list.size() > counter) {
-        assert(counter < 8 * 8 * 8 * 8 * 8 * 8 * 8 - 1);
-
         pddl_lib::KBState &cur_state = open_list[counter];
-        if (cur_state.goal_dist != -1) {
-            assert(0); //TODO remove
-            counter++;
-            continue;
-        }
-        if (counter != 0) {
-            assert(&cur_state != &open_list[0]);
-        }
 
         if (check_goal(cur_state)) {
             cur_state.goal_dist = 0;
@@ -361,10 +349,6 @@ int main(int argc, char **argv) {
 
         }
 
-//      if (counter==4509){
-//        int o = 0;
-//      }
-
         assert(cur_state.goal_dist == -1);
         pddl_lib::expand(cur_state, new_states, constraints);
 
@@ -372,23 +356,6 @@ int main(int argc, char **argv) {
             std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
                       << open_list.size() << std::endl;
         }
-
-//        if (counter==4509){
-//          int count = 0;
-//          for (auto &potential_new_state: new_states) {
-//
-//            if (potential_new_state.valid) {
-//              if (potential_new_state.action_name_[0] == "DetectPersonLocation") {
-//                count++;
-//                if (count == 5){
-//                  std::cout << (int) pddl_lib::indexers::message_givencall_caregiver_guide_msg(potential_new_state) << "\n";
-//                  std::cout << (int) pddl_lib::indexers::message_givencall_caregiver_guide_msg(cur_state) << "\n";
-//
-//                }
-//                }
-//            }
-//        }
-//        }
 
         for (auto &potential_new_state: new_states) {
             if (potential_new_state.valid) {
@@ -407,11 +374,11 @@ int main(int argc, char **argv) {
                         new_state.associated_state->associated_state = &new_state;
 
                         auto it2 = close_list.find(new_state.associated_state);
-//                        if (it2 != close_list.end()) { TODO I do not know if this is needed
-//                            new_state.associated_state = *it2;
-//                            assert(new_state.associated_state != nullptr);
-//                            assert((*it2)->associated_state == &new_state);
-//                        }
+                        if (it2 != close_list.end()) { //TODO I do not know if this is needed
+                            new_state.associated_state = *it2;
+                            assert(new_state.associated_state != nullptr);
+                            assert((*it2)->associated_state == &new_state);
+                        }
                     }
 
                     if (new_state.depth > max_depth) {
@@ -421,12 +388,6 @@ int main(int argc, char **argv) {
                 } else {
                     cur_state.children.push_back(*it);
                     (*it)->parents.push_back(&cur_state);
-//                    assert(potential_new_state == *(*it));
-//                    if (potential_new_state.action_name_[0] == "DetectPersonLocation"){
-//                        assert(pddl_lib::indexers::message_givencall_caregiver_guide_msg(potential_new_state)
-//                               == pddl_lib::indexers::message_givencall_caregiver_guide_msg(cur_state));
-//                    }
-
                 }
             } else {
                 break;
@@ -435,15 +396,6 @@ int main(int argc, char **argv) {
 
         counter++;
     }
-
-//    if (!plan_found) {
-//        std::cout << "DEBUG PLAN FAILED!\n";
-//        counter--;
-//        for (auto &val: open_list) {
-//            val.reached_goal = true;
-//        }
-//        print_plan(open_list, counter);
-//    }
 
     std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
               << open_list.size() << std::endl;
