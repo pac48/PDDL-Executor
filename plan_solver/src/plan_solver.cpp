@@ -81,6 +81,31 @@ struct Chunk {
 
 typedef std::vector<pddl_lib::KBState> OpenList;
 
+
+std::vector<pddl_lib::KBState*> get_best_child(const pddl_lib::KBState * state){
+  if (state->children.empty()){
+    return {};
+  }
+  int best = 99999;
+  int best_ind = -1;
+  for (auto i = 0; i < state->children.size(); i++){
+    auto & child = state->children[i];
+    if(child->goal_dist!= -1 && child->goal_dist < best && child->associated_state== nullptr){
+      best_ind = i;
+      best = child->goal_dist;
+    }
+    if (child->goal_dist!= -1 && child->associated_state != nullptr && std::max(child->goal_dist, child->associated_state->goal_dist) < best){
+      best = std::max(child->goal_dist, child->associated_state->goal_dist);
+      best_ind = i;
+    }
+  }
+  if (state->children[best_ind]->associated_state == nullptr){
+    return {state->children[best_ind]};
+  } else{
+    return {state->children[best_ind], state->children[best_ind]->associated_state};
+  }
+}
+
 void print_plan(const OpenList &open_list, unsigned int goal_ind) {
     assert(open_list[goal_ind].goal_dist != -1);
 
@@ -88,10 +113,10 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
     std::unordered_map<int, int> depth_map; // tack the number of values inserted at each depth
     std::queue<pddl_lib::KBState *> q;
     std::unordered_set<pddl_lib::KBState *> close_list;
-    for (const auto &child: open_list[0].children) {
-        if (child->goal_dist != 1) {
-            q.emplace(child);
-        }
+    std::vector<pddl_lib::KBState*> best_children = get_best_child(&open_list[0]);
+    for (const auto &child: best_children) {
+        assert(child->goal_dist != -1);
+        q.emplace(child);
     }
     while (!q.empty()) {
         auto state = q.front();
@@ -102,14 +127,11 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
         }
         close_list.insert(state);
 
-        int counter = 0;
-        for (const auto &child: state->children) {
-            if (child->goal_dist != 1) {
-                q.emplace(child);
-                counter++;
-            }
+        best_children = get_best_child(state);
+        for (const auto &child: best_children) {
+            assert(child->goal_dist != -1);
+            q.emplace(child);
         }
-
 //        assert(counter == 0 || counter == 1 || counter == 2); TODO enable after done debug print
     }
 
@@ -399,11 +421,11 @@ int main(int argc, char **argv) {
                 } else {
                     cur_state.children.push_back(*it);
                     (*it)->parents.push_back(&cur_state);
-                    assert(potential_new_state == *(*it));
-                    if (potential_new_state.action_name_[0] == "DetectPersonLocation"){
-                        assert(pddl_lib::indexers::message_givencall_caregiver_guide_msg(potential_new_state)
-                               == pddl_lib::indexers::message_givencall_caregiver_guide_msg(cur_state));
-                    }
+//                    assert(potential_new_state == *(*it));
+//                    if (potential_new_state.action_name_[0] == "DetectPersonLocation"){
+//                        assert(pddl_lib::indexers::message_givencall_caregiver_guide_msg(potential_new_state)
+//                               == pddl_lib::indexers::message_givencall_caregiver_guide_msg(cur_state));
+//                    }
 
                 }
             } else {
