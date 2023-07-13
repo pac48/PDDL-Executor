@@ -10,17 +10,23 @@
 )
 (:init
 
-	;; needed actions
+	  ;; needed actions
     (DetectPerson_enabled)
-    (UpdatePersonLocation_enabled)
     (GiveReminder_enabled)
     (MakeCall_enabled)
+    (DetectTakingMedicine_enabled)
 
     (current_time t1)
     (next_time t1 t2)
     (next_time t2 t3)
     (next_time t3 t4)
     (next_time t4 t5)
+
+    (unknown (person_taking_medicine t1))
+    (unknown (person_taking_medicine t2))
+    (unknown (person_taking_medicine t3))
+    (unknown (person_taking_medicine t4))
+    (unknown (person_taking_medicine t5))
 
     (robot_at couch)
     (unknown (person_at t1 nathan kitchen))
@@ -63,7 +69,9 @@
 
     ;; specify world state constraints for all actions
     (reminder_person_location_constraint automated_reminder nathan kitchen)
+    (reminder_person_not_taking_medicine_constraint automated_reminder nathan)
     (reminder_person_location_constraint recorded_reminder nathan kitchen)
+    (reminder_person_not_taking_medicine_constraint recorded_reminder nathan)
     (reminder_not_person_location_constraint guide_reminder_1 nathan kitchen)
     (reminder_not_person_location_constraint guide_reminder_2 nathan kitchen)
     (call_not_person_location_constraint caregiver_call_guide nathan kitchen)

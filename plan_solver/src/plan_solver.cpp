@@ -94,7 +94,7 @@ std::vector<pddl_lib::KBState *> get_best_child(const pddl_lib::KBState *state) 
             best_ind = i;
             best = child->goal_dist;
         }
-        if (child->goal_dist != -1 && child->associated_state != nullptr &&
+        if (child->goal_dist != -1 && child->associated_state != nullptr && child->associated_state->goal_dist != -1 &&
             std::max(child->goal_dist, child->associated_state->goal_dist) < best) {
             best = std::max(child->goal_dist, child->associated_state->goal_dist);
             best_ind = i;
@@ -136,32 +136,33 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
 
         map[depth].push_back(state);
     }
+    std::stringstream ss;
 
-    std::cout << "-------------------------------------------------\n";
+    ss << "-------------------------------------------------\n";
     for (int depth = 1; depth <= map.size(); depth++) {
         const auto &state_set = map[depth];
         int ind = 0;
         int next_ind = 0;
         for (const auto &state: state_set) {
             auto name_vec = pddl_lib::indexers::get_action_string(state->action);
-            std::stringstream ss;
+            std::stringstream ss_local;
             for (const auto &val: name_vec) {
-                ss << val << " ";
+                ss_local << val << " ";
             }
-            auto action_name = ss.str();
+            auto action_name = ss_local.str();
             if (state->children.size() == 0) {
-                std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||" << -1
+                ss << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||" << -1
 //                          << " DEBUG: " << state->goal_dist //TODO remove
                           << "\n";
             } else {
                 if (state->associated_state == nullptr) {
-                    std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||"
+                    ss << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||"
                               << next_ind
 //                              << " DEBUG: " << state->goal_dist //TODO remove
                               << "\n";
                     next_ind++;
                 } else if (state->associated_state > state->associated_state->associated_state) {
-                    std::cout << depth - 1 << "||" << ind << " --- " << action_name << "--- TRUESON: " << depth << "||"
+                    ss << depth - 1 << "||" << ind << " --- " << action_name << "--- TRUESON: " << depth << "||"
                               << next_ind << " --- FALSESON: " << depth << "||"
                               << next_ind + 1
 //                              << " DEBUG: " << state->goal_dist << " "<<state->associated_state->goal_dist //TODO remove
@@ -172,13 +173,18 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
                     assert(state->associated_state != nullptr);
 //                    assert(1 == abs(((int) (state.associated_state)) - ((int) (open_list[state.associated_state].associated_state))));
                 }
-//          std::cout << pddl_lib::indexers::get_state_string(state);
+//          ss << pddl_lib::indexers::get_state_string(state);
 
             }
             ind++;
         }
-        std::cout << "-------------------------------------------------\n";
+        ss << "-------------------------------------------------\n";
     }
+
+    std::cout << ss.str();
+
+    std::ofstream outputFile("/tmp/plan.txt");
+    outputFile << ss.rdbuf();
 
 }
 

@@ -103,9 +103,10 @@ def main():
             act.base_name = action.name
             act.params = param
 
-            tmp = parse_preconditions_unknowns(action_inst.precondtion, kb_template_map)
-            act.pre = parse_preconditions(action_inst.precondtion, kb_template_map) + parse_observe_preconditions(
-                action_inst.observe, kb_template_map) + " && " + tmp + ';'
+            # tmp = parse_preconditions_unknowns(action_inst.precondtion, kb_template_map)
+            act.pre = parse_preconditions(action_inst.precondtion, False,
+                                          kb_template_map) + parse_observe_preconditions(
+                action_inst.observe, kb_template_map) + ';'  # + " && " + tmp + ';'
             act.effect = parse_effect(action_inst.effect, kb_template_map)
             if len(action_inst.observe.predicates) > 0:
                 act.observe = parse_observe(action_inst.observe, kb_template_map)
@@ -215,16 +216,19 @@ def parse_preconditions_unknowns(cond, kb_template_map):
     return out
 
 
-def parse_preconditions(cond, kb_template_map):
+def parse_preconditions(cond, negate, kb_template_map):
     if cond.op == pddl_parser.parser.NOT:
         assert (len(cond.conditions) == 1 or len(cond.predicates) == 1)
         assert (len(cond.conditions) == 0 or len(cond.predicates) == 0)
         if len(cond.conditions) == 1:
-            out = "!(" + parse_preconditions(cond.conditions[0], kb_template_map) + ')'
+            out = parse_preconditions(cond.conditions[0], not negate, kb_template_map)
         else:
             out = "("
             index = kb_template_map[str(cond.predicates[0])]
-            out += f"state.data[{index}]==0"
+            if not negate:
+                out += f"state.data[{index}]==0"
+            else:
+                out += f"state.data[{index}]==1"
             out += ')'
     elif cond.op == pddl_parser.parser.AND:
         out = ""
@@ -233,21 +237,36 @@ def parse_preconditions(cond, kb_template_map):
             if ind == 0:
                 delim = ""
             else:
-                delim = " && "
-            out += f"{delim}state.data[{index}]==1"
+                if not negate:
+                    delim = " && "
+                else:
+                    delim = " || "
+            if not negate:
+                out += f"{delim}state.data[{index}]==1"
+            else:
+                out += f"{delim}state.data[{index}]==0"
 
         if len(cond.conditions) > 0 and len(cond.predicates) > 0:
-            out += " && "
+            if not negate:
+                out += " && "
+            else:
+                out += " || "
         for (ind, sub_cond) in enumerate(cond.conditions):
             if ind == 0:
                 delim = ""
             else:
-                delim = " && "
-            out += f"{delim}({parse_preconditions(sub_cond, kb_template_map)})"
+                if not negate:
+                    delim = " && "
+                else:
+                    delim = " || "
+            out += f"{delim}({parse_preconditions(sub_cond, negate, kb_template_map)})"
+
+        out = '(' + out + ')'
+
         if len(out) > 0:
             out = '(' + out + ')'
         else:
-            out = 'true'
+            assert (0)
     else:
         raise Exception("wrong condition type")
 

@@ -28,7 +28,6 @@
 
 	;; enable/disable actions
   (DetectPerson_enabled)
-  (UpdatePersonLocation_enabled)
   (GiveReminder_enabled)
   (MakeCall_enabled)
   (WaitForPersonToGoToLocation_enabled)
@@ -165,7 +164,6 @@
 (:action UpdatePersonLocation
     :parameters (?tp - Time ?tc - Time ?p - Person ?loc - Landmark)
     :precondition (and
-                    (UpdatePersonLocation_enabled)
                     (not (should_tick))
                     (current_time ?tc)
                     (next_time ?tp ?tc)
