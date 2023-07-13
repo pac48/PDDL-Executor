@@ -8,6 +8,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <list>
+#include <algorithm>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include "pddl_problem.hpp"
@@ -18,103 +19,77 @@ struct Chunk {
     std::array<pddl_lib::KBState, CHUNK_SIZE> memory;
 };
 
-class OpenList {
-private:
-    size_t size_ = 0;
-    std::list<Chunk> list_;
-
-    Chunk &get_chunk(size_t index) {
-        if (index >= list_.size() * CHUNK_SIZE) {
-            throw std::runtime_error("index out of bounds");
-        }
-        auto it = list_.begin();
-        while (index >= CHUNK_SIZE && it != list_.end()) {
-            index -= CHUNK_SIZE;
-            it++;
-        }
-        return *it;
-    }
-
-    [[nodiscard]] const Chunk &get_chunk(size_t index) const {
-        if (index >= list_.size() * CHUNK_SIZE) {
-            throw std::runtime_error("index out of bounds");
-        }
-        auto it = list_.begin();
-        while (index >= CHUNK_SIZE && it != list_.end()) {
-            index -= CHUNK_SIZE;
-            it++;
-        }
-        return *it;
-    }
-
-public:
-
-    const pddl_lib::KBState &operator[](size_t index) const {
-        return get_chunk(index).memory[index % CHUNK_SIZE];
-    }
-
-    pddl_lib::KBState &operator[](size_t index) {
-        return get_chunk(index).memory[index % CHUNK_SIZE];
-    }
-
-    void push_back(pddl_lib::KBState state) {
-        if (size_ == list_.size() * CHUNK_SIZE) {    // need new chunk
-            list_.emplace_back();
-        }
-//        std::cout << size_ <<"\n";
-        Chunk &chunk = list_.back();
-        chunk.memory[size_ % CHUNK_SIZE] = state;
-        size_++;
-    }
-
-    pddl_lib::KBState &back() {
-        Chunk &chunk = list_.back();
-        return chunk.memory[(size_ - 1) % CHUNK_SIZE];
-    }
-
-    size_t size() {
-        return size_;
-    }
-
-};
-
-
-//void disable_subtree(OpenList &open_list, pddl_lib::KBState &cur_state) {
-//    cur_state.reached_goal = -1;
-//    for (auto child = cur_state.children; child < cur_state.children_end; child++) {
-//        if (child > 0) {
-//            disable_subtree(open_list, open_list[child]);
+//class OpenList {
+//private:
+//    size_t size_ = 0;
+//    std::list<Chunk> list_;
+//
+//    Chunk &get_chunk(size_t index) {
+//        if (index >= list_.size() * CHUNK_SIZE) {
+//            throw std::runtime_error("index out of bounds");
 //        }
-//    }
-//}
-
-//bool goal_propagate(OpenList &open_list, unsigned int goal_ind) {
-//    if (goal_ind == 0) {
-//        return true;
-//    }
-//    pddl_lib::KBState &goal_state = open_list[goal_ind];
-//    if (goal_state.associated_state != 0 && open_list[goal_state.associated_state].reached_goal != 1) {
-//        return false;
-//    }
-//    auto &goal_parent = open_list[goal_state.parent];
-//    goal_parent.reached_goal = 1;
-//    for (auto child = goal_parent.children_begin; child < goal_parent.children_end; child++) {
-//        if (child > 0 && child != goal_ind && child != goal_state.associated_state) {
-//            disable_subtree(open_list, open_list[child]);
+//        auto it = list_.begin();
+//        while (index >= CHUNK_SIZE && it != list_.end()) {
+//            index -= CHUNK_SIZE;
+//            it++;
 //        }
+//        return *it;
 //    }
-//    return goal_propagate(open_list, goal_state.parent);
-//}
+//
+//    [[nodiscard]] const Chunk &get_chunk(size_t index) const {
+//        if (index >= list_.size() * CHUNK_SIZE) {
+//            throw std::runtime_error("index out of bounds");
+//        }
+//        auto it = list_.begin();
+//        while (index >= CHUNK_SIZE && it != list_.end()) {
+//            index -= CHUNK_SIZE;
+//            it++;
+//        }
+//        return *it;
+//    }
+//
+//public:
+//
+//    const pddl_lib::KBState &operator[](size_t index) const {
+//        return get_chunk(index).memory[index % CHUNK_SIZE];
+//    }
+//
+//    pddl_lib::KBState &operator[](size_t index) {
+//        return get_chunk(index).memory[index % CHUNK_SIZE];
+//    }
+//
+//    void push_back(pddl_lib::KBState state) {
+//        if (size_ == list_.size() * CHUNK_SIZE) {    // need new chunk
+//            list_.emplace_back();
+//        }
+////        std::cout << size_ <<"\n";
+//        Chunk &chunk = list_.back();
+//        chunk.memory[size_ % CHUNK_SIZE] = state;
+//        size_++;
+//    }
+//
+//    pddl_lib::KBState &back() {
+//        Chunk &chunk = list_.back();
+//        return chunk.memory[(size_ - 1) % CHUNK_SIZE];
+//    }
+//
+//    size_t size() {
+//        return size_;
+//    }
+//
+//};
+
+typedef std::vector<pddl_lib::KBState> OpenList;
 
 void print_plan(const OpenList &open_list, unsigned int goal_ind) {
-    assert(open_list[goal_ind].reached_goal);
+    assert(open_list[goal_ind].goal_dist != -1);
 
     std::unordered_map<unsigned int, std::vector<pddl_lib::KBState *> > map;
     std::unordered_map<int, int> depth_map; // tack the number of values inserted at each depth
     std::queue<pddl_lib::KBState *> q;
     std::unordered_set<pddl_lib::KBState *> close_list;
     for (const auto &child: open_list[0].children) {
-        if (child->reached_goal == 1) {
+        if (child->goal_dist != 1) {
             q.emplace(child);
         }
     }
@@ -129,7 +104,7 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
 
         int counter = 0;
         for (const auto &child: state->children) {
-            if (child->reached_goal == 1) {
+            if (child->goal_dist != 1) {
                 q.emplace(child);
                 counter++;
             }
@@ -180,42 +155,127 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
 
 }
 
-bool goal_search(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState *> &checked_states) {
-    if (checked_states.find(state) != checked_states.end()) {
-//        assert(state->reached_goal == 0);
-        return state->reached_goal == 1;
-    }
-    if (state->reached_goal == 1) {
+//bool goal_search(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState *> &checked_states) {
+//    if (checked_states.find(state) != checked_states.end()) {
+////        assert(state->reached_goal == 0);
+//        return state->reached_goal == 1;
+//    }
+//    if (state->reached_goal == 1) {
+//        return true;
+//    }
+////    if (state->reached_goal == 1  && state->associated_state == nullptr) {
+////        return true;
+////    }
+////    if (state->reached_goal == 1 && state->associated_state != nullptr && state->associated_state->reached_goal == 1) {
+////        return true;
+////    }
+//    checked_states.insert(state);
+//    for (const auto &child: state->children) {
+//        bool reached = goal_search(child, checked_states);
+//        if (reached && child->associated_state == nullptr) {
+//            if (state->action_name_[0]=="Wait"){
+//                int o = 0;
+//            }
+//            state->reached_goal = 1;
+//            return true;
+//        }
+//        if (reached && child->associated_state != nullptr) {
+////            checked_states.insert(child->associated_state);
+//            reached = goal_search(child->associated_state, checked_states);
+////            checked_states.erase(child->associated_state);
+//            if (reached) {
+//                state->reached_goal = 1;
+//                return true;
+//            }
+//        }
+//    }
+//    checked_states.erase(state);
+//    assert(state->reached_goal == false);
+//    state->reached_goal = 0;
+//
+//    return false;
+//}
+
+
+bool goal_propagate(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState *> &checked_states) {
+    assert(state->goal_dist != -1);
+    if (state->depth == 0) {
         return true;
     }
-//    if (state->reached_goal == 1  && state->associated_state == nullptr) {
-//        return true;
+    if (state->associated_state != nullptr && state->associated_state->goal_dist == -1) {
+        return false;
+    }
+//    for (auto parent: state->parents) {
+//        if (parent->goal_dist != -1) {
+//            int o = 0;
+//        }
 //    }
-//    if (state->reached_goal == 1 && state->associated_state != nullptr && state->associated_state->reached_goal == 1) {
-//        return true;
+    assert(!state->parents.empty());
+    int parent_dist;
+    if (state->associated_state != nullptr) {
+        parent_dist = std::max(state->goal_dist + 1, state->associated_state->goal_dist + 1);
+    } else {
+        parent_dist = state->goal_dist + 1;
+    }
+//    if (parent_dist != state->goal_dist + 1) {
+//        int o = 0;
 //    }
-    checked_states.insert(state);
-    for (const auto &child: state->children) {
-        bool reached = goal_search(child, checked_states);
-        if (reached && child->associated_state == nullptr) {
-            state->reached_goal = 1;
-            return true;
-        }
-        if (reached && child->associated_state != nullptr) {
-//            checked_states.insert(child->associated_state);
-            reached = goal_search(child->associated_state, checked_states);
-//            checked_states.erase(child->associated_state);
-            if (reached) {
-                state->reached_goal = 1;
-                return true;
-            }
+
+    bool reached = false;
+    for (auto parent: state->parents) {
+        if (parent->goal_dist == -1 || parent_dist < parent->goal_dist) {
+            parent->goal_dist = parent_dist;
+            reached |= goal_propagate(parent, checked_states);
+//            if (reached) {
+//                return true;
+//            }
         }
     }
-    checked_states.erase(state);
-    assert(state->reached_goal == false);
-    state->reached_goal = 0;
+    return reached;
+}
 
-    return false;
+void recurse(pddl_lib::KBState *const state, std::vector<pddl_lib::KBState *> &goals,
+             std::unordered_set<pddl_lib::KBState *> &checked) {
+    if (checked.find(state) != checked.end()) {
+        return;
+    }
+    checked.insert(state);
+    if (state->goal_dist != -1) {
+        goals.push_back(state);
+        return;
+    }
+    for (const auto &child: state->children) {
+        recurse(child, goals, checked);
+    }
+}
+
+bool goal_search(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState *> &checked_states) {
+    std::vector<pddl_lib::KBState *> goals;
+    std::unordered_set<pddl_lib::KBState *> checked;
+    recurse(state, goals, checked);
+    std::sort(goals.begin(), goals.end(), [](const pddl_lib::KBState *a, const pddl_lib::KBState *b) {
+        return a->depth < b->depth;
+    });
+    bool valid = false;
+    for (const auto &goal: goals) {
+        for (auto p: goal->parents) {
+            auto name_vec = pddl_lib::indexers::get_action_string(p->action);
+            std::stringstream ss;
+            for (const auto &val: name_vec) {
+                ss << val << " ";
+            }
+            auto action_name = ss.str();
+            std::cout << action_name << "\n";
+        }
+        std::cout << "\n\n";
+
+        if (goal_propagate(goal, checked_states)) {
+            valid = true;
+//            return true;
+        }
+    }
+
+    return valid;
 }
 
 int main(int argc, char **argv) {
@@ -232,16 +292,21 @@ int main(int argc, char **argv) {
     auto start = std::chrono::high_resolution_clock::now();
     unsigned int max_depth = 0;
     bool plan_found = false;
+    int num_goals = 0;
 
     std::unordered_set<pddl_lib::KBState *> close_list;
     std::unordered_set<unsigned int> depth_check;
     OpenList open_list;
+    open_list.reserve(8 * 8 * 8 * 8 * 8 * 8 * 8);
     open_list.push_back(init_state);
     close_list.insert(&open_list.back());
     unsigned int counter = 0;
     while (open_list.size() > counter) {
+        assert(counter < 8 * 8 * 8 * 8 * 8 * 8 * 8 - 1);
+
         pddl_lib::KBState &cur_state = open_list[counter];
-        if (cur_state.reached_goal == 1) {
+        if (cur_state.goal_dist != -1) {
+            assert(0); //TODO remove
             counter++;
             continue;
         }
@@ -250,10 +315,11 @@ int main(int argc, char **argv) {
         }
 
         if (check_goal(cur_state)) {
-            cur_state.reached_goal = 1;
+            cur_state.goal_dist = 0;
+            num_goals++;
 //            std::cout << "new goal found" << std::endl;
 //            if (goal_propagate(open_list, counter)) {
-            bool should_check = open_list.size() == counter + 1 || depth_check.find(max_depth) == depth_check.end();
+            bool should_check = open_list.size() == counter + 1;// || depth_check.find(max_depth) == depth_check.end();
             if (should_check) {
                 std::unordered_set<pddl_lib::KBState *> checked_states;
                 std::cout << "checking goal" << std::endl;
@@ -272,7 +338,7 @@ int main(int argc, char **argv) {
             continue;
 
         }
-        assert(cur_state.reached_goal == 0);
+        assert(cur_state.goal_dist == -1);
         pddl_lib::expand(cur_state, new_states, constraints);
 
         if ((counter % 1000000) == 0) {
@@ -283,33 +349,25 @@ int main(int argc, char **argv) {
         for (auto &potential_new_state: new_states) {
             if (potential_new_state.valid) {
                 auto it = close_list.find(&potential_new_state);
+//                std::cout << potential_new_state.action_name_[0] << "\n";
                 if (it == close_list.end()) {
-                    if (potential_new_state.associated_state != nullptr &&
-                        !potential_new_state.associated_state->valid) {
-                        assert(0); // I do not think this can occur
-//                        potential_new_state.valid = 0;
-//                        continue;
-                    }
                     open_list.push_back(potential_new_state);
                     auto &new_state = open_list.back();
                     new_state.depth = cur_state.depth + 1;
-//                    new_states[i].parent = counter;
                     close_list.insert(&new_state);
                     cur_state.children.push_back(&new_state);
-
+                    new_state.parents.push_back(&cur_state);
 
                     if (new_state.associated_state != nullptr) {
                         assert(new_state.associated_state->associated_state != nullptr);
                         new_state.associated_state->associated_state = &new_state;
 
                         auto it2 = close_list.find(new_state.associated_state);
-                        if (it2 != close_list.end()) {
-//                            potential_new_state.associated_state->valid = 0; // set to zero to prevent it from being added
-                            pddl_lib::KBState tmp = new_state;
-                            new_state.associated_state = *it2;
-                            assert(new_state.associated_state != nullptr);
-                            assert((*it2)->associated_state == &new_state);
-                        }
+//                        if (it2 != close_list.end()) { TODO I do not know if this is needed
+//                            new_state.associated_state = *it2;
+//                            assert(new_state.associated_state != nullptr);
+//                            assert((*it2)->associated_state == &new_state);
+//                        }
                     }
 
                     if (new_state.depth > max_depth) {
@@ -318,6 +376,13 @@ int main(int argc, char **argv) {
                     }
                 } else {
                     cur_state.children.push_back(*it);
+                    (*it)->parents.push_back(&cur_state);
+                    assert(potential_new_state == *(*it));
+                    if (potential_new_state.action_name_[0] != "MakeCall"){
+                        assert(pddl_lib::indexers::message_givencall_caregiver_guide_msg(potential_new_state)
+                               == pddl_lib::indexers::message_givencall_caregiver_guide_msg(cur_state));
+                    }
+
                 }
             } else {
                 break;

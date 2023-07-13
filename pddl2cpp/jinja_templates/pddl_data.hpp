@@ -20,8 +20,10 @@ namespace pddl_lib {
         unsigned int action = 0;
         KBState* associated_state = {};
         std::vector<KBState*> children = {};
-        char reached_goal = 0;
+        std::vector<KBState*> parents = {};
+        int goal_dist = -1;
         char valid = 0;
+        std::vector<std::string> action_name_; //TODO remove after done debugging
 //        unsigned int subgraph = 0;
 
         bool operator==(const KBState & other) const{
@@ -205,12 +207,12 @@ namespace std {
     struct equal_to<pddl_lib::KBState*>{
         bool operator()(const pddl_lib::KBState * state1, const pddl_lib::KBState *state2) const {
             if (state1->associated_state == nullptr && state2->associated_state == nullptr){
-                return std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0;
+                return  state1->action == state2->action && std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0;
             } else if ((state1->associated_state == nullptr && state2->associated_state != nullptr)
                        || (state1->associated_state != nullptr && state2->associated_state == nullptr) ){
                 return false;
             } else{
-                return (std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0)
+                return state1->action == state2->action && (std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0)
                        && (std::memcmp(state1->associated_state->data, state2->associated_state->data, {{size_kb_data}}) == 0);
             }
         }
@@ -282,6 +284,9 @@ new_states[num].valid = 0;
 if ({{action.name}}::check_preconditions(cur_state)){
         new_states[num] = cur_state;
         new_states[num].action = {{ loop.index - 1}};
+        new_states[num].children.clear();
+        new_states[num].parents.clear();
+        new_states[num].action_name_ = pddl_lib::indexers::get_action_string(new_states[num].action);
         new_states[num].associated_state = nullptr;
         {{action.name}}::apply_effect(new_states[num]);
         new_states[num].valid = 1;
@@ -295,8 +300,14 @@ if ({{action.name}}::check_preconditions(cur_state)){
 if ({{action.name}}::check_preconditions(cur_state)){
     new_states[num] = cur_state;
     new_states[num+1] = cur_state;
+    new_states[num].children.clear();
+    new_states[num].parents.clear();
+    new_states[num+1].children.clear();
+    new_states[num+1].parents.clear();
     new_states[num].action = {{actions|length + loop.index - 1}};
     new_states[num+1].action = {{actions|length + loop.index - 1}};
+    new_states[num].action_name_ = pddl_lib::indexers::get_action_string(new_states[num].action);
+    new_states[num+1].action_name_ = pddl_lib::indexers::get_action_string(new_states[num+1].action);
     {{action.name}}::apply_effect(new_states[num]);
     {{action.name}}::apply_effect(new_states[num+1]);
     {{action.name}}::apply_observe(new_states[num], new_states[num+1], constraints);
