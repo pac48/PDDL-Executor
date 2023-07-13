@@ -279,20 +279,8 @@ bool goal_search(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState 
     });
     bool valid = false;
     for (const auto &goal: goals) {
-        for (auto p: goal->parents) {
-            auto name_vec = pddl_lib::indexers::get_action_string(p->action);
-            std::stringstream ss;
-            for (const auto &val: name_vec) {
-                ss << val << " ";
-            }
-            auto action_name = ss.str();
-//            std::cout << action_name << "\n";
-        }
-        std::cout << "\n\n";
-
         if (goal_propagate(goal, checked_states)) {
             valid = true;
-//            return true;
         }
     }
 
@@ -329,7 +317,7 @@ int main(int argc, char **argv) {
             num_goals++;
 //            std::cout << "new goal found" << std::endl;
 //            if (goal_propagate(open_list, counter)) {
-            bool should_check = open_list.size() == counter + 1;// || depth_check.find(max_depth) == depth_check.end();
+            bool should_check = open_list.size() == counter + 1 || depth_check.find(max_depth) == depth_check.end();
             if (should_check) {
                 std::unordered_set<pddl_lib::KBState *> checked_states;
                 std::cout << "checking goal" << std::endl;

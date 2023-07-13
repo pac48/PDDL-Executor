@@ -18,12 +18,12 @@ namespace pddl_lib {
         unsigned char data[{{size_kb_data}}];
         unsigned int depth = 0;
         unsigned int action = 0;
+        int goal_dist = -1;
+        char valid = 0;
         KBState* associated_state = {};
         std::vector<KBState*> children = {};
         std::vector<KBState*> parents = {};
-        int goal_dist = -1;
-        char valid = 0;
-        std::vector<std::string> action_name_; //TODO remove after done debugging
+//        std::vector<std::string> action_name_; //TODO remove after done debugging
 //        unsigned int subgraph = 0;
 
         bool operator==(const KBState & other) const{
@@ -206,30 +206,27 @@ namespace std {
     template<>
     struct equal_to<pddl_lib::KBState*>{
         bool operator()(const pddl_lib::KBState * state1, const pddl_lib::KBState *state2) const {
-//            if (state1->associated_state == nullptr && state2->associated_state == nullptr){
+            if (state1->associated_state == nullptr && state2->associated_state == nullptr){
                 return  state1->action == state2->action && std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0;
-//            } else if ((state1->associated_state == nullptr && state2->associated_state != nullptr)
-//                       || (state1->associated_state != nullptr && state2->associated_state == nullptr) ){
-//                return false;
-//            } else{
-//                return state1->action == state2->action && (std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0)
-//                       && (std::memcmp(state1->associated_state->data, state2->associated_state->data, {{size_kb_data}}) == 0);
-//            }
+            } else if ((state1->associated_state == nullptr && state2->associated_state != nullptr)
+                       || (state1->associated_state != nullptr && state2->associated_state == nullptr) ){
+                return false;
+            } else{
+                return state1->action == state2->action && (std::memcmp(state1->data, state2->data, {{size_kb_data}}) == 0)
+                       && (std::memcmp(state1->associated_state->data, state2->associated_state->data, {{size_kb_data}}) == 0);
+            }
         }
     };
 
     template<>
     struct hash<pddl_lib::KBState*> {
         std::size_t operator()(const pddl_lib::KBState* obj) const {
-            std::size_t hashValue = 0;
             std::size_t* data = (std::size_t*) obj->data;
-            constexpr std::size_t prime = 1099511628211;  // A large prime number
-
-            for (size_t i = 0; i < {{size_kb_data}}/64; ++i) {
-                hashValue = (hashValue * prime) ^ data[i];
-            }
-            for (size_t i = 64*({{size_kb_data}}/64); i < {{size_kb_data}}; ++i) {
-                hashValue = (hashValue * prime) ^ obj->data[i];
+            std::size_t hashValue = 0;
+            std::hash<std::size_t> intHash;
+            for (size_t i = 0; i < {{size_kb_data}}/8; ++i) {
+                auto val = intHash(data[i]);
+                hashValue = hashValue ^ val;
             }
 
             return hashValue;

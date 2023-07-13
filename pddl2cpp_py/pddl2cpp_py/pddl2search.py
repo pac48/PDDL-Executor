@@ -103,7 +103,6 @@ def main():
             act.base_name = action.name
             act.params = param
 
-
             tmp = parse_preconditions_unknowns(action_inst.precondtion, kb_template_map)
             act.pre = parse_preconditions(action_inst.precondtion, kb_template_map) + parse_observe_preconditions(
                 action_inst.observe, kb_template_map) + " && " + tmp + ';'
@@ -116,10 +115,10 @@ def main():
 
     j2_template = Template(templates["pddl_data.hpp"])
 
-    if ((len(kb_template) % 1) == 0):
-        size_kb_data = len(kb_template) // 1
+    if (len(kb_template) % 8) == 0:
+        size_kb_data = len(kb_template)
     else:
-        size_kb_data = 1 + (len(kb_template) // 1)
+        size_kb_data = 8 + 8 * (len(kb_template) // 8)
 
     indexers = []
     for val in kb_template:
