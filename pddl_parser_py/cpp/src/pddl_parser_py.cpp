@@ -93,7 +93,8 @@ namespace pddl_lib {
                 .def_readwrite("predicates", &pddl_lib::Domain::predicates)
                 .def_readwrite("actions", &pddl_lib::Domain::actions)
                 .def_readwrite("requirements", &pddl_lib::Domain::requirements)
-                .def_readwrite("types", &pddl_lib::Domain::types);
+                .def_readwrite("types", &pddl_lib::Domain::types)
+                .def_readwrite("constants", &pddl_lib::Domain::constants);
         m.def("parse_domain", &pddl_lib::parse_domain_py, "parse domain from string",
               py::arg("content"));
     }
@@ -262,25 +263,23 @@ namespace pddl_lib {
               py::arg("content"));
     }
 
+
     void init_InstantiatedCondition(py::module &m) {
         py::class_<pddl_lib::InstantiatedCondition>(m, "InstantiatedCondition", R"(
   The InstantiatedCondition class from parser.
 									     )")
 
                 .def(py::init([](const std::vector<pddl_lib::InstantiatedParameter> &parameters,
-                                 const std::vector<pddl_lib::InstantiatedPredicate> &predicates,
-                                 const std::vector<pddl_lib::InstantiatedCondition> &conditions,
+                                 const std::vector<std::variant<pddl_lib::InstantiatedCondition, pddl_lib::InstantiatedPredicate>> &conditions,
                                  const pddl_lib::OPERATION op) {
                          auto cond = pddl_lib::InstantiatedCondition();
                          cond.parameters = parameters;
-                         cond.predicates = predicates;
                          cond.conditions = conditions;
                          cond.op = op;
                          return cond;
                      }),
                      py::arg("parameters") = std::vector<pddl_lib::InstantiatedParameter>(),
-                     py::arg("predicates") = std::vector<pddl_lib::InstantiatedPredicate>(),
-                     py::arg("conditions") = std::vector<pddl_lib::InstantiatedCondition>(),
+                     py::arg("conditions") = std::vector<std::variant<pddl_lib::InstantiatedCondition, pddl_lib::InstantiatedPredicate>>(),
                      py::arg("op") = pddl_lib::OPERATION(),
                      R"(
                  Init stuff.
@@ -289,7 +288,6 @@ namespace pddl_lib {
                     ss << param;
                     return ss.str();
                 }).def_readwrite("parameters", &pddl_lib::InstantiatedCondition::parameters)
-                .def_readwrite("predicates", &pddl_lib::InstantiatedCondition::predicates)
                 .def_readwrite("conditions", &pddl_lib::InstantiatedCondition::conditions)
                 .def_readwrite("op", &pddl_lib::InstantiatedCondition::op);
     }
@@ -376,11 +374,11 @@ namespace pddl_lib {
         py::enum_<pddl_lib::OPERATION>(m, "OPERATION", R"(
   The OPERATION class from parser.
 									     )")
-                .value("AND", pddl_lib::AND)
-                .value("OR", pddl_lib::OR)
-                .value("NOT", pddl_lib::NOT)
-                .value("FORALL", pddl_lib::FORALL)
-                .value("WHEN", pddl_lib::WHEN)
+                .value("AND", pddl_lib::OPERATION::AND)
+                .value("OR", pddl_lib::OPERATION::OR)
+                .value("NOT", pddl_lib::OPERATION::NOT)
+                .value("FORALL", pddl_lib::OPERATION::FORALL)
+                .value("WHEN", pddl_lib::OPERATION::WHEN)
                 .export_values();
     }
 
@@ -388,8 +386,8 @@ namespace pddl_lib {
         py::enum_<pddl_lib::CONSTRAINTS>(m, "CONSTRAINTS", R"(
   The CONSTRAINTS class from parser.
 									     )")
-                .value("ONEOF", pddl_lib::ONEOF)
-                .value("OR", pddl_lib::OR_CONSTRAINT)
+                .value("ONEOF", pddl_lib::CONSTRAINTS::ONEOF)
+                .value("OR", pddl_lib::CONSTRAINTS::OR)
                 .export_values();
     }
 

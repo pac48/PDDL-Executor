@@ -107,12 +107,12 @@ std::vector<pddl_lib::KBState *> get_best_child(const pddl_lib::KBState *state) 
     }
 }
 
-void print_plan(const OpenList &open_list, unsigned int goal_ind) {
-    assert(open_list[goal_ind].goal_dist != -1);
+void print_plan(const OpenList &open_list) {
+    assert(open_list[0].goal_dist != -1);
 
     std::unordered_map<unsigned int, std::vector<pddl_lib::KBState *> > map;
     std::unordered_map<int, int> depth_map; // tack the number of values inserted at each depth
-    std::queue<std::pair<unsigned int, pddl_lib::KBState*>> q;
+    std::queue<std::pair<unsigned int, pddl_lib::KBState *>> q;
     std::unordered_set<pddl_lib::KBState *> close_list;
     std::vector<pddl_lib::KBState *> best_children = get_best_child(&open_list[0]);
     for (const auto &child: best_children) {
@@ -131,7 +131,7 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
         best_children = get_best_child(state);
         for (const auto &child: best_children) {
             assert(child->goal_dist != -1);
-            q.emplace(depth+1, child);
+            q.emplace(depth + 1, child);
         }
 
         map[depth].push_back(state);
@@ -152,21 +152,21 @@ void print_plan(const OpenList &open_list, unsigned int goal_ind) {
             auto action_name = ss_local.str();
             if (state->children.size() == 0) {
                 ss << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||" << -1
-//                          << " DEBUG: " << state->goal_dist //TODO remove
-                          << "\n";
+                   //                          << " DEBUG: " << state->goal_dist //TODO remove
+                   << "\n";
             } else {
                 if (state->associated_state == nullptr) {
                     ss << depth - 1 << "||" << ind << " --- " << action_name << "--- SON: " << depth << "||"
-                              << next_ind
-//                              << " DEBUG: " << state->goal_dist //TODO remove
-                              << "\n";
+                       << next_ind
+                       //                              << " DEBUG: " << state->goal_dist //TODO remove
+                       << "\n";
                     next_ind++;
                 } else if (state->associated_state > state->associated_state->associated_state) {
                     ss << depth - 1 << "||" << ind << " --- " << action_name << "--- TRUESON: " << depth << "||"
-                              << next_ind << " --- FALSESON: " << depth << "||"
-                              << next_ind + 1
-//                              << " DEBUG: " << state->goal_dist << " "<<state->associated_state->goal_dist //TODO remove
-                              << "\n";
+                       << next_ind << " --- FALSESON: " << depth << "||"
+                       << next_ind + 1
+                       //                              << " DEBUG: " << state->goal_dist << " "<<state->associated_state->goal_dist //TODO remove
+                       << "\n";
                     next_ind += 2;
                 } else {
                     ind--;
@@ -282,7 +282,7 @@ void recurse(pddl_lib::KBState *const state, std::vector<pddl_lib::KBState *> &g
     }
 }
 
-bool goal_search(std::vector<pddl_lib::KBState *>& goals) {
+bool goal_search(std::vector<pddl_lib::KBState *> &goals) {
     std::unordered_set<pddl_lib::KBState *> checked;
 //    recurse(state, goals, checked);
     std::sort(goals.begin(), goals.end(), [](const pddl_lib::KBState *a, const pddl_lib::KBState *b) {
@@ -328,26 +328,24 @@ int main(int argc, char **argv) {
             cur_state.goal_dist = 0;
             goals.push_back(&cur_state);
             num_goals++;
-//            std::cout << "new goal found" << std::endl;
-//            if (goal_propagate(open_list, counter)) {
-            bool should_check = open_list.size() == counter + 1 || depth_check.find(max_depth) == depth_check.end();
-            if (should_check) {
-                std::unordered_set<pddl_lib::KBState *> checked_states;
-                std::cout << "checking goal" << std::endl;
-//                for (int i = 0; i < 100; i++) {
-//                    goal_search(&open_list[0], checked_states);
-//                }
-                if (goal_search(goals)) {
-                    plan_found = true;
-                    std::cout << "found plan" << std::endl;
-                    print_plan(open_list, counter);
-                    break;
-                }
-            }
+        }
+
+        bool should_check = open_list.size() == counter + 1 ||
+                            (depth_check.find(max_depth) == depth_check.end() && cur_state.goal_dist == 0);
+        if (should_check) {
             depth_check.insert(max_depth);
+            std::unordered_set<pddl_lib::KBState *> checked_states;
+            std::cout << "checking goal" << std::endl;
+            if (goal_search(goals)) {
+                plan_found = true;
+                std::cout << "found plan" << std::endl;
+                print_plan(open_list);
+                break;
+            }
+        }
+        if (cur_state.goal_dist == 0) {
             counter++;
             continue;
-
         }
 
         assert(cur_state.goal_dist == -1);

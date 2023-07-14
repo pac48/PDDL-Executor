@@ -18,7 +18,7 @@ s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 - STAIN)
 
 
 
-(:action medicate1  :precondition (and (ndead) (ill i1) )  :effect      (when (ill i1) (ill i0)) )
+(:action medicate1  :precondition (and (ndead) (ill i1) )  :effect       (when (ill i1) (ill i0)) )
  (:action medicate2  :precondition (and (ndead) (ill i2) )  :effect      (when (ill i2) (ill i0)) )
  (:action medicate3  :precondition (and (ndead) (ill i3) )  :effect      (when (ill i3) (ill i0)) )
  (:action medicate4  :precondition (and (ndead) (ill i4) )  :effect      (when (ill i4) (ill i0)) )
@@ -27,7 +27,7 @@ s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 - STAIN)
  (:action medicate7  :precondition (and (ndead) (ill i7) )  :effect      (when (ill i7) (ill i0)) )
  (:action medicate8  :precondition (and (ndead) (ill i8) )  :effect      (when (ill i8) (ill i0)) )
  (:action medicate9  :precondition (and (ndead) (ill i9) )  :effect      (when (ill i9) (ill i0)) )
- (:action medicate10  :precondition (and (ndead) (ill i10) )  :effect      (when (ill i10) (ill i0)) )
+ (:action medicate10  :precondition (and (ndead) (ill i10) )  :effect    (when (ill i10) (ill i0)) )
 
 (:action stain
 :parameters ()

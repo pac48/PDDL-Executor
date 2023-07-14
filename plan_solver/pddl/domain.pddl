@@ -1,21 +1,26 @@
-(define (domain bomb)
-  (:types obj)
-   (:predicates (bomb ?x - obj)
-                (toilet ?x - obj)
-                (armed ?x - obj)
-		(clogged ?x - obj)
-		)
+(define (domain btcs)
+  (:types package bomb toilet)
+  (:predicates
+   (in ?p - package ?b - bomb)
+   (defused ?b - bomb)
+   (clog ?toilet - toilet)
 
-   (:action dunk
-       :parameters  (?bomb ?toilet - obj)
-       :precondition (and (bomb ?bomb) (toilet ?toilet) 
-                          (not (clogged ?toilet)))
-       :effect (and (when (armed ?bomb) (not (armed ?bomb)))
-                    (clogged ?toilet)))
+)
 
-   (:action flush
-       :parameters  (?toilet - obj)
-       :precondition (toilet ?toilet) 
-       :effect (when (clogged ?toilet) (not (clogged ?toilet))))
+  (:action senseP
+   :parameters (?p - package ?b - bomb)
+   :observe (in ?p ?b))
+
+  (:action dunk
+   :parameters (?p - package
+                ?b - bomb
+                ?t - toilet)
+   :precondition (not (clog ?t))
+   :effect (and (when (in ?p ?b) (defused ?b))
+                (clog ?t)))
+
+ (:action flush
+  :parameters (?t - toilet)
+  :effect (not (clog ?t)))
 
 )

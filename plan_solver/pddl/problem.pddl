@@ -1,54 +1,48 @@
 
 
 
-(define (problem bomb-10-10)
-(:domain bomb)
-(:objects bomb1 bomb2 bomb3 bomb4 bomb5 bomb6 bomb7 bomb8 bomb9 bomb10 toilet1 toilet2 toilet3 toilet4 toilet5 toilet6 toilet7 toilet8 toilet9 toilet10 - obj)
+(define (problem btcs-10-1)
+(:domain btcs)
+(:objects
+b0 - bomb
+p0
+p1
+p2
+p3
+p4
+p5
+p6
+p7
+p8
+p9
+- package
+t0
+- toilet
+)
 (:init
-(bomb bomb1)
-(bomb bomb2)
-(bomb bomb3)
-(bomb bomb4)
-(bomb bomb5)
-(bomb bomb6)
-(bomb bomb7)
-(bomb bomb8)
-(bomb bomb9)
-(bomb bomb10)
-(toilet toilet1)
-(toilet toilet2)
-(toilet toilet3)
-(toilet toilet4)
-(toilet toilet5)
-(toilet toilet6)
-(toilet toilet7)
-(toilet toilet8)
-(toilet toilet9)
-(toilet toilet10)
-(unknown (armed bomb1))
-(unknown (armed bomb2))
-(unknown (armed bomb3))
-(unknown (armed bomb4))
-(unknown (armed bomb5))
-(unknown (armed bomb6))
-(unknown (armed bomb7))
-(unknown (armed bomb8))
-(unknown (armed bomb9))
-(unknown (armed bomb10))
-)
-(:goal
-(and
-(not (armed bomb1))
-(not (armed bomb2))
-(not (armed bomb3))
-(not (armed bomb4))
-(not (armed bomb5))
-(not (armed bomb6))
-(not (armed bomb7))
-(not (armed bomb8))
-(not (armed bomb9))
-(not (armed bomb10))
+(unknown (in p0 b0))
+(unknown (in p1 b0))
+(unknown (in p2 b0))
+(unknown (in p3 b0))
+(unknown (in p4 b0))
+(unknown (in p5 b0))
+(unknown (in p6 b0))
+(unknown (in p7 b0))
+(unknown (in p8 b0))
+(unknown (in p9 b0))
+(oneof
+(in p0 b0)
+(in p1 b0)
+(in p2 b0)
+(in p3 b0)
+(in p4 b0)
+(in p5 b0)
+(in p6 b0)
+(in p7 b0)
+(in p8 b0)
+(in p9 b0)
 )
 )
+(:goal (defused b0))
 )
 

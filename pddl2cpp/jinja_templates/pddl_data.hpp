@@ -36,12 +36,15 @@ namespace pddl_lib {
 
     std::function<bool(KBState &)> create_constraint(const Constraint& constraint, std::unordered_map<std::string, unsigned int> func_map){
         if (constraint.constraint == CONSTRAINTS::ONEOF){
-            assert(constraint.condition.conditions.empty());
             std::vector<unsigned int> inds;
-            for (const auto& pred : constraint.condition.predicates){
-                std::stringstream ss;
-                ss << pred;
-                inds.push_back(func_map[ss.str()]);
+            for (const auto& c : constraint.condition.conditions){
+                if (auto pred = std::get_if<InstantiatedPredicate>(&c)){
+                    std::stringstream ss;
+                    ss << *pred;
+                    inds.push_back(func_map[ss.str()]);
+                } else {
+                    throw std::runtime_error("ONEOF constraint must only contain predicates");
+                }
             }
             return [inds](KBState & state){
                 unsigned int num_unknowns = 0;
@@ -68,20 +71,22 @@ namespace pddl_lib {
                 return true;
             };
 
-        } else if (constraint.constraint == CONSTRAINTS::OR_CONSTRAINT){
+        } else if (constraint.constraint == CONSTRAINTS::OR){
             assert(constraint.condition.conditions.size() == 2);
             std::vector<std::pair<unsigned int, unsigned char>> conds;
-            for (const auto & pred  : constraint.condition.predicates){
-                std::stringstream ss;
-                ss << pred;
-                conds.push_back({func_map[ss.str()], 1});
-            }
-            for (const auto & cond  : constraint.condition.conditions){
-                assert(cond.op == OPERATION::NOT);
-                assert(cond.predicates.size()==1);
-                std::stringstream ss;
-                ss << cond.predicates[0];
-                conds.push_back({func_map[ss.str()], 0});
+            for (const auto & c  : constraint.condition.conditions) {
+                if (auto pred = std::get_if<InstantiatedPredicate>(&c)){
+                    std::stringstream ss;
+                    ss << *pred;
+                    conds.push_back({func_map[ss.str()], 1});
+                } else {
+                    auto cond = std::get<InstantiatedCondition>(c);
+                    assert(cond.op == OPERATION::NOT);
+                    assert(cond.conditions.size()==1);
+                    std::stringstream ss;
+                    ss << std::get<InstantiatedPredicate>(cond.conditions[0]);
+                    conds.push_back({func_map[ss.str()], 0});
+                }
             }
             assert(conds.size()==2);
 
@@ -104,31 +109,33 @@ namespace pddl_lib {
         }
     }
 
-  std::function<bool(const KBState &)> create_goal(const InstantiatedCondition& goal, std::unordered_map<std::string, unsigned int> func_map){
-    assert(goal.conditions.size()==0);
-    std::vector<std::pair<unsigned int, unsigned char>> conds;
-    for (const auto & pred  : goal.predicates){
-      std::stringstream ss;
-      ss << pred;
-      conds.push_back({func_map[ss.str()], 1});
-    }
-    for (const auto & cond  : goal.conditions){
-      assert(cond.op == OPERATION::NOT);
-      assert(cond.predicates.size()==1);
-      std::stringstream ss;
-      ss << cond.predicates[0];
-      conds.push_back({func_map[ss.str()], 0});
-    }
+    std::function<bool(const KBState &)> create_goal(const InstantiatedCondition& goal, std::unordered_map<std::string, unsigned int> func_map){
+        std::vector<std::pair<unsigned int, unsigned char>> conds;
+        for (const auto & c  : goal.conditions){
+            if (auto pred = std::get_if<InstantiatedPredicate>(&c)){
+                std::stringstream ss;
+                ss << *pred;
+                conds.push_back({func_map[ss.str()], 1});
+            } else{
+                auto cond = std::get<InstantiatedCondition>(c);
+                assert(cond.op == OPERATION::NOT);
+                assert(cond.conditions.size()==1);
+                std::stringstream ss;
+                ss << std::get<InstantiatedPredicate>(cond.conditions[0]);
+                conds.push_back({func_map[ss.str()], 0});
+            }
 
-    return [conds](const KBState & state){
-      bool val = true;
-      for (const auto& c : conds ){
-        val &= state.data[c.first]==c.second;
-      }
-      return val;
-    };
+        }
 
-  }
+        return [conds](const KBState & state){
+            bool val = true;
+            for (const auto& c : conds ){
+                val &= state.data[c.first]==c.second;
+            }
+            return val;
+        };
+
+    }
 
 
     std::tuple<KBState, std::array<KBState, {{actions|length + 2*observe_actions|length}}>,
