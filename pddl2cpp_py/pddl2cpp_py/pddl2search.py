@@ -59,8 +59,6 @@ def main():
 
     problem_types = set(problem_objects_map.keys())
     assert (problem_types.issubset(domain_types))
-    # get kb structure
-    objects_product = list(itertools.product(*problem_objects_map.values()))
     # get all possible action instances
     kb_template = []
     kb_template_map = dict()
