@@ -1,94 +1,24 @@
-(define (problem roverprob1234) (:domain Rover)
-(:objects
-        general - lander
-        colour high_res low_res - mode
-        rover0 - rover
-        rover0store - store
-        waypoint0 waypoint1 waypoint2 waypoint3 waypoint4 waypoint5 - waypoint
-        camera0 - camera
-        objective1 - objective
-        )
-(:init
-	(visible waypoint1 waypoint4)
-	(visible waypoint4 waypoint1)
-	(visible waypoint5 waypoint4)
-	(visible waypoint4 waypoint5)
+(define (problem unix-3)
+   (:domain unix)
+   (:objects root sub1 sub2 sub11 sub12 sub21 sub22 - DIR my_file - FILE)
 
-
-	(visible waypoint1 waypoint0)
-	(visible waypoint2 waypoint0)
-	(visible waypoint3 waypoint0)
-        (visible waypoint0 waypoint1)
-
-        (visible waypoint0 waypoint2)
-        (visible waypoint2 waypoint1)
-        (visible waypoint1 waypoint2)
-
-        (visible waypoint0 waypoint3)
-        (visible waypoint3 waypoint1)
-        (visible waypoint1 waypoint3)
-        (visible waypoint3 waypoint2)
-        (visible waypoint2 waypoint3)
-
-
-
-
-
-        (at_lander general waypoint0)
-       (channel_free general)
-        (at rover0 waypoint3)
-        (available rover0)
-       (equipped_for_imaging rover0)
-          (can_traverse rover0 waypoint1 waypoint4)
-        (can_traverse rover0 waypoint4 waypoint1)
-         (can_traverse rover0 waypoint5 waypoint4)
-        (can_traverse rover0 waypoint4 waypoint5)
-       (can_traverse rover0 waypoint3 waypoint0)
-        (can_traverse rover0 waypoint0 waypoint3)
-        (can_traverse rover0 waypoint3 waypoint1)
-        (can_traverse rover0 waypoint1 waypoint3)
-        (can_traverse rover0 waypoint1 waypoint2)
-        (can_traverse rover0 waypoint2 waypoint1)
-
-
-       (on_board camera0 rover0)
-        (calibration_target camera0 objective1)
-        (supports camera0 colour)
-        (supports camera0 high_res)
-         (store_of rover0store rover0)
-          (equipped_for_soil_analysis rover0)
-        (equipped_for_rock_analysis rover0)
- 	(empty rover0store)
-
-
-
-	(unknown (visible_from objective1 waypoint0))
-	(unknown (visible_from objective1 waypoint4))
-	(unknown (visible_from objective1 waypoint5))
-	(oneof
-         (visible_from objective1 waypoint0)
-         (visible_from objective1 waypoint4)
-         (visible_from objective1 waypoint5)
-	)
-
-	(unknown (at_soil_sample waypoint4))
-	(unknown (at_soil_sample waypoint5))
-	(unknown (at_rock_sample waypoint4))
-	(unknown (at_rock_sample waypoint5))
-	(oneof
-	 (at_soil_sample waypoint4)
-	 (at_soil_sample waypoint5)
-	)
-	(oneof
-          (at_rock_sample waypoint4)
-   	  (at_rock_sample waypoint5)
- 	)
-
-)
-
-(:goal (and (communicated_image_data objective1 high_res)
-          (communicated_soil_data)
-            (communicated_rock_data)
-       )
-)
+   (:init
+     (sub_dir root sub1)
+     (sub_dir root sub2)
+     (sub_dir sub1 sub11)
+     (sub_dir sub1 sub12)
+     (sub_dir sub2 sub21)
+     (sub_dir sub2 sub22)
+     (is_cur_dir root)
+     (unknown (file_in_dir my_file sub11))
+     (unknown (file_in_dir my_file sub21))
+     (unknown (file_in_dir my_file sub12))
+     (unknown (file_in_dir my_file sub22))
+     (oneof
+        (file_in_dir my_file sub11)
+        (file_in_dir my_file sub21)
+        (file_in_dir my_file sub12)
+        (file_in_dir my_file sub22))
+     )
+   (:goal (file_in_dir my_file root))
 )

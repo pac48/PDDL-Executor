@@ -377,7 +377,7 @@ int main(int argc, char **argv) {
             num_goals++;
         }
 
-        bool should_check = open_list.size() == counter + 1 ||
+        bool should_check = (!goals.empty() && open_list.size() == counter + 1) ||
                             (depth_check.find(max_depth) == depth_check.end() && cur_state.goal_dist == 0);
         if (should_check) {
             depth_check.insert(max_depth);

@@ -64,10 +64,14 @@ namespace pddl_lib {
 
             int ind1 = ind;
             int num_open = 0;
-            while (ind < section.size() && (num_open != 0 || (skip_symbols.find(section[ind]) == skip_symbols.end()))) {
+            int num_close = 0;
+            while (ind < section.size() && (num_open > 0 || skip_symbols.find(section[ind]) == skip_symbols.end()) ) {
                 num_open += section[ind] == '(';
-                num_open -= section[ind] == ')';
+                num_close += section[ind] == ')';
                 ind++;
+                if (num_open > 0 && num_open==num_close){
+                    break;
+                }
             }
             if (ind - ind1 > 0) {
                 if (ind - ind1 >= 2 && section.substr(ind1, 2) == ";;") {
@@ -543,7 +547,7 @@ namespace pddl_lib {
         auto param_to_type_map = param_to_type_map_const;
 
         std::tie(section, remaining) = getNextParen(content);
-        auto strings = parseVector(section, {'\t', '\n', ' '});
+        auto strings = parseVector(section, {'\t', '\n', ' ', ')'});
         if (strings.empty()) {
             cond.op = OPERATION::AND;
             return cond;
