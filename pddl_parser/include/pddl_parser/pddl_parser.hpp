@@ -11,26 +11,25 @@
 #include <tl_expected/expected.hpp>
 
 namespace pddl_lib {
-// types
-    enum OPERATION {
-        AND, OR, FORALL, NOT, WHEN
+
+    enum class OPERATION {
+        AND = 0, OR, FORALL, NOT, WHEN
     };
 
-    enum CONSTRAINTS {
-        ONEOF, OR_CONSTRAINT
+    enum class CONSTRAINTS {
+        ONEOF = 0, OR
     };
 
-    struct Parameter {
+    struct Parameter  {
         std::string name;
         std::string type;
 
         bool operator==(const Parameter &other) const {
             return name == other.name && type == other.type;
         }
-
     };
 
-    struct InstantiatedParameter {
+    struct InstantiatedParameter  {
         std::string name;
         std::string type;
 
@@ -67,10 +66,8 @@ namespace pddl_lib {
 
     struct InstantiatedCondition {
         OPERATION op;
-        std::vector<InstantiatedCondition> conditions;
-        std::vector<InstantiatedPredicate> predicates;
         std::vector<InstantiatedParameter> parameters;
-
+        std::vector<std::variant<InstantiatedCondition, InstantiatedPredicate>> conditions;
     };
 
     struct InstantiatedAction {
@@ -93,47 +90,33 @@ namespace pddl_lib {
 // Hash functions
 namespace std {
     template<>
-    struct hash<pddl_lib::InstantiatedPredicate> {
-        std::size_t operator()(const pddl_lib::InstantiatedPredicate &obj) const {
-            std::size_t seed = 0;
-            hash<int> intHash;
-            hash<std::string> stringHash;
-
-            seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-
-            return seed;
-        }
-    };
-}
-
-namespace std {
-    template<>
     struct hash<pddl_lib::Predicate> {
         std::size_t operator()(const pddl_lib::Predicate &obj) const {
-            std::size_t seed = 0;
             hash<int> intHash;
             hash<std::string> stringHash;
-
-            seed ^= intHash(obj.parameters.size()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-
-            return seed;
+            return intHash(obj.parameters.size()) ^ stringHash(obj.name);
         }
     };
-}
-
-namespace std {
+    template<>
+    struct hash<pddl_lib::InstantiatedPredicate> {
+        std::size_t operator()(const pddl_lib::InstantiatedPredicate &obj) const {
+            hash<int> intHash;
+            hash<std::string> stringHash;
+            return intHash(obj.parameters.size()) ^ stringHash(obj.name);
+        }
+    };
     template<>
     struct hash<pddl_lib::InstantiatedParameter> {
         std::size_t operator()(const pddl_lib::InstantiatedParameter &obj) const {
-            std::size_t seed = 0;
             hash<std::string> stringHash;
-
-            seed ^= stringHash(obj.type) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            seed ^= stringHash(obj.name) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-
-            return seed;
+            return stringHash(obj.type) ^ stringHash(obj.name);
+        }
+    };
+    template<>
+    struct hash<pddl_lib::Parameter> {
+        std::size_t operator()(const pddl_lib::Parameter &obj) const {
+            hash<std::string> stringHash;
+            return stringHash(obj.type) ^ stringHash(obj.name);
         }
     };
 }
@@ -143,6 +126,7 @@ namespace pddl_lib {
     struct Domain {
         std::string name;
         std::vector<std::string> requirements;
+        std::vector<InstantiatedParameter> constants;
         std::unordered_set<std::string> types;
         std::unordered_set<Predicate> predicates;
         std::vector<Action> actions;
@@ -152,7 +136,7 @@ namespace pddl_lib {
     };
 
     struct Constraint {
-        CONSTRAINTS constraint;
+        CONSTRAINTS constraint{};
         InstantiatedCondition condition;
     };
 
@@ -269,7 +253,7 @@ namespace pddl_lib {
 
     tl::expected<InstantiatedCondition, std::string>
     parse_instantiated_condition(const std::string &content,
-                    const std::unordered_map<std::string, std::string> &param_to_type_map = {});
+                                 const std::unordered_map<std::string, std::string> &param_to_type_map = {});
 
     InstantiatedPredicate
     instantiate_predicate(const Predicate &predicate, const std::unordered_map<std::string, std::string> &param_subs);
@@ -294,6 +278,7 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::Predicate &pred);
 std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedPredicate &pred);
 
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Condition &cond);
+
 std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedCondition &cond);
 
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Action &action);
