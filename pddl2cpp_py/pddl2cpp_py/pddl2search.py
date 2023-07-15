@@ -52,15 +52,17 @@ def main():
     with open(problem_file) as f:
         problem = pddl_parser.parser.parse_problem(f.read())
 
+    problem.objects.extend(domain.constants)
+    problem.objects = list(set(problem.objects))
+
     domain_types = set(domain.types)
+    domain_types.add('')  # add empty type
     problem_objects_map = defaultdict(list)
     for object in problem.objects:
         problem_objects_map[object.type].append(object.name)
 
     problem_types = set(problem_objects_map.keys())
     assert (problem_types.issubset(domain_types))
-    # get kb structure
-    objects_product = list(itertools.product(*problem_objects_map.values()))
     # get all possible action instances
     kb_template = []
     kb_template_map = dict()
@@ -103,12 +105,12 @@ def main():
             act.base_name = action.name
             act.params = param
 
-
-            tmp = parse_preconditions_unknowns(action_inst.precondtion, kb_template_map)
-            act.pre = parse_preconditions(action_inst.precondtion, kb_template_map) + parse_observe_preconditions(
-                action_inst.observe, kb_template_map) + " && " + tmp + ';'
+            # tmp = parse_preconditions_unknowns(action_inst.precondtion, kb_template_map)
+            act.pre = parse_preconditions(action_inst.precondtion, False,
+                                          kb_template_map) + parse_observe_preconditions(
+                action_inst.observe, kb_template_map) + ';'  # + " && " + tmp + ';'
             act.effect = parse_effect(action_inst.effect, kb_template_map)
-            if len(action_inst.observe.predicates) > 0:
+            if len(action_inst.observe.conditions) > 0:
                 act.observe = parse_observe(action_inst.observe, kb_template_map)
                 all_observe_actions.append(act)
             else:
@@ -116,10 +118,10 @@ def main():
 
     j2_template = Template(templates["pddl_data.hpp"])
 
-    if ((len(kb_template) % 1) == 0):
-        size_kb_data = len(kb_template) // 1
+    if (len(kb_template) % 8) == 0:
+        size_kb_data = len(kb_template)
     else:
-        size_kb_data = 1 + (len(kb_template) // 1)
+        size_kb_data = 8 + 8 * (len(kb_template) // 8)
 
     indexers = []
     for val in kb_template:
@@ -144,23 +146,31 @@ def main():
 
 def parse_effect(cond, kb_template_map, truth_val=True):
     if cond.op == pddl_parser.parser.NOT:
-        assert (len(cond.predicates) == 1)
-        assert (len(cond.conditions) == 0)
-        index = kb_template_map[str(cond.predicates[0])]
+        assert (len(cond.conditions) == 1)
+        assert (type(cond.conditions[0]) is pddl_parser.parser.InstantiatedPredicate)
+        index = kb_template_map[str(cond.conditions[0])]
         out = f"state.data[{index}] = 0;\n"
     elif cond.op == pddl_parser.parser.AND:
         out = ''
-        for (ind, pred) in enumerate(cond.predicates):
-            index = kb_template_map[str(pred)]
-            out += f"state.data[{index}] = 1;\n"
         for (ind, sub_cond) in enumerate(cond.conditions):
-            out += f"{parse_effect(sub_cond, kb_template_map)}"
+            if type(sub_cond) is pddl_parser.parser.InstantiatedPredicate:
+                index = kb_template_map[str(sub_cond)]
+                out += f"state.data[{index}] = 1;\n"
+            else:
+                out += f"{parse_effect(sub_cond, kb_template_map)}"
     elif cond.op == pddl_parser.parser.WHEN:
-        assert (len(cond.predicates) == 2)
-        assert (len(cond.conditions) == 0)
-        index1 = kb_template_map[str(cond.predicates[0])]
-        index2 = kb_template_map[str(cond.predicates[1])]
-        out = f"if (state.data[{index1}]==1)" + "{" + f" state.data[{index2}]=1; " + "}"
+        assert (len(cond.conditions) == 2)
+        if type(cond.conditions[0]) is pddl_parser.parser.InstantiatedPredicate:
+            index1 = kb_template_map[str(cond.conditions[0])]
+            cause = f"state.data[{index1}]==1"
+        else:
+            cause = parse_preconditions(cond.conditions[0], False, kb_template_map)
+        if type(cond.conditions[1]) is pddl_parser.parser.InstantiatedPredicate:
+            index2 = kb_template_map[str(cond.conditions[1])]
+            effect = f" state.data[{index2}]=1; "
+        else:
+            effect = parse_effect(cond.conditions[1], kb_template_map)
+        out = f"if (" + cause + ")" + "{" + effect + "}"
     else:
         raise Exception("wrong condition for condition")
 
@@ -170,85 +180,106 @@ def parse_effect(cond, kb_template_map, truth_val=True):
 def parse_observe(cond, kb_template_map):
     out = ""
     assert (cond.op == pddl_parser.parser.AND)
-    for pred in cond.predicates:
-        index = kb_template_map[str(pred)]
-        out += f"state1.data[{index}] = 1;\n"
-        out += f"state2.data[{index}] = 0;\n"
-    if len(cond.conditions) == 1:
-        cond = cond.conditions[0]
-
-    if len(cond.conditions) > 0:
-        raise Exception(f"observe only support predicates")
+    assert (len(cond.conditions) == 1)
+    pred = cond.conditions[0]
+    assert (type(cond.conditions[0]) is pddl_parser.parser.InstantiatedPredicate)
+    index = kb_template_map[str(pred)]
+    out += f"state1.data[{index}] = 1;\n"
+    out += f"state2.data[{index}] = 0;\n"
+    # if len(cond.conditions) == 1:
+    #     cond = cond.conditions[0]
+    #
+    # if len(cond.conditions) > 0:
+    #     raise Exception(f"observe only support predicates")
 
     return out
 
 
 def parse_observe_preconditions(cond, kb_template_map):
-    if len(cond.predicates) == 0:
+    if len(cond.conditions) == 0:
         return ""
-    assert (len(cond.predicates) == 1)
-    assert (len(cond.conditions) == 0)
+    assert (len(cond.conditions) == 1)
     assert (cond.op == pddl_parser.parser.AND)
-    pred = cond.predicates[0]
+    pred = cond.conditions[0]
     index = kb_template_map[str(pred)]
     return f" && (state.data[{index}]==2)"
 
 
-def parse_preconditions_unknowns(cond, kb_template_map):
-    out = ""
-    for (ind, pred) in enumerate(cond.predicates):
-        index = kb_template_map[str(pred)]
-        if ind == 0:
-            delim = ""
-        else:
-            delim = " && "
-        out += f"{delim}state.data[{index}]!=2"
+# def parse_preconditions_unknowns(cond, kb_template_map):
+#     out = ""
+#     for (ind, pred) in enumerate(cond.predicates):
+#         index = kb_template_map[str(pred)]
+#         if ind == 0:
+#             delim = ""
+#         else:
+#             delim = " && "
+#         out += f"{delim}state.data[{index}]!=2"
+#
+#     if len(cond.conditions) > 0 and len(cond.predicates) > 0:
+#         out += " && "
+#     for (ind, sub_cond) in enumerate(cond.conditions):
+#         if ind == 0:
+#             delim = ""
+#         else:
+#             delim = " && "
+#         out += f"{delim}{parse_preconditions_unknowns(sub_cond, kb_template_map)}"
+#
+#     return out
 
-    if len(cond.conditions) > 0 and len(cond.predicates) > 0:
-        out += " && "
-    for (ind, sub_cond) in enumerate(cond.conditions):
-        if ind == 0:
-            delim = ""
-        else:
-            delim = " && "
-        out += f"{delim}{parse_preconditions_unknowns(sub_cond, kb_template_map)}"
 
-    return out
-
-
-def parse_preconditions(cond, kb_template_map):
+def parse_preconditions(cond, negate, kb_template_map):
     if cond.op == pddl_parser.parser.NOT:
-        assert (len(cond.conditions) == 1 or len(cond.predicates) == 1)
-        assert (len(cond.conditions) == 0 or len(cond.predicates) == 0)
-        if len(cond.conditions) == 1:
-            out = "!(" + parse_preconditions(cond.conditions[0], kb_template_map) + ')'
+        assert (len(cond.conditions) == 1)
+        if type(cond.conditions[0]) is pddl_parser.parser.InstantiatedCondition:
+            out = parse_preconditions(cond.conditions[0], not negate, kb_template_map)
         else:
             out = "("
-            index = kb_template_map[str(cond.predicates[0])]
-            out += f"state.data[{index}]==0"
+            index = kb_template_map[str(cond.conditions[0])]
+            if not negate:
+                out += f"state.data[{index}]==0"
+            else:
+                out += f"state.data[{index}]==1"
             out += ')'
     elif cond.op == pddl_parser.parser.AND:
         out = ""
-        for (ind, pred) in enumerate(cond.predicates):
-            index = kb_template_map[str(pred)]
-            if ind == 0:
-                delim = ""
-            else:
-                delim = " && "
-            out += f"{delim}state.data[{index}]==1"
-
-        if len(cond.conditions) > 0 and len(cond.predicates) > 0:
-            out += " && "
         for (ind, sub_cond) in enumerate(cond.conditions):
             if ind == 0:
                 delim = ""
             else:
-                delim = " && "
-            out += f"{delim}({parse_preconditions(sub_cond, kb_template_map)})"
+                if not negate:
+                    delim = " && "
+                else:
+                    delim = " || "
+            if type(sub_cond) is pddl_parser.parser.InstantiatedPredicate:
+                index = kb_template_map[str(sub_cond)]
+                if not negate:
+                    out += f"{delim}state.data[{index}]==1"
+                else:
+                    out += f"{delim}state.data[{index}]==0"
+            else:
+                out += f"{delim}({parse_preconditions(sub_cond, negate, kb_template_map)})"
+        # if len(cond.conditions) > 0 and len(cond.predicates) > 0:
+        #     if not negate:
+        #         out += " && "
+        #     else:
+        #         out += " || "
+        # for (ind, sub_cond) in enumerate(cond.conditions):
+        #     if ind == 0:
+        #         delim = ""
+        #     else:
+        #         if not negate:
+        #             delim = " && "
+        #         else:
+        #             delim = " || "
+        if len(out) == 0:
+            return "true"
+
+        out = '(' + out + ')'
+
         if len(out) > 0:
             out = '(' + out + ')'
         else:
-            out = 'true'
+            assert (0)
     else:
         raise Exception("wrong condition type")
 
