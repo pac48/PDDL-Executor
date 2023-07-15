@@ -167,6 +167,7 @@ namespace pddl_lib {
                 for (const auto &tmp: std::vector<std::string_view>(subsubstrings.begin() + 1, subsubstrings.end())) {
                     if (auto pred = parse_instantiated_predicate(std::string(tmp))) {
                         condition.conditions.push_back(pred.value());
+                        problem.unknowns.insert({pred.value()});
                     } else {
                         return fmt::format("ERROR line {}: failed to parse oneof predicate \n{}",
                                            get_line_num(content, str),
