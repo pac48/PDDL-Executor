@@ -52,8 +52,10 @@ def main():
     with open(problem_file) as f:
         problem = pddl_parser.parser.parse_problem(f.read())
 
-    problem.objects.extend(domain.constants)
-    problem.objects = list(set(problem.objects))
+    objects = domain.constants
+    for obj in problem.objects:
+        objects.append(obj)
+    problem.objects = list(set(objects))
 
     domain_types = set(domain.types)
     domain_types.add('')  # add empty type

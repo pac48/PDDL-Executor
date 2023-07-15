@@ -164,7 +164,7 @@ namespace pddl_lib {
                                  return pred;
                              }),
                      py::arg("name") = "default_name",
-                     py::arg("parameters") = std::vector<pddl_lib::Parameter>(),
+                     py::arg("parameters") = std::vector<pddl_lib::InstantiatedParameter>(),
                      R"(
                  Init stuff.
            )").def("__str__", [](const pddl_lib::InstantiatedPredicate &pred) {

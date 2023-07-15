@@ -133,15 +133,15 @@ namespace pddl_lib {
 
         std::tie(section, remaining) = getNextParen(strings[ind]);
         substrings = parseVector(section, {'\t', '\n', ' '});
-        if (substrings[0] != ":objects") {
-            return fmt::format("ERROR line {}: missing ':objects' keyword", get_line_num(content, substrings[0]));
+        if (substrings[0] == ":objects") {
+//            return fmt::format("ERROR line {}: missing ':objects' keyword", get_line_num(content, substrings[0]));
+            problem.objects = parse_instantiated_params(
+                    std::vector<std::string_view>(substrings.begin() + 1, substrings.end()));
+            ind++;
+            std::tie(section, remaining) = getNextParen(strings[ind]);
+            substrings = parseVector(section, {'\t', '\n', ' '});
         }
-        problem.objects = parse_instantiated_params(
-                std::vector<std::string_view>(substrings.begin() + 1, substrings.end()));
-        ind++;
 
-        std::tie(section, remaining) = getNextParen(strings[ind]);
-        substrings = parseVector(section, {'\t', '\n', ' '});
         if (substrings[0] != ":init") {
             return fmt::format("ERROR line {}: missing ':init' keyword", get_line_num(content, substrings[0]));
         }
@@ -278,8 +278,9 @@ namespace pddl_lib {
         }
 
         if (substrings[0] == ":constants") {
-            domain.constants = parse_instantiated_params(std::vector<std::string_view>(substrings.begin() + 1, substrings.end()));
-            for (const auto & con : domain.constants){
+            domain.constants = parse_instantiated_params(
+                    std::vector<std::string_view>(substrings.begin() + 1, substrings.end()));
+            for (const auto &con: domain.constants) {
                 domain.types.insert(con.type);
             }
             ind++;
