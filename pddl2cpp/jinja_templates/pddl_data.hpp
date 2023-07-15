@@ -34,7 +34,7 @@ namespace pddl_lib {
 //        }
     };
 
-    std::function<bool(KBState &)> create_constraint(const Constraint& constraint, std::unordered_map<std::string, unsigned int> func_map){
+    std::function<std::pair<bool,bool>(KBState &)> create_constraint(const Constraint& constraint, std::unordered_map<std::string, unsigned int> func_map){
         if (constraint.constraint == CONSTRAINTS::ONEOF){
             std::vector<unsigned int> inds;
             for (const auto& c : constraint.condition.conditions){
@@ -53,22 +53,24 @@ namespace pddl_lib {
                     num_true += state.data[ind]==1;
                     num_unknowns += state.data[ind]==2;
                 }
-//                assert(num_true < 2);
                 if (num_true > 1 || (num_true == 0 && num_unknowns == 0)) {
-                    return false;
+                    return std::make_pair(false, false);
                 }
 
+                bool modified = false;
                 if (num_true==1 && num_unknowns > 0){
                     for (const auto& ind : inds){
                         state.data[ind] = state.data[ind]*(state.data[ind]==1);
                     }
+                    modified = true;
                 }
                 if (num_true==0 && num_unknowns==1){
                     for (const auto& ind : inds){
                         state.data[ind] = state.data[ind]==1 || state.data[ind]==2;
                     }
+                    modified = true;
                 }
-                return true;
+                return std::make_pair(true, modified);
             };
 
         } else if (constraint.constraint == CONSTRAINTS::OR){
@@ -91,19 +93,36 @@ namespace pddl_lib {
             assert(conds.size()==2);
 
             return [conds](KBState & state){
-                auto cond_1 = conds[0];
-                auto cond_2 = conds[1];
-                if(state.data[cond_1.first] == 2 && state.data[cond_2.first]==0){
-                    state.data[cond_1.first] = cond_1.second;
-                } else if (state.data[cond_1.first] == 0 && state.data[cond_2.first]==2){
-                    state.data[cond_2.first] = cond_2.second;
-                } else if (state.data[cond_1.first] == 0 && state.data[cond_2.first]==0){
-                    return false;
+                const auto & cond_1 = conds[0];
+                const auto & cond_2 = conds[1];
+                if (state.data[cond_1.first] != cond_1.second && state.data[cond_1.first] != 2
+                    && state.data[cond_2.first] != cond_2.second && state.data[cond_2.first] != 2){
+                    assert(0);
+//                    return std::make_pair(false,false);
                 }
-                return true;
+//                if (state.data[cond_1.first] == cond_1.second && state.data[cond_1.first] != 2
+//                    && state.data[cond_2.first] == cond_2.second && state.data[cond_2.first] != 2){
+//                    return std::make_pair(false,false);
+//                }
+                bool modified = false;
+                if (state.data[cond_1.first] == 2 && state.data[cond_2.first] != 2 && state.data[cond_2.first] != cond_2.second){
+                    state.data[cond_1.first] = cond_1.second;
+                    modified = true;
+                } else if (state.data[cond_2.first] == 2 && state.data[cond_1.first] != 2 && state.data[cond_1.first] != cond_1.second){
+                    state.data[cond_2.first] = cond_2.second;
+                    modified = true;
+                }
+
+                if (state.data[cond_1.first] == 2 && state.data[cond_2.first] != 2 && state.data[cond_2.first] == cond_2.second){
+                    state.data[cond_1.first] = 1-cond_1.second;
+                    modified = true;
+                } else if (state.data[cond_2.first] == 2 && state.data[cond_1.first] != 2 && state.data[cond_1.first] == cond_1.second){
+                    state.data[cond_2.first] = 1-cond_2.second;
+                    modified = true;
+                }
+
+                return std::make_pair(true, modified);
             };
-
-
         } else{
             throw std::runtime_error("Constraint not supported");
         }
@@ -139,14 +158,14 @@ namespace pddl_lib {
 
 
     std::tuple<KBState, std::array<KBState, {{actions|length + 2*observe_actions|length}}>,
-    std::vector<std::function<bool(KBState &)>>, std::function<bool (const KBState&)>> initialize_problem(const std::string& problem_str){
+    std::vector<std::function<std::pair<bool,bool>(KBState &)>>, std::function<bool (const KBState&)>> initialize_problem(const std::string& problem_str){
         pddl_lib::KBState state{};
         std::array<KBState, {{actions|length + 2*observe_actions|length}}> new_states{};
         memset(new_states.data(), 0, sizeof(new_states));
         auto problem = pddl_lib::parse_problem(problem_str).value();
         std::unordered_map<std::string, unsigned int> func_map;
         std::function<bool (const KBState&)> check_goal;
-        std::vector<std::function<bool (KBState &)>> constraints{};
+        std::vector<std::function<std::pair<bool,bool> (KBState &)>> constraints{};
         {{problem_initialization}}
         for (const auto& pred : problem.init){
             std::stringstream ss;
@@ -230,11 +249,19 @@ namespace std {
     struct hash<pddl_lib::KBState*> {
         std::size_t operator()(const pddl_lib::KBState* obj) const {
             std::size_t* data = (std::size_t*) obj->data;
-            std::size_t hashValue = 0;
-            std::hash<std::size_t> intHash;
-            for (size_t i = 0; i < {{size_kb_data}}/8; ++i) {
-                auto val = intHash(data[i]);
-                hashValue = hashValue ^ val;
+//            std::size_t hashValue = 0;
+//            std::hash<std::size_t> intHash;
+//            for (size_t i = 0; i < {{size_kb_data}}/8; ++i) {
+//                auto val = intHash(data[i]);
+//                hashValue = hashValue ^ val;
+//            }
+            constexpr std::size_t FNV_OFFSET_BASIS = 14695981039346656037ULL;
+            constexpr std::size_t FNV_PRIME = 1099511628211ULL;
+
+            std::size_t hashValue = FNV_OFFSET_BASIS;
+            for (std::size_t i = 0; i < {{size_kb_data}}/8; ++i) {
+                hashValue ^= data[i];
+                hashValue *= FNV_PRIME;
             }
 
             return hashValue;
@@ -263,26 +290,47 @@ void apply_observe_debug_2(){
 }
 {% for action in observe_actions %}
 namespace {{action.name}} {
-bool check_preconditions(const KBState & state) {
-    return {{action.pre}}
-}
-void apply_effect(KBState & state) {
-    {{action.effect}}
-}
-void apply_observe(KBState & state1, KBState & state2, const std::vector<std::function<bool(KBState &)>> & constraints) {
-    {{action.observe}}
-    apply_observe_debug_1();
-    for (auto &constraint: constraints) {
-        auto valid = constraint(state1)*constraint(state2);
-        state1.valid = valid;
-        state2.valid = valid;
+    bool check_preconditions(const KBState & state) {
+        return {{action.pre}}
     }
-}
+    void apply_effect(KBState & state) {
+        {{action.effect}}
+    }
+    void apply_observe(KBState & state1, KBState & state2, const std::vector<std::function<std::pair<bool,bool>(KBState &)>> & constraints) {
+        {{action.observe}}
+        apply_observe_debug_1();
+        bool modified;
+        do {
+            modified = false;
+            for (auto &constraint: constraints) {
+                auto [valid, modified_i] = constraint(state1);
+                modified |= modified_i;
+                state1.valid = valid;
+                if (!valid){
+                    state2.valid = false;
+                    return;
+                }
+            }
+        } while (modified);
+
+        do {
+            modified = false;
+            for (auto &constraint: constraints) {
+                auto [valid, modified_i] = constraint(state2);
+                modified |= modified_i;
+                state2.valid = valid;
+                if (!valid){
+                    state1.valid = false;
+                    return;
+                }
+            }
+        } while (modified);
+    }
 }
 {% endfor %}
 
 void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*observe_actions|length}}> & new_states,
-            const std::vector<std::function<bool(KBState &)>> & constraints={}){
+            const std::vector<std::function<std::pair<bool,bool>(KBState &)>> & constraints={}){
   int num = 0;
 {% for action in actions %}
 new_states[{{ loop.index - 1}}].valid = 0;

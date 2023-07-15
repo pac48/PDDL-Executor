@@ -230,56 +230,98 @@ void print_plan(const OpenList &open_list) {
 //}
 
 
-bool goal_propagate(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState *> &checked_states) {
-    assert(state->goal_dist != -1);
-    if (state->depth == 0) {
-        return true;
-    }
-    if (state->associated_state != nullptr && state->associated_state->goal_dist == -1) {
-        return false;
-    }
+//bool goal_propagate(pddl_lib::KBState *state, std::unordered_set<pddl_lib::KBState *> &checked_states) {
+//    assert(state->goal_dist != -1);
+//    if (state->depth == 0) {
+//        return true;
+//    }
+//    if (state->associated_state != nullptr && state->associated_state->goal_dist == -1) {
+//        return false;
+//    }
+////    for (auto parent: state->parents) {
+////        if (parent->goal_dist != -1) {
+////            int o = 0;
+////        }
+////    }
+//    assert(!state->parents.empty());
+//    int parent_dist;
+//    if (state->associated_state != nullptr) {
+//        parent_dist = std::max(state->goal_dist + 1, state->associated_state->goal_dist + 1);
+//    } else {
+//        parent_dist = state->goal_dist + 1;
+//    }
+////    if (parent_dist != state->goal_dist + 1) {
+////        int o = 0;
+////    }
+//
+//    bool reached = false;
 //    for (auto parent: state->parents) {
-//        if (parent->goal_dist != -1) {
-//            int o = 0;
+//        if (parent->goal_dist == -1 || parent_dist < parent->goal_dist) {
+//            parent->goal_dist = parent_dist;
+//            reached |= goal_propagate(parent, checked_states);
+////            if (reached) {
+////                return true;
+////            }
 //        }
 //    }
-    assert(!state->parents.empty());
-    int parent_dist;
-    if (state->associated_state != nullptr) {
-        parent_dist = std::max(state->goal_dist + 1, state->associated_state->goal_dist + 1);
-    } else {
-        parent_dist = state->goal_dist + 1;
-    }
-//    if (parent_dist != state->goal_dist + 1) {
-//        int o = 0;
+//    return reached;
+//}
+//
+//void recurse(pddl_lib::KBState *const state, std::vector<pddl_lib::KBState *> &goals,
+//             std::unordered_set<pddl_lib::KBState *> &checked) {
+//    if (checked.find(state) != checked.end()) {
+//        return;
 //    }
+//    checked.insert(state);
+//    if (state->goal_dist != -1) {
+//        goals.push_back(state);
+//        return;
+//    }
+//    for (const auto &child: state->children) {
+//        recurse(child, goals, checked);
+//    }
+//}
 
-    bool reached = false;
-    for (auto parent: state->parents) {
-        if (parent->goal_dist == -1 || parent_dist < parent->goal_dist) {
-            parent->goal_dist = parent_dist;
-            reached |= goal_propagate(parent, checked_states);
-//            if (reached) {
-//                return true;
-//            }
+
+bool goal_propagate(const std::vector<pddl_lib::KBState*>& goals) {
+//    assert(goal->goal_dist == 0);
+    std::queue<pddl_lib::KBState *> q;
+    std::unordered_set<pddl_lib::KBState *> close_list;
+    for (const auto& g : goals){
+        q.emplace(g);
+    }
+    bool goal_reached = false;
+    while (!q.empty()) {
+        auto state = q.front();
+        q.pop();
+
+        assert(state->goal_dist != -1);
+        if (state->depth == 0) {
+            goal_reached = true;
+            continue;
+        }
+        if (state->associated_state != nullptr && state->associated_state->goal_dist == -1) {
+            continue;
+        }
+
+        assert(!state->parents.empty());
+        int parent_dist;
+        if (state->associated_state != nullptr) {
+            parent_dist = std::max(state->goal_dist + 1, state->associated_state->goal_dist + 1);
+        } else {
+            parent_dist = state->goal_dist + 1;
+        }
+
+        for (auto parent: state->parents) {
+            auto it = close_list.find(parent);
+            if (it == close_list.end() || (it != close_list.end() && (*it)->goal_dist > parent_dist)) {
+                parent->goal_dist = parent_dist;
+                q.emplace(parent);
+                close_list.insert(parent);
+            }
         }
     }
-    return reached;
-}
-
-void recurse(pddl_lib::KBState *const state, std::vector<pddl_lib::KBState *> &goals,
-             std::unordered_set<pddl_lib::KBState *> &checked) {
-    if (checked.find(state) != checked.end()) {
-        return;
-    }
-    checked.insert(state);
-    if (state->goal_dist != -1) {
-        goals.push_back(state);
-        return;
-    }
-    for (const auto &child: state->children) {
-        recurse(child, goals, checked);
-    }
+    return goal_reached;
 }
 
 bool goal_search(std::vector<pddl_lib::KBState *> &goals) {
@@ -289,13 +331,14 @@ bool goal_search(std::vector<pddl_lib::KBState *> &goals) {
         return a->depth < b->depth;
     });
     std::unordered_set<pddl_lib::KBState *> checked_states;
-    for (const auto &goal: goals) {
-        if (goal_propagate(goal, checked_states)) {
-            return true; //TODO maybe should continue checking?
+    bool valid = false;
+//    for (const auto &goal: goals) {
+        if (goal_propagate(goals)) {
+            valid = true; //TODO maybe should continue checking?
         }
-    }
+//    }
 
-    return false;
+    return valid;
 }
 
 int main(int argc, char **argv) {
@@ -322,6 +365,10 @@ int main(int argc, char **argv) {
     close_list.insert(&open_list.back());
     unsigned int counter = 0;
     while (open_list.size() > counter) {
+        if ((counter % 1000000) == 0) {
+            std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
+                      << open_list.size() << std::endl;
+        }
         pddl_lib::KBState &cur_state = open_list[counter];
 
         if (check_goal(cur_state)) {
@@ -336,13 +383,16 @@ int main(int argc, char **argv) {
             depth_check.insert(max_depth);
             std::unordered_set<pddl_lib::KBState *> checked_states;
             std::cout << "checking goal" << std::endl;
-            if (goal_search(goals)) {
-                plan_found = true;
-                std::cout << "found plan" << std::endl;
-                print_plan(open_list);
-                break;
-            }
+            goal_search(goals);
         }
+
+        if (open_list[0].goal_dist != -1 && open_list[0].goal_dist < cur_state.depth){
+            plan_found = true;
+            std::cout << "found plan" << std::endl;
+            print_plan(open_list);
+            break;
+        }
+
         if (cur_state.goal_dist == 0) {
             counter++;
             continue;
@@ -350,11 +400,6 @@ int main(int argc, char **argv) {
 
         assert(cur_state.goal_dist == -1);
         pddl_lib::expand(cur_state, new_states, constraints);
-
-        if ((counter % 1000000) == 0) {
-            std::cout << "counter: " << counter << ", close_list_size: " << close_list.size() << ", open_list_size: "
-                      << open_list.size() << std::endl;
-        }
 
         for (auto &potential_new_state: new_states) {
             if (potential_new_state.valid) {
