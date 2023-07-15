@@ -283,11 +283,11 @@ void print_plan(const OpenList &open_list) {
 //}
 
 
-bool goal_propagate(const std::vector<pddl_lib::KBState*>& goals) {
+bool goal_propagate(const std::vector<pddl_lib::KBState *> &goals) {
 //    assert(goal->goal_dist == 0);
     std::queue<pddl_lib::KBState *> q;
     std::unordered_set<pddl_lib::KBState *> close_list;
-    for (const auto& g : goals){
+    for (const auto &g: goals) {
         q.emplace(g);
     }
     bool goal_reached = false;
@@ -333,9 +333,9 @@ bool goal_search(std::vector<pddl_lib::KBState *> &goals) {
     std::unordered_set<pddl_lib::KBState *> checked_states;
     bool valid = false;
 //    for (const auto &goal: goals) {
-        if (goal_propagate(goals)) {
-            valid = true; //TODO maybe should continue checking?
-        }
+    if (goal_propagate(goals)) {
+        valid = true; //TODO maybe should continue checking?
+    }
 //    }
 
     return valid;
@@ -386,7 +386,8 @@ int main(int argc, char **argv) {
             goal_search(goals);
         }
 
-        if (open_list[0].goal_dist != -1 && open_list[0].goal_dist < cur_state.depth){
+        if (open_list[0].goal_dist != -1 &&
+            (open_list[0].goal_dist <= cur_state.depth || open_list.size() == counter + 1)) {
             plan_found = true;
             std::cout << "found plan" << std::endl;
             print_plan(open_list);
