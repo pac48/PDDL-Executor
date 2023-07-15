@@ -15,6 +15,6 @@ block world domain.
 </p>
 
 Once a plan is found at runtime, it is converted into a behavior tree encoded and then executed. Notable, codegen is 
-used again to generate a C++ interface that is used by the behavior tree. Essentially, the interface containes 
+used again to generate a C++ interface that is used by the behavior tree. Essentially, the interface contains 
 function for all actions in the PDDL domain, which need to implemented.          
 

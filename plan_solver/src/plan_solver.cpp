@@ -387,7 +387,7 @@ int main(int argc, char **argv) {
         }
 
         if (open_list[0].goal_dist != -1 &&
-            (open_list[0].goal_dist <= cur_state.depth || open_list.size() == counter + 1)) {
+            (open_list[0].goal_dist < cur_state.depth || open_list.size() == counter + 1)) {
             plan_found = true;
             std::cout << "found plan" << std::endl;
             print_plan(open_list);
