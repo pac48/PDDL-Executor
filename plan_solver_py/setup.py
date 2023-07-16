@@ -10,7 +10,7 @@ setup(
     packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+         ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/plan_solver', ['plan_solver/CMakeLists.txt']),
         ('share/' + package_name + '/plan_solver/src', ['plan_solver/src/plan_solver.cpp']),
@@ -23,8 +23,7 @@ setup(
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [
-            'plan_solver_py = plan_solver_py.plan_solver_py:main'
-        ],
+        'console_scripts': ['plan_solver = plan_solver_py.plan_solver:main',
+                            'plan_graph = plan_solver_py.plan_graph:main'],
     },
 )

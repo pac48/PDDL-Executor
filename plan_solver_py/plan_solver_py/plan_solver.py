@@ -1,4 +1,5 @@
 import os
+import sys
 from ament_index_python.packages import get_package_share_directory
 import argparse
 import shutil
@@ -27,7 +28,11 @@ def main():
     args = parser.parse_args()
 
     domain_file = args.domain
+    if not os.path.isabs(domain_file):
+        raise AssertionError("--domain must be an absolute path")
     problem_file = args.problem
+    if not os.path.isabs(problem_file):
+        raise AssertionError("--problem must be an absolute path")
 
     h_val = hash_file(domain_file, problem_file)
     planner_path = f'/tmp/plan_solver/plan_solver_{h_val}'

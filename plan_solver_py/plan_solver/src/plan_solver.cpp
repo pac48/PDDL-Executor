@@ -182,7 +182,7 @@ void print_plan(const OpenList &open_list) {
 
     std::cout << ss.str();
 
-    std::ofstream outputFile("/tmp/plan.txt");
+    std::ofstream outputFile("/tmp/plan_solver/plan.txt");
     outputFile << ss.rdbuf();
 
 }

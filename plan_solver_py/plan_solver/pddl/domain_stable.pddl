@@ -62,7 +62,6 @@
     (valid_guide_message ?a - GuideAction ?m - Msg)
 
     ;; time management predicates
-    (should_tick)
     (time_critical)
     (used_move ?tc - Time)
     (current_time ?tc - Time)
@@ -85,24 +84,12 @@
     (success)
 )
 
-;; change time
-(:action Tick
-	:parameters (?tc - Time ?tn - Time)
-	:precondition (and
-	    (current_time ?tc)
-	    (next_time ?tc ?tn)
-	    (should_tick)
-		)
-	:effect (and (not (current_time ?tc)) (current_time ?tn) (not (should_tick)) )
-)
-
 ;; detect if person is at location
 (:action DetectTakingMedicine
     :parameters (?t - Time)
     :precondition (and
                     (DetectTakingMedicine_enabled)
                     (current_time ?t)
-                    (not (should_tick))
 	                )
     :observe (person_taking_medicine ?t)
 )
@@ -113,7 +100,6 @@
     :precondition (and
                     (DetectEatingFood_enabled)
                     (current_time ?t)
-                    (not (should_tick))
 	                )
     :observe (person_eating_food ?t)
 )
@@ -123,7 +109,6 @@
     :parameters (?t - Time ?p - Person ?loc - Landmark)
     :precondition (and
                     (current_time ?t)
-                    (not (should_tick))
                     (DetectPerson_enabled)
 	                )
     :observe (person_at ?t ?p ?loc)
@@ -136,7 +121,6 @@
             (GiveReminder_enabled)
             (current_time ?t)
             (valid_reminder_message ?a ?m)
-            (not (should_tick))
             (not (executed_reminder ?a))
             ;; enforce that the person didn't taking medicine constraint
             (not (and (reminder_person_not_taking_medicine_constraint ?a ?p)  (not (not (person_taking_medicine ?t)) ) ) )
@@ -163,20 +147,27 @@
               (not (and (person_at ?t ?p ?loc) (reminder_not_person_location_constraint ?a ?p ?loc) ) )
             )
 		)
-    :effect (and (message_given ?m)  (executed_reminder ?a)  (should_tick) )
+    :effect (and (message_given ?m)  (executed_reminder ?a)
+              (forall (?tn - Time)
+                (when (next_time ?t ?tn) (and (not (current_time ?t)) (current_time ?tn)) )
+              )
+            )
 )
 
 ;; Wait for timestep
 (:action Wait
 	:parameters (?a - WaitAction)
 	:precondition (and
-	                (not (should_tick))
 	                (not (executed_wait ?a))
                   (forall (?ai - WaitAction)
                     (not (and (wait_blocks_wait ?ai ?a)  (not (executed_wait ?ai) ) ) )
                   )
 	             )
-	:effect (and (should_tick) (executed_wait ?a) )
+	:effect (and (executed_wait ?a)
+            (forall (?tn - Time)
+              (when (next_time ?t ?tn) (and (not (current_time ?t)) (current_time ?tn)) )
+            )
+	)
 )
 
 ;; Move to any landmark, avoiding terrain
@@ -184,12 +175,17 @@
 	:parameters (?t - Time ?from - Landmark ?to - Landmark)
 	:precondition (and
 	                (current_time ?t)
-	                (not (should_tick))
 	                (not (used_move ?t))
 	                (robot_at ?from)
 	                (traversable ?from ?to)
 	          )
-	:effect (and (robot_at ?to) (not (robot_at ?from)) (used_move ?t) (when (time_critical) (should_tick)) ) ;;
+	:effect (and (robot_at ?to) (not (robot_at ?from)) (used_move ?t)
+	          (when (time_critical)
+              (forall (?tn - Time)
+                (when (next_time ?t ?tn) (and (not (current_time ?t)) (current_time ?tn)) )
+              )
+	          )
+	        )
 )
 
 ;;make call
@@ -199,7 +195,6 @@
             (MakeCall_enabled)
             (current_time ?t)
             (valid_call_message ?a ?m)
-            (not (should_tick))
             (not (executed_call ?a))
             ;; enforce that the person didn't taking medicine constraint
             (not (and (call_person_not_taking_medicine_constraint ?a ?p)  (not (not (person_taking_medicine ?t)) ) ) )
@@ -222,7 +217,11 @@
               (not (and (person_at ?t ?p ?loc) (call_not_person_location_constraint ?a ?p ?loc) ) )
             )
 		)
-    :effect (and (message_given ?m)  (executed_call ?a) (should_tick) )
+    :effect (and (message_given ?m)  (executed_call ?a)
+              (forall (?tn - Time)
+                (when (next_time ?t ?tn) (and (not (current_time ?t)) (current_time ?tn)) )
+              )
+    )
 )
 
 ;; Update success status

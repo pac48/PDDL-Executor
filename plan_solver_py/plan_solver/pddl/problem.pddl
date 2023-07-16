@@ -1,75 +1,94 @@
-(define (problem medicine_reminder)
-(:domain shr_domain)
+(define (problem roverprob1234) (:domain Rover)
 (:objects
-    couch kitchen - Landmark
-    nathan - Person
-    t1 t2 t3 t4 t5 - Time
-    guide_1_msg guide_2_msg automated_msg recorded_msg call_caregiver_guide_msg call_caregiver_msg - Msg
-    automated_reminder recorded_reminder guide_reminder_1 guide_reminder_2 - ReminderAction
-    caregiver_call caregiver_call_guide - CallAction
-)
+        general - lander
+        colour high_res low_res - mode
+        rover0 - rover
+        rover0store - store
+        waypoint0 waypoint1 waypoint2 waypoint3 waypoint4 waypoint5 - waypoint
+        camera0 - camera
+        objective1 - objective
+        )
 (:init
+	(visible waypoint1 waypoint4)
+	(visible waypoint4 waypoint1)
+	(visible waypoint5 waypoint4)
+	(visible waypoint4 waypoint5)
 
-	  ;; needed actions
-    (DetectPerson_enabled)
-    (GiveReminder_enabled)
-    (MakeCall_enabled)
-    (DetectTakingMedicine_enabled)
 
-    (current_time t1)
-    (next_time t1 t2)
-    (next_time t2 t3)
-    (next_time t3 t4)
-    (next_time t4 t5)
+	(visible waypoint1 waypoint0)
+	(visible waypoint2 waypoint0)
+	(visible waypoint3 waypoint0)
+        (visible waypoint0 waypoint1)
 
-    (unknown (person_taking_medicine t1))
-    (unknown (person_taking_medicine t2))
-    (unknown (person_taking_medicine t3))
-    (unknown (person_taking_medicine t4))
-    (unknown (person_taking_medicine t5))
+        (visible waypoint0 waypoint2)
+        (visible waypoint2 waypoint1)
+        (visible waypoint1 waypoint2)
 
-    (robot_at couch)
-    (oneof (person_at t1 nathan couch) (person_at t1 nathan kitchen) )
-    (oneof (person_at t2 nathan couch) (person_at t2 nathan kitchen) )
-    (oneof (person_at t3 nathan couch) (person_at t3 nathan kitchen) )
-    (oneof (person_at t4 nathan couch) (person_at t4 nathan kitchen) )
-    (oneof (person_at t5 nathan couch) (person_at t5 nathan kitchen) )
+        (visible waypoint0 waypoint3)
+        (visible waypoint3 waypoint1)
+        (visible waypoint1 waypoint3)
+        (visible waypoint3 waypoint2)
+        (visible waypoint2 waypoint3)
 
-    (traversable kitchen couch)
-    (traversable couch kitchen)
 
-    ;;success states
-    (message_given_success call_caregiver_msg)
-    (message_given_success call_caregiver_guide_msg)
-    (medicine_taken_success)
 
-    ;; specify which actions must come before others
-    (reminder_blocks_reminder automated_reminder recorded_reminder)
-    (reminder_blocks_call recorded_reminder caregiver_call)
-    (reminder_blocks_reminder guide_reminder_1 guide_reminder_2)
-    (reminder_blocks_call guide_reminder_2 caregiver_call_guide)
 
-    ;; specify valid input argument combinations for all actions
-    (valid_call_message caregiver_call call_caregiver_msg)
-    (valid_call_message caregiver_call_guide call_caregiver_guide_msg)
-    (valid_reminder_message automated_reminder automated_msg)
-    (valid_reminder_message recorded_reminder recorded_msg)
-    (valid_reminder_message guide_reminder_1 guide_1_msg)
-    (valid_reminder_message guide_reminder_2 guide_2_msg)
 
-    ;; specify world state constraints for all actions
-    (reminder_person_location_constraint automated_reminder nathan kitchen)
-    (reminder_person_not_taking_medicine_constraint automated_reminder nathan)
-    (reminder_person_location_constraint recorded_reminder nathan kitchen)
-    (reminder_person_not_taking_medicine_constraint recorded_reminder nathan)
-    (reminder_not_person_location_constraint guide_reminder_1 nathan kitchen)
-    (reminder_person_not_taking_medicine_constraint guide_reminder_1 nathan)
-    (reminder_not_person_location_constraint guide_reminder_2 nathan kitchen)
-    (reminder_person_not_taking_medicine_constraint guide_reminder_2 nathan)
-    (call_not_person_location_constraint caregiver_call_guide nathan kitchen)
-    (call_person_not_taking_medicine_constraint caregiver_call nathan)
+        (at_lander general waypoint0)
+       (channel_free general)
+        (at rover0 waypoint3)
+        (available rover0)
+       (equipped_for_imaging rover0)
+          (can_traverse rover0 waypoint1 waypoint4)
+        (can_traverse rover0 waypoint4 waypoint1)
+         (can_traverse rover0 waypoint5 waypoint4)
+        (can_traverse rover0 waypoint4 waypoint5)
+       (can_traverse rover0 waypoint3 waypoint0)
+        (can_traverse rover0 waypoint0 waypoint3)
+        (can_traverse rover0 waypoint3 waypoint1)
+        (can_traverse rover0 waypoint1 waypoint3)
+        (can_traverse rover0 waypoint1 waypoint2)
+        (can_traverse rover0 waypoint2 waypoint1)
+
+
+       (on_board camera0 rover0)
+        (calibration_target camera0 objective1)
+        (supports camera0 colour)
+        (supports camera0 high_res)
+         (store_of rover0store rover0)
+          (equipped_for_soil_analysis rover0)
+        (equipped_for_rock_analysis rover0)
+ 	(empty rover0store)
+
+
+
+	(unknown (visible_from objective1 waypoint0))
+	(unknown (visible_from objective1 waypoint4))
+	(unknown (visible_from objective1 waypoint5))
+	(oneof
+         (visible_from objective1 waypoint0)
+         (visible_from objective1 waypoint4)
+         (visible_from objective1 waypoint5)
+	)
+
+	(unknown (at_soil_sample waypoint4))
+	(unknown (at_soil_sample waypoint5))
+	(unknown (at_rock_sample waypoint4))
+	(unknown (at_rock_sample waypoint5))
+	(oneof
+	 (at_soil_sample waypoint4)
+	 (at_soil_sample waypoint5)
+	)
+	(oneof
+          (at_rock_sample waypoint4)
+   	  (at_rock_sample waypoint5)
+ 	)
 
 )
-(:goal (and (success)  ) )
 
+(:goal (and (communicated_image_data objective1 high_res)
+          (communicated_soil_data)
+            (communicated_rock_data)
+       )
+)
 )
