@@ -1,4 +1,4 @@
-(define (problem midnight_wondering)
+(define (problem midnight_wandering)
 (:domain shr_domain)
 (:objects
     bed door outside home - Landmark

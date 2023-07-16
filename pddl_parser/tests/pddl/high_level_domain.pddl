@@ -9,7 +9,7 @@
   FallProtocol
   FoodProtocol
   MedicineProtocol
-  WonderingProtocol
+  WanderingProtocol
 )
 
 (:predicates
@@ -21,10 +21,10 @@
   (time_to_eat ?f - FoodProtocol)
   (already_ate  ?f - FoodProtocol)
   (already_called_about_eating  ?f - FoodProtocol)
-  ;; wondering
-  (too_late_to_go_outside ?w - WonderingProtocol)
-  (person_at_door ?w - WonderingProtocol)
-  (person_outside ?w - WonderingProtocol)
+  ;; wandering
+  (too_late_to_go_outside ?w - WanderingProtocol)
+  (person_at_door ?w - WanderingProtocol)
+  (person_outside ?w - WanderingProtocol)
   ;; fall
   (person_on_ground ?f - FallProtocol)
   ;; priority
@@ -37,7 +37,7 @@
   (fall_protocol_enabled ?f - FallProtocol)
   (food_protocol_enabled ?f - FoodProtocol)
   (medicine_protocol_enabled ?m - MedicineProtocol)
-  (wondering_protocol_enabled ?w - WonderingProtocol)
+  (wandering_protocol_enabled ?w - WanderingProtocol)
 
 	(success)
 
@@ -87,7 +87,7 @@
             (medicine_protocol_enabled ?m)
             (forall (?fall - FallProtocol) (not (fall_protocol_enabled ?fall)) )
             (forall (?food - FoodProtocol) (not (food_protocol_enabled ?food)) )
-            (forall (?wond - WonderingProtocol) (not (wondering_protocol_enabled ?wond)) )
+            (forall (?wond - WanderingProtocol) (not (wandering_protocol_enabled ?wond)) )
           )
 )
 
@@ -118,7 +118,7 @@
             (food_protocol_enabled ?f)
             (forall (?fall - FallProtocol) (not (fall_protocol_enabled ?fall)) )
             (forall (?med - MedicineProtocol) (not (medicine_protocol_enabled ?med)) )
-            (forall (?wond - WonderingProtocol) (not (wondering_protocol_enabled ?wond)) )
+            (forall (?wond - WanderingProtocol) (not (wandering_protocol_enabled ?wond)) )
           )
 )
 (:action ContinueFoodProtocol
@@ -145,7 +145,7 @@
 	          (not (priority_1))
 	          (fall_protocol_enabled ?f)
             (forall (?med - MedicineProtocol) (not (medicine_protocol_enabled ?med)) )
-            (forall (?wond - WonderingProtocol) (not (wondering_protocol_enabled ?wond)) )
+            (forall (?wond - WanderingProtocol) (not (wandering_protocol_enabled ?wond)) )
             (forall (?food - FoodProtocol) (not (food_protocol_enabled ?food)) )
           )
 )
@@ -160,35 +160,35 @@
 	:effect (and (success) (not (priority_1)) )
 )
 
-(:action StartWonderingProtocol
-	:parameters (?w - WonderingProtocol)
+(:action StartWanderingProtocol
+	:parameters (?w - WanderingProtocol)
 	:precondition (and
 	    (priority_1)
       (not
         (and (not (person_at_door ?w) ) (not (person_outside ?w) ) )
       )
       (too_late_to_go_outside ?w)
-      (forall (?wond - WonderingProtocol) (not (wondering_protocol_enabled ?wond)) )
+      (forall (?wond - WanderingProtocol) (not (wandering_protocol_enabled ?wond)) )
     )
 	:effect (and
 	          (success)
 	          (not (priority_1))
-	          (wondering_protocol_enabled ?w)
+	          (wandering_protocol_enabled ?w)
             (forall (?fall - FallProtocol) (not (fall_protocol_enabled ?fall)) )
             (forall (?med - MedicineProtocol) (not (medicine_protocol_enabled ?med)) )
             (forall (?food - FoodProtocol) (not (food_protocol_enabled ?food)) )
           )
 )
 
-(:action ContinueWonderingProtocol
-	:parameters (?w - WonderingProtocol)
+(:action ContinueWanderingProtocol
+	:parameters (?w - WanderingProtocol)
 	:precondition (and
 	    (priority_1)
       (not
         (and (not (person_at_door ?w) ) (not (person_outside ?w) ) )
       )
       (too_late_to_go_outside ?w)
-      (wondering_protocol_enabled ?w)
+      (wandering_protocol_enabled ?w)
     )
 	:effect (and (success) (not (priority_1)) )
 )

@@ -19,7 +19,7 @@
   (already_ate_lunch)
   (time_to_eat_dinner)
   (already_ate_dinner)
-  ;; wondering
+  ;; wandering
   (too_late_to_go_outside)
   ;; fall
   (person_on_ground)

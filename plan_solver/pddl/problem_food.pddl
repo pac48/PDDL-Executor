@@ -67,7 +67,7 @@
     (reminder_not_person_location_constraint guide_reminder_2 nathan kitchen)
     (reminder_person_not_eating_food_constraint guide_reminder_2 nathan)
     (call_not_person_location_constraint caregiver_call_guide nathan kitchen)
-    (call_person_not_taking_medicine_constraint caregiver_call nathan)
+    (call_person_not_eating_food_constraint caregiver_call nathan)
 
 )
 (:goal (and (success)  ) )

@@ -96,6 +96,39 @@
 	:effect (and (not (current_time ?tc)) (current_time ?tn) (not (should_tick)) )
 )
 
+;; detect if person is at location
+(:action DetectTakingMedicine
+    :parameters (?t - Time)
+    :precondition (and
+                    (DetectTakingMedicine_enabled)
+                    (current_time ?t)
+                    (not (should_tick))
+	                )
+    :observe (person_taking_medicine ?t)
+)
+
+;; detect if person is at location
+(:action DetectEatingFood
+    :parameters (?t - Time)
+    :precondition (and
+                    (DetectEatingFood_enabled)
+                    (current_time ?t)
+                    (not (should_tick))
+	                )
+    :observe (person_eating_food ?t)
+)
+
+;; detect if person is at location
+(:action DetectPersonLocation
+    :parameters (?t - Time ?p - Person ?loc - Landmark)
+    :precondition (and
+                    (current_time ?t)
+                    (not (should_tick))
+                    (DetectPerson_enabled)
+	                )
+    :observe (person_at ?t ?p ?loc)
+)
+
 ;;give reminder
 (:action GiveReminder
     :parameters (?a - ReminderAction ?t - Time ?p - Person ?m - Msg)
@@ -132,42 +165,6 @@
 		)
     :effect (and (message_given ?m)  (executed_reminder ?a)  (should_tick) )
 )
-
-;; detect if person is at location
-(:action DetectPersonLocation
-    :parameters (?t - Time ?p - Person ?loc - Landmark)
-    :precondition (and
-                    (current_time ?t)
-                    (not (should_tick))
-                    (DetectPerson_enabled)
-	                )
-    :observe (person_at ?t ?p ?loc)
-)
-
-;; detect if person is at location
-(:action DetectTakingMedicine
-    :parameters (?t - Time)
-    :precondition (and
-                    (DetectTakingMedicine_enabled)
-                    (current_time ?t)
-                    (not (should_tick))
-	                )
-    :observe (person_taking_medicine ?t)
-)
-
-;; detect if person is at location
-(:action DetectEatingFood
-    :parameters (?t - Time)
-    :precondition (and
-                    (DetectEatingFood_enabled)
-                    (current_time ?t)
-                    (not (should_tick))
-	                )
-    :observe (person_eating_food ?t)
-)
-
-
-
 
 ;; Wait for timestep
 (:action Wait

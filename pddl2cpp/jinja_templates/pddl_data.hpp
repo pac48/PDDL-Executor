@@ -331,44 +331,45 @@ namespace {{action.name}} {
 
 void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*observe_actions|length}}> & new_states,
             const std::vector<std::function<std::pair<bool,bool>(KBState &)>> & constraints={}){
-  int num = 0;
-{% for action in actions %}
-new_states[{{ loop.index - 1}}].valid = 0;
-if ({{action.name}}::check_preconditions(cur_state)){
+    int num = 0;
+    {% for action in observe_actions %}
+    new_states[{{2*loop.index - 2}}].valid = 0;
+    new_states[{{2*loop.index - 1}}].valid = 0;
+    if ({{action.name}}::check_preconditions(cur_state)){
         new_states[num] = cur_state;
-        new_states[num].action = {{ loop.index - 1}};
+        new_states[num+1] = cur_state;
         new_states[num].children.clear();
         new_states[num].parents.clear();
-//        new_states[num].action_name_ = pddl_lib::indexers::get_action_string(new_states[num].action);
-        new_states[num].associated_state = nullptr;
+        new_states[num+1].children.clear();
+        new_states[num+1].parents.clear();
+        new_states[num].action = {{actions|length + loop.index - 1}};
+        new_states[num+1].action = {{actions|length + loop.index - 1}};
+    //    new_states[num].action_name_ = pddl_lib::indexers::get_action_string(new_states[num].action);
+    //    new_states[num+1].action_name_ = pddl_lib::indexers::get_action_string(new_states[num+1].action);
         {{action.name}}::apply_effect(new_states[num]);
-        new_states[num].valid = 1;
-        num++;
-}
-{% endfor %}
+        {{action.name}}::apply_effect(new_states[num+1]);
+        {{action.name}}::apply_observe(new_states[num], new_states[num+1], constraints);
+        new_states[num].associated_state = &new_states[num+1];
+        new_states[num+1].associated_state = &new_states[num];
+        num += 2;
+    }
+    {% endfor %}
 
-{% for action in observe_actions %}
-    new_states[{{actions|length + 2*loop.index - 2}}].valid = 0;
-    new_states[{{actions|length + 2*loop.index - 1}}].valid = 0;
-if ({{action.name}}::check_preconditions(cur_state)){
-    new_states[num] = cur_state;
-    new_states[num+1] = cur_state;
-    new_states[num].children.clear();
-    new_states[num].parents.clear();
-    new_states[num+1].children.clear();
-    new_states[num+1].parents.clear();
-    new_states[num].action = {{actions|length + loop.index - 1}};
-    new_states[num+1].action = {{actions|length + loop.index - 1}};
-//    new_states[num].action_name_ = pddl_lib::indexers::get_action_string(new_states[num].action);
-//    new_states[num+1].action_name_ = pddl_lib::indexers::get_action_string(new_states[num+1].action);
-    {{action.name}}::apply_effect(new_states[num]);
-    {{action.name}}::apply_effect(new_states[num+1]);
-    {{action.name}}::apply_observe(new_states[num], new_states[num+1], constraints);
-    new_states[num].associated_state = &new_states[num+1];
-    new_states[num+1].associated_state = &new_states[num];
-    num += 2;
-}
-{% endfor %}
+    {% for action in actions %}
+    new_states[{{2*observe_actions|length +  loop.index - 1}}].valid = 0;
+    if ({{action.name}}::check_preconditions(cur_state)){
+            new_states[num] = cur_state;
+            new_states[num].action = {{ loop.index - 1}};
+            new_states[num].children.clear();
+            new_states[num].parents.clear();
+    //        new_states[num].action_name_ = pddl_lib::indexers::get_action_string(new_states[num].action);
+            new_states[num].associated_state = nullptr;
+            {{action.name}}::apply_effect(new_states[num]);
+            new_states[num].valid = 1;
+            num++;
+    }
+    {% endfor %}
+
 }
 
 } // pddl_lib
