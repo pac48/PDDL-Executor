@@ -20,6 +20,7 @@
     (person_at ?t - Time ?p - Person ?lm - Landmark)
     (person_eating ?t - Time)
     (person_taking_medicine ?t - Time)
+    (person_eating_food ?t - Time)
     (person_on_ground ?t - Time)
 
     ;; physical constants
@@ -33,10 +34,13 @@
     ;; success conditions
     (person_at_success ?p - Person ?loc - Landmark)
     (message_given_success ?m - Msg)
+    (medicine_taken_success)
+    (food_eaten_success)
 
     ;; enable/disable actions
     (DetectPerson_enabled)
     (DetectTakingMedicine_enabled)
+    (DetectEatingFood_enabled)
     (GiveReminder_enabled)
     (MakeCall_enabled)
 
@@ -59,6 +63,7 @@
 
     ;; time management predicates
     (should_tick)
+    (time_critical)
     (used_move ?tc - Time)
     (current_time ?tc - Time)
     (next_time ?tc ?tn - Time)
@@ -68,7 +73,9 @@
     (call_person_location_constraint ?a - CallAction ?p - Person ?loc - Landmark)
     (reminder_person_location_constraint ?a - ReminderAction ?p - Person ?loc - Landmark)
     (reminder_person_not_taking_medicine_constraint ?a - ReminderAction ?p - Person)
+    (reminder_person_not_eating_food_constraint ?a - ReminderAction ?p - Person)
     (call_person_not_taking_medicine_constraint ?a - CallAction ?p - Person)
+    (call_person_not_eating_food_constraint ?a - CallAction ?p - Person)
     (guide_person_location_constraint ?a - GuideAction ?p - Person ?loc - Landmark)
 
     (call_not_person_location_constraint ?a - CallAction ?p - Person ?loc - Landmark)
@@ -100,6 +107,9 @@
             (not (executed_reminder ?a))
             ;; enforce that the person didn't taking medicine constraint
             (not (and (reminder_person_not_taking_medicine_constraint ?a ?p)  (not (not (person_taking_medicine ?t)) ) ) )
+            ;; enforce that the person didn't eat food constraint
+            (not (and (reminder_person_not_eating_food_constraint ?a ?p)  (not (not (person_eating_food ?t)) ) ) )
+
             ;; the robot and person must be at the same location
             (not
               (forall (?loc - Landmark)
@@ -145,6 +155,17 @@
     :observe (person_taking_medicine ?t)
 )
 
+;; detect if person is at location
+(:action DetectEatingFood
+    :parameters (?t - Time)
+    :precondition (and
+                    (DetectEatingFood_enabled)
+                    (current_time ?t)
+                    (not (should_tick))
+	                )
+    :observe (person_eating_food ?t)
+)
+
 
 
 
@@ -171,7 +192,7 @@
 	                (robot_at ?from)
 	                (traversable ?from ?to)
 	          )
-	:effect (and (robot_at ?to) (not (robot_at ?from)) (used_move ?t) ) ;;(should_tick)
+	:effect (and (robot_at ?to) (not (robot_at ?from)) (used_move ?t) (when (time_critical) (should_tick)) ) ;;
 )
 
 ;;make call
@@ -185,6 +206,8 @@
             (not (executed_call ?a))
             ;; enforce that the person didn't taking medicine constraint
             (not (and (call_person_not_taking_medicine_constraint ?a ?p)  (not (not (person_taking_medicine ?t)) ) ) )
+            ;; enforce that the person didn't eat food constraint
+            (not (and (call_person_not_eating_food_constraint ?a ?p)  (not (not (person_eating_food ?t)) ) ) )
             ;; certain action instances block others, for example, we must call caregiver before calling emergency
             (forall (?ai - CallAction)
               (not (and (call_blocks_call ?ai ?a)  (not (executed_call ?ai) ) ) )
@@ -220,11 +243,25 @@
 
 ;; taking medicine
 (:action MedicineTakenSuccess
-	:parameters (?t - Time)
+	:parameters ()
 	:precondition (and
-	                ;;(current_time ?t)
-	                (person_taking_medicine ?t)
-                  )
+	                (not (forall (?t - Time)
+                          (not (and (medicine_taken_success) (person_taking_medicine ?t) ) )
+                       )
+	                )
+                )
+    :effect (success)
+)
+
+;; eating food
+(:action FoodEatenSuccess
+	:parameters ()
+	:precondition (and
+	                (not (forall (?t - Time)
+	                        (not (and (food_eaten_success) (person_eating_food ?t) ) )
+                       )
+	                )
+                )
     :effect (success)
 )
 

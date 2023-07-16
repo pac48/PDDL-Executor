@@ -51,7 +51,7 @@
     ;;success states
     (message_given_success call_caregiver_msg)
     (message_given_success call_caregiver_guide_msg)
-    ;;should be kitchen (person_at_success nathan bed)
+    (medicine_taken_success)
 
     ;; specify which actions must come before others
     (reminder_blocks_reminder automated_reminder recorded_reminder)

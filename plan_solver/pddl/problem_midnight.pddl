@@ -3,7 +3,7 @@
 (:objects
     bed door outside home - Landmark
     nathan - Person
-    t1 t2 t3 t4 - Time
+    t1 t2 t3 t4 t5 - Time
     automated_msg recorded_msg call_caregiver_outside_msg call_caregiver_bed_msg call_emergency_msg - Msg
     automated_reminder recorded_reminder - ReminderAction
     caregiver_call emergency_call caregiver_call_bed - CallAction
@@ -19,23 +19,16 @@
     (next_time t1 t2)
     (next_time t2 t3)
     (next_time t3 t4)
+    (next_time t4 t5)
+    (time_critical)
+
 
     (robot_at home)
-    (unknown (person_at t1 nathan door))
-    (unknown (person_at t1 nathan outside))
-    (unknown (person_at t2 nathan outside))
-    (unknown (person_at t2 nathan door))
-    (unknown (person_at t2 nathan bed))
-    (unknown (person_at t3 nathan outside))
-    (unknown (person_at t3 nathan door))
-    (unknown (person_at t3 nathan bed))
-    (unknown (person_at t4 nathan outside))
-    (unknown (person_at t4 nathan door))
-    (unknown (person_at t4 nathan bed))
     (oneof (person_at t1 nathan door) (person_at t1 nathan outside) )
     (oneof (person_at t2 nathan door) (person_at t2 nathan outside) (person_at t2 nathan bed) )
     (oneof (person_at t3 nathan door) (person_at t3 nathan outside) (person_at t3 nathan bed) )
     (oneof (person_at t4 nathan door) (person_at t4 nathan outside) (person_at t4 nathan bed) )
+    (oneof (person_at t5 nathan door) (person_at t5 nathan outside) (person_at t5 nathan bed) )
 
     (traversable home door)
 

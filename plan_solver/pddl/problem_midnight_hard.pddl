@@ -23,6 +23,7 @@
     (next_time t5 t6)
     (next_time t6 t7)
     (next_time t7 t8)
+    (time_critical)
 
     (robot_at home)
     (unknown (person_at t1 nathan door))
