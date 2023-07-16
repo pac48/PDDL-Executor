@@ -1,6 +1,0 @@
-# ninja log v5
-0	302	1689537617536460463	pddl_problem/include/pddl_problem.hpp	c5f77710be22b57c
-302	1915	1689537619148523239	CMakeFiles/plan_solver.dir/src/plan_solver.cpp.o	e9ac9a37fdee0f0c
-0	302	1689537617536460463	/home/paul/smart_home_ws/src/smart-home/external/pddl_executor/plan_solver_py/plan_solver/cmake-build-debug/pddl_problem/include/pddl_problem.hpp	c5f77710be22b57c
-0	3	0	CMakeFiles/install.util	e60ea3b893dc6b19
-1915	2006	1689537619244526978	plan_solver	30480a7c8df8314d
