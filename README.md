@@ -11,10 +11,18 @@ but it would be easy to reuse the basic framework with a custom planner. See bel
 block world domain.        
 
 <p align="center">
-  <img src="resources/plan-graph.png" width="500" title="plan">
+  <img src="resources/plan-graph.png" width="800" title="plan">
 </p>
 
 Once a plan is found at runtime, it is converted into a behavior tree encoded and then executed. Notable, codegen is 
 used again to generate a C++ interface that is used by the behavior tree. Essentially, the interface contains 
 function for all actions in the PDDL domain, which need to implemented.          
 
+## Run
+Run the following command from the project root to generate a sample plan. Note the first run is slower because it compiles the PDDL.
+
+`ros2 run plan_solver_py plan_solver -o $(pwd)/plan_solver_py/plan_solver/pddl/domain_blocks.pddl -f $(pwd)/plan_solver_py/plan_solver/pddl/problem_blocks.pddl`
+
+Then run the following command visualize the plan graph
+
+`ros2 run plan_solver_py plan_graph`
