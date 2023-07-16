@@ -3,7 +3,7 @@
 (:objects
     bed door outside home - Landmark
     nathan - Person
-    t1 t2 t3 t4 t5 t6 t7 t8 - Time    ;; t7
+    t1 t2 t3 t4 t5 t6 t7 t8 - Time    ;;t7
     automated_msg recorded_msg recorded_msg_2 recorded_msg_3 call_caregiver_outside_msg call_caregiver_bed_msg call_caregiver_bed_msg_2 call_emergency_msg call_emergency_msg_2 - Msg
     automated_reminder recorded_reminder recorded_reminder_2 recorded_reminder_3 - ReminderAction
     caregiver_call emergency_call emergency_call_2 caregiver_call_bed caregiver_call_bed_2 - CallAction

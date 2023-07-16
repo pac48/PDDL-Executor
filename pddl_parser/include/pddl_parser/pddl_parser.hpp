@@ -128,6 +128,7 @@ namespace pddl_lib {
         std::unordered_set<std::string> types;
         std::unordered_set<Predicate> predicates;
         std::vector<Action> actions;
+        std::vector<std::string> comments;
 
         std::string str();
 
@@ -146,6 +147,7 @@ namespace pddl_lib {
         std::unordered_set<InstantiatedPredicate> unknowns;
         std::vector<Constraint> constraints;
         InstantiatedCondition goal;
+        std::vector<std::string> comments;
 
         std::string str();
 

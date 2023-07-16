@@ -54,7 +54,8 @@ namespace pddl_lib {
     }
 
     std::vector<std::string_view>
-    parseVector(const std::string_view &section, std::unordered_set<char> skip_symbols) {
+    parseVector(const std::string_view &section, std::unordered_set<char> skip_symbols,
+                std::vector<std::string_view> &comments) {
         std::vector<std::string_view> out;
         int ind = 0;
         while (ind < section.size()) {
@@ -78,6 +79,7 @@ namespace pddl_lib {
                     while (ind < section.size() && section[ind] != '\n') {
                         ind++;
                     }
+                    comments.push_back(section.substr(ind1, (ind - ind1)));
                 } else {
                     out.emplace_back(section.substr(ind1, (ind - ind1)));
                 }
@@ -104,9 +106,10 @@ namespace pddl_lib {
         std::string_view current;
         std::string_view section;
         std::string matched_token;
+        std::vector<std::string_view> all_comments;
 
         std::tie(section, remaining) = getNextParen(content);
-        const auto strings = parseVector(section, {'\t', '\n', ' '});
+        const auto strings = parseVector(section, {'\t', '\n', ' '}, all_comments);
 
         int ind = 0;
 
@@ -118,7 +121,7 @@ namespace pddl_lib {
 
 
         std::tie(section, remaining) = getNextParen(strings[ind]);
-        auto substrings = parseVector(section, {'\t', '\n', ' '});
+        auto substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         if (substrings[0] != "problem") {
             return fmt::format("ERROR line {}: missing 'domain' keyword",
                                get_line_num(content, substrings[0]));
@@ -128,7 +131,7 @@ namespace pddl_lib {
 
 
         std::tie(section, remaining) = getNextParen(strings[ind]);
-        substrings = parseVector(section, {'\t', '\n', ' '});
+        substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         if (substrings[0] != ":domain") {
             return fmt::format("ERROR line {}: missing ':domain' keyword", get_line_num(content, substrings[0]));
         }
@@ -136,14 +139,14 @@ namespace pddl_lib {
         ind++;
 
         std::tie(section, remaining) = getNextParen(strings[ind]);
-        substrings = parseVector(section, {'\t', '\n', ' '});
+        substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         if (substrings[0] == ":objects") {
 //            return fmt::format("ERROR line {}: missing ':objects' keyword", get_line_num(content, substrings[0]));
             problem.objects = parse_instantiated_params(
                     std::vector<std::string_view>(substrings.begin() + 1, substrings.end()));
             ind++;
             std::tie(section, remaining) = getNextParen(strings[ind]);
-            substrings = parseVector(section, {'\t', '\n', ' '});
+            substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         }
 
         if (substrings[0] != ":init") {
@@ -151,7 +154,7 @@ namespace pddl_lib {
         }
         for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
             std::tie(section, remaining) = getNextParen(str);
-            auto subsubstrings = parseVector(section, {'\t', '\n', ' '});
+            auto subsubstrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
             if (subsubstrings[0] == "unknown") {
                 if (auto pred = parse_instantiated_predicate(std::string(subsubstrings[1]))) {
                     problem.unknowns.insert({pred.value()});
@@ -210,7 +213,7 @@ namespace pddl_lib {
         ind++;
 
         std::tie(section, remaining) = getNextParen(strings[ind]);
-        substrings = parseVector(section, {'\t', '\n', ' '});
+        substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         if (substrings[0] != ":goal") {
             return fmt::format("ERROR line {}: missing ':goal' keyword", get_line_num(content, substrings[0]));
         }
@@ -229,6 +232,8 @@ namespace pddl_lib {
         }
         ind++;
 
+        problem.comments.insert(problem.comments.end(), all_comments.begin(), all_comments.end());
+
         return {};
     }
 
@@ -238,9 +243,10 @@ namespace pddl_lib {
         std::string_view current;
         std::string_view section;
         std::string matched_token;
+        std::vector<std::string_view> all_comments;
 
         std::tie(section, remaining) = getNextParen(content);
-        const auto strings = parseVector(section, {'\t', '\n', ' '});
+        const auto strings = parseVector(section, {'\t', '\n', ' '}, all_comments);
 
         int ind = 0;
 
@@ -252,7 +258,7 @@ namespace pddl_lib {
 
 
         std::tie(section, remaining) = getNextParen(strings[ind]);
-        auto substrings = parseVector(section, {'\t', '\n', ' '});
+        auto substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         if (substrings[0] != "domain") {
             return fmt::format("ERROR line {}: missing 'domain' keyword",
                                get_line_num(content, substrings[0]));
@@ -260,7 +266,7 @@ namespace pddl_lib {
         domain.name = substrings[1];
         ind++;
         std::tie(section, remaining) = getNextParen(strings[ind]);
-        substrings = parseVector(section, {'\t', '\n', ' '});
+        substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
 
         if (substrings[0] == ":requirements") {
             for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
@@ -269,7 +275,7 @@ namespace pddl_lib {
             ind++;
 
             std::tie(section, remaining) = getNextParen(strings[ind]);
-            substrings = parseVector(section, {'\t', '\n', ' '});
+            substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         }
 
         if (substrings[0] == ":types") {
@@ -279,7 +285,7 @@ namespace pddl_lib {
             ind++;
 
             std::tie(section, remaining) = getNextParen(strings[ind]);
-            substrings = parseVector(section, {'\t', '\n', ' '});
+            substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         }
 
         if (substrings[0] == ":constants") {
@@ -291,7 +297,7 @@ namespace pddl_lib {
             ind++;
 
             std::tie(section, remaining) = getNextParen(strings[ind]);
-            substrings = parseVector(section, {'\t', '\n', ' '});
+            substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         }
 
 
@@ -318,6 +324,8 @@ namespace pddl_lib {
             ind++;
         }
 
+        domain.comments.insert(domain.comments.end(), all_comments.begin(), all_comments.end());
+
         return {};
     }
 
@@ -328,10 +336,11 @@ namespace pddl_lib {
             int ind = 0;
             std::string_view section;
             std::string_view remaining;
+            std::vector<std::string_view> comments;
             std::unordered_map<std::string, std::string> param_to_type_map;
 
             std::tie(section, remaining) = getNextParen(content);
-            const auto strings = parseVector(section, {'\t', '\n', ' '});
+            const auto strings = parseVector(section, {'\t', '\n', ' '}, comments);
 
             if (strings[ind] != ":action") {
                 return {};
@@ -345,7 +354,7 @@ namespace pddl_lib {
                 if (strings[ind] == ":parameters") {
                     ind++;
                     std::tie(section, remaining) = getNextParen(strings[ind]);
-                    auto substrings = parseVector(section, {'\t', '\n', ' '});
+                    auto substrings = parseVector(section, {'\t', '\n', ' '}, comments);
                     action.parameters = parse_params(substrings);
                     for (const auto &param: action.parameters) {
                         param_to_type_map[param.name] = param.type;
@@ -426,9 +435,10 @@ namespace pddl_lib {
     tl::expected<Predicate, std::string>
     parse_predicate(const std::string &content, const std::unordered_map<std::string, std::string> &param_to_type_map) {
         try {
+            std::vector<std::string_view> comments;
             auto pred = Predicate();
             auto [section, remaining] = getNextParen(content);
-            auto str = parseVector(section, {'\t', '\n', ' '});
+            auto str = parseVector(section, {'\t', '\n', ' '}, comments);
             pred.name = str[0];
 
             pred.parameters = parse_params(std::vector<std::string_view>(str.begin() + 1, str.end()));
@@ -449,9 +459,10 @@ namespace pddl_lib {
     parse_instantiated_predicate(const std::string &content,
                                  const std::unordered_map<std::string, std::string> &param_to_type_map) {
         try {
+            std::vector<std::string_view> comments;
             auto pred = InstantiatedPredicate();
             auto [section, remaining] = getNextParen(content);
-            auto str = parseVector(section, {'\t', '\n', ' '});
+            auto str = parseVector(section, {'\t', '\n', ' '}, comments);
             pred.name = str[0];
 
             pred.parameters = parse_instantiated_params(std::vector<std::string_view>(str.begin() + 1, str.end()));
@@ -544,11 +555,12 @@ namespace pddl_lib {
                     const std::unordered_map<std::string, std::string> &param_to_type_map_const) {
         std::string_view section;
         std::string_view remaining;
+        std::vector<std::string_view> comments;
         Condition cond;
         auto param_to_type_map = param_to_type_map_const;
 
         std::tie(section, remaining) = getNextParen(content);
-        auto strings = parseVector(section, {'\t', '\n', ' ', ')'});
+        auto strings = parseVector(section, {'\t', '\n', ' ', ')'}, comments);
         if (strings.empty()) {
             cond.op = OPERATION::AND;
             return cond;
@@ -566,7 +578,7 @@ namespace pddl_lib {
         } else if (strings[0] == "forall") {
             cond.op = OPERATION::FORALL;
             std::tie(section, remaining) = getNextParen(strings[ind]);
-            auto tmp = parseVector(section, {'\t', '\n', ' '});
+            auto tmp = parseVector(section, {'\t', '\n', ' '}, comments);
             cond.parameters = parse_params(tmp);
             for (const auto &param: cond.parameters) {
                 param_to_type_map[param.name] = param.type;
@@ -599,9 +611,10 @@ namespace pddl_lib {
         std::string_view section;
         std::string_view remaining;
         InstantiatedCondition cond;
+        std::vector<std::string_view> comments;
 
         std::tie(section, remaining) = getNextParen(content);
-        auto strings = parseVector(section, {'\t', '\n', ' '});
+        auto strings = parseVector(section, {'\t', '\n', ' '}, comments);
         if (strings.empty()) {
             cond.op = OPERATION::AND;
             return cond;
@@ -1111,7 +1124,7 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::Condition &condConst)
         if (auto pred = std::get_if<pddl_lib::Predicate>(&c)) {
             os << *pred << term;
         } else {
-            os << std::get<pddl_lib::Condition>(c) << term;;
+            os << std::get<pddl_lib::Condition>(c) << term;
         }
     }
     os << ")";

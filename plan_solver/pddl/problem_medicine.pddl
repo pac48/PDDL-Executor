@@ -42,8 +42,8 @@
     (oneof (person_at t1 nathan couch) (person_at t1 nathan kitchen) )
     (oneof (person_at t2 nathan couch) (person_at t2 nathan kitchen) )
     (oneof (person_at t3 nathan couch) (person_at t3 nathan kitchen) )
-    (oneof (person_at t4 nathan couch) (person_at t4 nathan kitchen)  )
-    (oneof (person_at t5 nathan couch) (person_at t5 nathan kitchen)  )
+    (oneof (person_at t4 nathan couch) (person_at t4 nathan kitchen) )
+    (oneof (person_at t5 nathan couch) (person_at t5 nathan kitchen) )
 
     (traversable kitchen couch)
     (traversable couch kitchen)

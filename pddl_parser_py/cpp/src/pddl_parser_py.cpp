@@ -94,7 +94,8 @@ namespace pddl_lib {
                 .def_readwrite("actions", &pddl_lib::Domain::actions)
                 .def_readwrite("requirements", &pddl_lib::Domain::requirements)
                 .def_readwrite("types", &pddl_lib::Domain::types)
-                .def_readwrite("constants", &pddl_lib::Domain::constants);
+                .def_readwrite("constants", &pddl_lib::Domain::constants)
+                .def_readwrite("comments", &pddl_lib::Domain::comments);
         m.def("parse_domain", &pddl_lib::parse_domain_py, "parse domain from string",
               py::arg("content"));
     }
@@ -120,7 +121,8 @@ namespace pddl_lib {
                 .def_readwrite("init", &pddl_lib::Problem::init)
                 .def_readwrite("unknowns", &pddl_lib::Problem::unknowns)
                 .def_readwrite("constraints", &pddl_lib::Problem::constraints)
-                .def_readwrite("goal", &pddl_lib::Problem::goal);
+                .def_readwrite("goal", &pddl_lib::Problem::goal)
+                .def_readwrite("comments", &pddl_lib::Problem::comments);
         m.def("parse_problem", &pddl_lib::parse_problem_py, "parse problem from string",
               py::arg("content"));
     }
