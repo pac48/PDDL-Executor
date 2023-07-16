@@ -22,7 +22,6 @@
     (next_time t4 t5)
     (time_critical)
 
-
     (robot_at home)
     (oneof (person_at t1 nathan door) (person_at t1 nathan outside) )
     (oneof (person_at t2 nathan door) (person_at t2 nathan outside) (person_at t2 nathan bed) )

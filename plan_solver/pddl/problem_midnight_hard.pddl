@@ -3,7 +3,7 @@
 (:objects
     bed door outside home - Landmark
     nathan - Person
-    t1 t2 t3 t4 t5 t6 t7 t8 - Time    ;; t7
+    t1 t2 t3 t4 t5 t6 t7 t8 t9 - Time    ;; t7
     automated_msg recorded_msg recorded_msg_2 recorded_msg_3 call_caregiver_outside_msg call_caregiver_bed_msg call_caregiver_bed_msg_2 call_emergency_msg call_emergency_msg_2 - Msg
     automated_reminder recorded_reminder recorded_reminder_2 recorded_reminder_3 - ReminderAction
     caregiver_call emergency_call emergency_call_2 caregiver_call_bed caregiver_call_bed_2 - CallAction
@@ -23,32 +23,10 @@
     (next_time t5 t6)
     (next_time t6 t7)
     (next_time t7 t8)
+    (next_time t8 t9)
     (time_critical)
 
     (robot_at home)
-    (unknown (person_at t1 nathan door))
-    (unknown (person_at t1 nathan outside))
-    (unknown (person_at t2 nathan outside))
-    (unknown (person_at t2 nathan door))
-    (unknown (person_at t2 nathan bed))
-    (unknown (person_at t3 nathan outside))
-    (unknown (person_at t3 nathan door))
-    (unknown (person_at t3 nathan bed))
-    (unknown (person_at t4 nathan outside))
-    (unknown (person_at t4 nathan door))
-    (unknown (person_at t4 nathan bed))
-    (unknown (person_at t5 nathan outside))
-    (unknown (person_at t5 nathan door))
-    (unknown (person_at t5 nathan bed))
-    (unknown (person_at t6 nathan outside))
-    (unknown (person_at t6 nathan door))
-    (unknown (person_at t6 nathan bed))
-    (unknown (person_at t7 nathan outside))
-    (unknown (person_at t7 nathan door))
-    (unknown (person_at t7 nathan bed))
-    (unknown (person_at t8 nathan outside))
-    (unknown (person_at t8 nathan door))
-    (unknown (person_at t8 nathan bed))
     (oneof (person_at t1 nathan door) (person_at t1 nathan outside) )
     (oneof (person_at t2 nathan door) (person_at t2 nathan outside) (person_at t2 nathan bed) )
     (oneof (person_at t3 nathan door) (person_at t3 nathan outside) (person_at t3 nathan bed) )
@@ -57,6 +35,7 @@
     (oneof (person_at t6 nathan door) (person_at t6 nathan outside) (person_at t6 nathan bed) )
     (oneof (person_at t7 nathan door) (person_at t7 nathan outside) (person_at t7 nathan bed) )
     (oneof (person_at t8 nathan door) (person_at t8 nathan outside) (person_at t8 nathan bed) )
+    (oneof (person_at t9 nathan door) (person_at t9 nathan outside) (person_at t9 nathan bed) )
 
     (traversable home door)
 
