@@ -43,8 +43,12 @@ function(generate_search_header LIB_NAME)
   file(MAKE_DIRECTORY ${OUTPUT_FILE_DIR})
 
   # Set the domain file parameter to be relative to the current source dir
-  set(DOMAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${DOMAIN_FILE})
-  set(PROBLEM_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${PROBLEM_FILE})
+  if(NOT IS_ABSOLUTE ${DOMAIN_FILE})
+    set(DOMAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${DOMAIN_FILE})
+  endif()
+  if(NOT IS_ABSOLUTE ${PROBLEM_FILE})
+    set(PROBLEM_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${PROBLEM_FILE})
+  endif()
 
   # Set the output parameter header file name
   set(HEADER_FILE ${OUTPUT_FILE_DIR}/${LIB_NAME}.hpp)

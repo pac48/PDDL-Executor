@@ -1,0 +1,7 @@
+/usr/local/clion-2022.3.1/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/usr/local/clion-2022.3.1/bin/ninja/linux/ninja -G Ninja -S /home/paul/smart_home_ws/src/smart-home/external/pddl_executor/plan_solver_py/plan_solver -B /home/paul/smart_home_ws/src/smart-home/external/pddl_executor/plan_solver_py/plan_solver/cmake-build-debug
+-- Found pddl2cpp: 0.0.0 (/home/paul/smart_home_ws/install/pddl2cpp/share/pddl2cpp/cmake)
+-- Found pddl_parser: 0.0.0 (/home/paul/smart_home_ws/install/pddl_parser/share/pddl_parser/cmake)
+Running `/home/paul/smart_home_ws/install/pddl2cpp_py/bin/pddl2search /home/paul/smart_home_ws/src/smart-home/external/pddl_executor/plan_solver_py/plan_solver/cmake-build-debug/pddl_problem/include/pddl_problem.hpp /home/paul/smart_home_ws/src/smart-home/external/pddl_executor/plan_solver_py/plan_solver/pddl/domain.pddl /home/paul/smart_home_ws/src/smart-home/external/pddl_executor/plan_solver_py/plan_solver/pddl/problem.pddl`
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/paul/smart_home_ws/src/smart-home/external/pddl_executor/plan_solver_py/plan_solver/cmake-build-debug
