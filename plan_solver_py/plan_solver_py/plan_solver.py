@@ -1,10 +1,11 @@
 import os
 import sys
-from ament_index_python.packages import get_package_share_directory
 import argparse
 import shutil
-
 import hashlib
+
+from ament_index_python.packages import get_package_share_directory
+import pddl_parser
 
 
 def hash_file(domain_file, problem_file):
@@ -13,10 +14,12 @@ def hash_file(domain_file, problem_file):
         # Read the file in chunks to handle large files efficiently
         for chunk in iter(lambda: file.read(4096), b''):
             sha256_hash.update(chunk)
-    with open(problem_file, 'rb') as file:
-        # Read the file in chunks to handle large files efficiently
-        for chunk in iter(lambda: file.read(4096), b''):
-            sha256_hash.update(chunk)
+
+    with open(problem_file) as f:
+        problem = pddl_parser.parser.parse_problem(f.read())
+
+    objs = ":".join(str(obj) for obj in problem.objects)
+    sha256_hash.update(objs.encode())
 
     return sha256_hash.hexdigest()
 
