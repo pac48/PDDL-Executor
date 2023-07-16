@@ -58,10 +58,8 @@ namespace pddl_lib {
 
     struct Condition {
         OPERATION op;
-        std::vector<Condition> conditions;
-        std::vector<Predicate> predicates;
+        std::vector<std::variant<Condition, Predicate>> conditions;
         std::vector<Parameter> parameters;
-
     };
 
     struct InstantiatedCondition {

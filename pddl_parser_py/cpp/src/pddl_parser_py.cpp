@@ -235,19 +235,16 @@ namespace pddl_lib {
 									     )")
 
                 .def(py::init([](const std::vector<pddl_lib::Parameter> &parameters,
-                                 const std::vector<pddl_lib::Predicate> &predicates,
-                                 const std::vector<pddl_lib::Condition> &conditions,
+                                 const std::vector<std::variant<pddl_lib::Condition, pddl_lib::Predicate>> &conditions,
                                  const pddl_lib::OPERATION op) {
                          auto cond = pddl_lib::Condition();
                          cond.parameters = parameters;
-                         cond.predicates = predicates;
                          cond.conditions = conditions;
                          cond.op = op;
                          return cond;
                      }),
                      py::arg("parameters") = std::vector<pddl_lib::Parameter>(),
-                     py::arg("predicates") = std::vector<pddl_lib::Predicate>(),
-                     py::arg("conditions") = std::vector<pddl_lib::Condition>(),
+                     py::arg("conditions") = std::vector<std::variant<pddl_lib::Condition, pddl_lib::Predicate>>(),
                      py::arg("op") = pddl_lib::OPERATION(),
                      R"(
                  Init stuff.
@@ -256,7 +253,6 @@ namespace pddl_lib {
                     ss << param;
                     return ss.str();
                 }).def_readwrite("parameters", &pddl_lib::Condition::parameters)
-                .def_readwrite("predicates", &pddl_lib::Condition::predicates)
                 .def_readwrite("conditions", &pddl_lib::Condition::conditions)
                 .def_readwrite("op", &pddl_lib::Condition::op);
         m.def("parse_condition", &pddl_lib::parse_condition_py, "parse condition from string",

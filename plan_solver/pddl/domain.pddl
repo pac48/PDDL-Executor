@@ -1,36 +1,35 @@
-;unix domain
-
-(define (domain unix)
-
-(:types FILE DIR)
-(:predicates (file_in_dir ?file - FILE ?dir - DIR)
-    (sub_dir ?par_dir - DIR ?child_dir - DIR)
-    (is_cur_dir ?d - DIR)
-    )
-
-(:action cd_down
- :parameters (?cur_dir - DIR ?child_dir - DIR)
- :precondition (and (is_cur_dir ?cur_dir)(sub_dir ?cur_dir ?child_dir))
- :effect (and (is_cur_dir ?child_dir)(not (is_cur_dir ?cur_dir)))
-)
+(define (domain blocksworld)
+(:predicates (clear ?x)
+             (on-table ?x)
+             (on ?x ?y))
 
 
-(:action cd_up
- :parameters (?cur_dir - DIR ?par_dir - DIR)
- :precondition (and (is_cur_dir ?cur_dir)(sub_dir ?par_dir ?cur_dir))
- :effect (and (is_cur_dir ?par_dir)(not (is_cur_dir ?cur_dir)))
-)
 
-(:action ls
- :parameters (?cur_dir - DIR ?file - FILE)
- :precondition (is_cur_dir ?cur_dir)
- :observe (file_in_dir ?file ?cur_dir)
-)
+  (:action senseON
+   :parameters (?b1 ?b2)
+   :observe (on ?b1 ?b2))
 
-(:action mv
- :parameters (?file - FILE ?cur_dir - DIR ?target_dir - DIR)
- :precondition (and (is_cur_dir ?cur_dir)(file_in_dir ?file ?cur_dir))
- :effect (and (not (file_in_dir ?file ?cur_dir))(file_in_dir ?file ?target_dir))
-)
+  (:action senseCLEAR
+   :parameters (?b1)
+   :observe (clear ?b1))
 
-)
+  (:action senseONTABLE
+   :parameters (?b1)
+   :observe (on-table ?b1))
+
+(:action move_b_to_b
+  :parameters (?bm ?bf ?bt)
+  :precondition (and (clear ?bm) (clear ?bt) (on ?bm ?bf))
+  :effect (and (not (clear ?bt)) (not (on ?bm ?bf))
+               (on ?bm ?bt) (clear ?bf)))
+
+(:action move_to_t
+  :parameters (?b ?bf)
+  :precondition (and (clear ?b) (on ?b ?bf))
+  :effect (and (on-table ?b) (not (on ?b ?bf)) (clear ?bf)))
+
+(:action move_t_to_b
+  :parameters (?bm ?bt)
+  :precondition (and (clear ?bm) (clear ?bt) (on-table ?bm))
+  :effect (and (not (clear ?bt)) (not (on-table ?bm))
+               (on ?bm ?bt))))
