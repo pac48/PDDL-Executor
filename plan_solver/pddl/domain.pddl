@@ -171,7 +171,7 @@
 )
 
 ;; Move to any landmark, avoiding terrain
-(:action moveToLandmark
+(:action MoveToLandmark
 	:parameters (?t - Time ?from - Landmark ?to - Landmark)
 	:precondition (and
 	                (current_time ?t)

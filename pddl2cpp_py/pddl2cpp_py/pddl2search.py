@@ -52,16 +52,16 @@ def main():
     with open(problem_file) as f:
         problem = pddl_parser.parser.parse_problem(f.read())
 
-    objects = domain.constants
+    objs = domain.constants
     for obj in problem.objects:
-        objects.append(obj)
-    problem.objects = list(set(objects))
+        objs.append(obj)
+    problem.objects = list(set(objs))
 
     domain_types = set(domain.types)
     domain_types.add('')  # add empty type
     problem_objects_map = defaultdict(list)
-    for object in problem.objects:
-        problem_objects_map[object.type].append(object.name)
+    for obj in problem.objects:
+        problem_objects_map[obj.type].append(obj.name)
 
     problem_types = set(problem_objects_map.keys())
     assert (problem_types.issubset(domain_types))

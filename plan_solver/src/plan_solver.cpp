@@ -10,7 +10,6 @@
 #include <list>
 #include <algorithm>
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
 #include "pddl_problem.hpp"
 
 
@@ -342,11 +341,8 @@ bool goal_search(std::vector<pddl_lib::KBState *> &goals) {
 }
 
 int main(int argc, char **argv) {
-    std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("plan_solver");
-    std::filesystem::path test_dir = pkg_dir / "pddl";
-    std::filesystem::path pddl_file = test_dir / "problem.pddl";
-    std::ifstream f(pddl_file);
-    std::ifstream pddl_file_stream(pddl_file.string().c_str());
+    auto pddl_file = argv[1];
+    std::ifstream pddl_file_stream(pddl_file);
     std::stringstream ss;
     ss << pddl_file_stream.rdbuf();
     std::string pddl_str = ss.str();
