@@ -46,7 +46,7 @@ def main():
         if not os.path.exists(build_dir):
             os.makedirs(build_dir, exist_ok=True)
 
-        cmd = f"cd {build_dir} && cmake {file_path} -DPDDL_PROBLEM={problem_file} -DPDDL_DOMAIN={domain_file} && make"
+        cmd = f"cd {build_dir} && cmake {file_path} -DCMAKE_BUILD_TYPE=Release -DPDDL_PROBLEM={problem_file} -DPDDL_DOMAIN={domain_file} && make"
         os.system(cmd)
 
         shutil.move(os.path.join(build_dir, 'plan_solver'), planner_path)

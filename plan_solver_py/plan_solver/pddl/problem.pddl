@@ -1,75 +1,131 @@
-(define (problem medicine_reminder)
-(:domain shr_domain)
-(:objects
-    couch kitchen - Landmark
-    nathan - Person
-    t1 t2 t3 t4 t5 - Time
-    guide_1_msg guide_2_msg automated_msg recorded_msg call_caregiver_guide_msg call_caregiver_msg - Msg
-    automated_reminder recorded_reminder guide_reminder_1 guide_reminder_2 - ReminderAction
-    caregiver_call caregiver_call_guide - CallAction
-)
+
+
+(define (problem BW-rand-7)
+(:domain blocksworld)
+(:objects b1 b2 b3 b4 b5 b6 b7 )
 (:init
-
-	  ;; needed actions
-    (DetectPerson_enabled)
-    (GiveReminder_enabled)
-    (MakeCall_enabled)
-    (DetectTakingMedicine_enabled)
-
-    (current_time t1)
-    (next_time t1 t2)
-    (next_time t2 t3)
-    (next_time t3 t4)
-    (next_time t4 t5)
-
-    (unknown (person_taking_medicine t1))
-    (unknown (person_taking_medicine t2))
-    (unknown (person_taking_medicine t3))
-    (unknown (person_taking_medicine t4))
-    (unknown (person_taking_medicine t5))
-
-    (robot_at couch)
-    (oneof (person_at t1 nathan couch) (person_at t1 nathan kitchen) )
-    (oneof (person_at t2 nathan couch) (person_at t2 nathan kitchen) )
-    (oneof (person_at t3 nathan couch) (person_at t3 nathan kitchen) )
-    (oneof (person_at t4 nathan couch) (person_at t4 nathan kitchen) )
-    (oneof (person_at t5 nathan couch) (person_at t5 nathan kitchen) )
-
-    (traversable kitchen couch)
-    (traversable couch kitchen)
-
-    ;;success states
-    (message_given_success call_caregiver_msg)
-    (message_given_success call_caregiver_guide_msg)
-    (medicine_taken_success)
-
-    ;; specify which actions must come before others
-    (reminder_blocks_reminder automated_reminder recorded_reminder)
-    (reminder_blocks_call recorded_reminder caregiver_call)
-    (reminder_blocks_reminder guide_reminder_1 guide_reminder_2)
-    (reminder_blocks_call guide_reminder_2 caregiver_call_guide)
-
-    ;; specify valid input argument combinations for all actions
-    (valid_call_message caregiver_call call_caregiver_msg)
-    (valid_call_message caregiver_call_guide call_caregiver_guide_msg)
-    (valid_reminder_message automated_reminder automated_msg)
-    (valid_reminder_message recorded_reminder recorded_msg)
-    (valid_reminder_message guide_reminder_1 guide_1_msg)
-    (valid_reminder_message guide_reminder_2 guide_2_msg)
-
-    ;; specify world state constraints for all actions
-    (reminder_person_location_constraint automated_reminder nathan kitchen)
-    (reminder_person_not_taking_medicine_constraint automated_reminder nathan)
-    (reminder_person_location_constraint recorded_reminder nathan kitchen)
-    (reminder_person_not_taking_medicine_constraint recorded_reminder nathan)
-    (reminder_not_person_location_constraint guide_reminder_1 nathan kitchen)
-    (reminder_person_not_taking_medicine_constraint guide_reminder_1 nathan)
-    (reminder_not_person_location_constraint guide_reminder_2 nathan kitchen)
-    (reminder_person_not_taking_medicine_constraint guide_reminder_2 nathan)
-    (call_not_person_location_constraint caregiver_call_guide nathan kitchen)
-    (call_person_not_taking_medicine_constraint caregiver_call nathan)
-
+(unknown (on-table b2))
+(unknown (clear b2))
+(unknown (on b2 b5))
+(unknown (on-table b5))
+(unknown (clear b5))
+(unknown (on b5 b2))
+(or
+(not (on b2 b5))
+(not (on b5 b2))
 )
-(:goal (and (success)  ) )
-
+(or
+(not (on b5 b2))
+(not (on b2 b5))
 )
+(oneof
+(clear b2)
+(clear b5)
+)
+(oneof
+(on-table b2)
+(on-table b5)
+)
+(oneof
+(on-table b2)
+(on b2 b5)
+)
+(oneof
+(on-table b5)
+(on b5 b2)
+)
+(oneof
+(clear b2)
+(on b5 b2)
+)
+(oneof
+(clear b5)
+(on b2 b5)
+)
+(on-table b3)
+(unknown (on b1 b3))
+(unknown (clear b1))
+(unknown (on b1 b6))
+(unknown (on b6 b3))
+(unknown (clear b6))
+(unknown (on b6 b1))
+(or
+(not (on b1 b6))
+(not (on b6 b1))
+)
+(or
+(not (on b6 b1))
+(not (on b1 b6))
+)
+(oneof
+(clear b1)
+(clear b6)
+)
+(oneof
+(on b1 b3)
+(on b6 b3)
+)
+(oneof
+(on b1 b3)
+(on b1 b6)
+)
+(oneof
+(on b6 b3)
+(on b6 b1)
+)
+(oneof
+(clear b1)
+(on b6 b1)
+)
+(oneof
+(clear b6)
+(on b1 b6)
+)
+(unknown (on-table b4))
+(unknown (clear b4))
+(unknown (on b4 b7))
+(unknown (on-table b7))
+(unknown (clear b7))
+(unknown (on b7 b4))
+(or
+(not (on b4 b7))
+(not (on b7 b4))
+)
+(or
+(not (on b7 b4))
+(not (on b4 b7))
+)
+(oneof
+(clear b4)
+(clear b7)
+)
+(oneof
+(on-table b4)
+(on-table b7)
+)
+(oneof
+(on-table b4)
+(on b4 b7)
+)
+(oneof
+(on-table b7)
+(on b7 b4)
+)
+(oneof
+(clear b4)
+(on b7 b4)
+)
+(oneof
+(clear b7)
+(on b4 b7)
+)
+)
+(:goal
+(and
+(on b1 b4)
+(on b2 b1)
+(on b3 b6)
+(on b5 b7))
+)
+)
+
