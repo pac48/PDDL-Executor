@@ -1,0 +1,218 @@
+<root BTCPP_format="4">
+    <BehaviorTree ID="MainTree\">
+        <Sequence name="root_sequence\">
+            <Fallback>
+                <Sequence>
+                    <Sequence name="blocksworld::senseon:100">
+                        <blocksworld_senseon name="blocksworld::senseon" b1="b1" b2="b3"/>
+                    </Sequence>
+                    <Fallback>
+                        <Sequence>
+                            <Sequence name="blocksworld::senseon:100">
+                                <blocksworld_senseon name="blocksworld::senseon" b1="b5" b2="b2"/>
+                            </Sequence>
+                            <Fallback>
+                                <Sequence>
+                                    <Sequence name="blocksworld::senseon:100">
+                                        <blocksworld_senseon name="blocksworld::senseon" b1="b4" b2="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b4" bf="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b5" bf="b2"
+                                                                 bt="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b6" bf="b1"
+                                                                 bt="b5"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b1" bf="b3"
+                                                                 bt="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_t_to_b:100">
+                                        <blocksworld_move_t_to_b name="blocksworld::move_t_to_b" bm="b3" bt="b6"/>
+                                    </Sequence>
+
+                                </Sequence>
+                                <Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b6" bf="b1"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b7" bf="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b1" bf="b3"
+                                                                 bt="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b5" bf="b2"
+                                                                 bt="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_t_to_b:100">
+                                        <blocksworld_move_t_to_b name="blocksworld::move_t_to_b" bm="b3" bt="b6"/>
+                                    </Sequence>
+
+                                </Sequence>
+                            </Fallback>
+                        </Sequence>
+                        <Sequence>
+                            <Fallback>
+                                <Sequence>
+                                    <Sequence name="blocksworld::senseon:100">
+                                        <blocksworld_senseon name="blocksworld::senseon" b1="b4" b2="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b4" bf="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b6" bf="b1"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b1" bf="b3"
+                                                                 bt="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b2" bf="b5"
+                                                                 bt="b1"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_t_to_b:100">
+                                        <blocksworld_move_t_to_b name="blocksworld::move_t_to_b" bm="b5" bt="b7"/>
+                                    </Sequence>
+
+                                </Sequence>
+                                <Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b6" bf="b1"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b7" bf="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b1" bf="b3"
+                                                                 bt="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b2" bf="b5"
+                                                                 bt="b1"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_t_to_b:100">
+                                        <blocksworld_move_t_to_b name="blocksworld::move_t_to_b" bm="b5" bt="b7"/>
+                                    </Sequence>
+
+                                </Sequence>
+                            </Fallback>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+                <Sequence>
+                    <Fallback>
+                        <Sequence>
+                            <Sequence name="blocksworld::senseon:100">
+                                <blocksworld_senseon name="blocksworld::senseon" b1="b5" b2="b2"/>
+                            </Sequence>
+                            <Fallback>
+                                <Sequence>
+                                    <Sequence name="blocksworld::senseon:100">
+                                        <blocksworld_senseon name="blocksworld::senseon" b1="b4" b2="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b4" bf="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b1" bf="b6"
+                                                                 bt="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b5" bf="b2"
+                                                                 bt="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b6" bf="b3"
+                                                                 bt="b5"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_t_to_b:100">
+                                        <blocksworld_move_t_to_b name="blocksworld::move_t_to_b" bm="b3" bt="b6"/>
+                                    </Sequence>
+
+                                </Sequence>
+                                <Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b7" bf="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b1" bf="b6"
+                                                                 bt="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b5" bf="b2"
+                                                                 bt="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b6" bf="b3"
+                                                                 bt="b5"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_t_to_b:100">
+                                        <blocksworld_move_t_to_b name="blocksworld::move_t_to_b" bm="b3" bt="b6"/>
+                                    </Sequence>
+
+                                </Sequence>
+                            </Fallback>
+                        </Sequence>
+                        <Sequence>
+                            <Fallback>
+                                <Sequence>
+                                    <Sequence name="blocksworld::senseon:100">
+                                        <blocksworld_senseon name="blocksworld::senseon" b1="b4" b2="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b4" bf="b7"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b1" bf="b6"
+                                                                 bt="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b2" bf="b5"
+                                                                 bt="b1"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b6" bf="b3"
+                                                                 bt="b2"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_t_to_b:100">
+                                        <blocksworld_move_t_to_b name="blocksworld::move_t_to_b" bm="b5" bt="b7"/>
+                                    </Sequence>
+
+                                </Sequence>
+                                <Sequence>
+                                    <Sequence name="blocksworld::move_to_t:100">
+                                        <blocksworld_move_to_t name="blocksworld::move_to_t" b="b7" bf="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b1" bf="b6"
+                                                                 bt="b4"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b2" bf="b5"
+                                                                 bt="b1"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_b_to_b:100">
+                                        <blocksworld_move_b_to_b name="blocksworld::move_b_to_b" bm="b6" bf="b3"
+                                                                 bt="b2"/>
+                                    </Sequence>
+                                    <Sequence name="blocksworld::move_t_to_b:100">
+                                        <blocksworld_move_t_to_b name="blocksworld::move_t_to_b" bm="b5" bt="b7"/>
+                                    </Sequence>
+
+                                </Sequence>
+                            </Fallback>
+                        </Sequence>
+                    </Fallback>
+                </Sequence>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+</root>

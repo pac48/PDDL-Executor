@@ -1,0 +1,3 @@
+<Sequence name="{{action_id}}">
+<{{action_name_underscore}}   name="{{action_name}}" {{ports}} />
+</Sequence>

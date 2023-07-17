@@ -11,7 +11,7 @@ find_package(ament_cmake REQUIRED)
 if (BUILD_TESTING)
   find_package(behaviortree_cpp_v3 REQUIRED)
   find_package(pddl2cpp REQUIRED)
-  find_package(cff_plan_solver REQUIRED)
+  find_package(plan2bt REQUIRED)
   find_package(ament_index_cpp REQUIRED)
 
   find_package(GTest REQUIRED)
@@ -26,7 +26,7 @@ if (BUILD_TESTING)
       ${GTEST_LIBRARIES}
       )
   ament_target_dependencies(test_bt
-      ament_index_cpp behaviortree_cpp_v3 cff_plan_solver
+      ament_index_cpp behaviortree_cpp_v3 plan2bt
       )
   target_include_directories(test_bt PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

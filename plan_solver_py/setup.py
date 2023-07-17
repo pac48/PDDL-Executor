@@ -1,5 +1,5 @@
 from setuptools import setup
-import glob
+from setuptools import find_packages
 import os
 
 package_name = 'plan_solver_py'
@@ -7,7 +7,7 @@ package_name = 'plan_solver_py'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name],
+    packages=find_packages(),
     data_files=[
         ('share/ament_index/resource_index/packages',
          ['resource/' + package_name]),
@@ -15,8 +15,15 @@ setup(
         ('share/' + package_name + '/plan_solver', ['plan_solver/CMakeLists.txt']),
         ('share/' + package_name + '/plan_solver/src', ['plan_solver/src/plan_solver.cpp']),
     ],
-    install_requires=['setuptools'],
-    zip_safe=True,
+    install_requires=["setuptools", "jinja2"],
+    package_data={
+        "": [
+            "jinja_templates/action.xml",
+            "jinja_templates/bt.xml",
+            "jinja_templates/observe_sequence.xml",
+            ]
+    },
+    zip_safe=False,
     maintainer='paul',
     maintainer_email='paulgesel@gmail.com',
     description='TODO: Package description',

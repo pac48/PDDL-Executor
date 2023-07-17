@@ -10,6 +10,7 @@
 #include <list>
 #include <algorithm>
 
+#include "Jinja2CppLight.h"
 #include "pddl_problem.hpp"
 
 
@@ -77,9 +78,6 @@ public:
     }
 
 };
-
-//typedef std::vector<pddl_lib::KBState> OpenList;
-
 
 std::vector<pddl_lib::KBState *> get_best_child(const pddl_lib::KBState *state) {
     if (state->children.empty()) {
@@ -340,6 +338,8 @@ bool goal_search(std::vector<pddl_lib::KBState *> &goals) {
     return valid;
 }
 
+std::string convert_to_bt(const pddl_lib::Domain &domain);
+
 int main(int argc, char **argv) {
     auto pddl_file = argv[1];
     std::ifstream pddl_file_stream(pddl_file);
@@ -448,3 +448,4 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
