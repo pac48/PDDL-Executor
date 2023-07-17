@@ -11,7 +11,7 @@
 
   <depend>behaviortree_cpp_v3</depend>
   <depend>pddl2cpp</depend>
-  <depend>plan2bt</depend>
+  <depend>plan_solver_py</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

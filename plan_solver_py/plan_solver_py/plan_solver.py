@@ -103,7 +103,7 @@ def add_action_sequence(action, action_map, templates):
             sep = " "
 
     action_name_underscore = action_name.replace("::", '_')
-    data = {"action_id": action_name + ":100", "action_name": action_name,
+    data = {"action_id": action_name , "action_name": action_name,
             'action_name_underscore': action_name_underscore, "ports": ports}
     return j2_template.render(data, trim_blocks=True) + "\n"
 
@@ -130,7 +130,7 @@ def add_observe_action_sequence(observe_result, action, action_map, templates):
             sep = " "
 
     action_name_underscore = action_name.replace("::", '_')
-    data = {"action_id": action_name + ":100", "action_name": action_name,
+    data = {"action_id": action_name , "action_name": action_name,
             'action_name_underscore': action_name_underscore, "ports": ports}
     return j2_template.render(data, trim_blocks=True) + "\n"
 
@@ -208,7 +208,7 @@ def main():
         os.system(cmd)
 
         shutil.move(os.path.join(build_dir, 'plan_solver'), planner_path)
-        shutil.rmtree(build_dir)
+        # shutil.rmtree(build_dir)
 
     cmd = f"{planner_path} {problem_file}"
     os.system(cmd)

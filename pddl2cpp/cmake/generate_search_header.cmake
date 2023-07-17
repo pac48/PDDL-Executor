@@ -61,7 +61,7 @@ function(generate_search_header LIB_NAME)
     COMMAND ${pddl2search_BIN} ${HEADER_FILE} ${DOMAIN_FILE} ${PROBLEM_FILE}
     DEPENDS ${DOMAIN_FILE} ${PROBLEM_FILE} ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../jinja_templates/pddl_data.hpp
     COMMENT
-    "Running `{pddl2search_BIN} ${HEADER_FILE} ${DOMAIN_FILE} ${PROBLEM_FILE}`"
+    "Running `${pddl2search_BIN} ${HEADER_FILE} ${DOMAIN_FILE} ${PROBLEM_FILE}`"
     VERBATIM
   )
 
