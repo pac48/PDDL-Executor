@@ -10,7 +10,6 @@
 #include <list>
 #include <algorithm>
 
-#include "Jinja2CppLight.h"
 #include "pddl_problem.hpp"
 
 

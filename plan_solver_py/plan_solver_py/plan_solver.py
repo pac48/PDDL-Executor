@@ -3,6 +3,8 @@ import sys
 import argparse
 import shutil
 import hashlib
+import time
+
 from jinja2 import Template
 
 from ament_index_python.packages import get_package_share_directory
@@ -148,17 +150,14 @@ def get_sub_tree(node, graph, action_map, templates):
         return j2_template.render(data, trim_blocks=True)
 
     else:
+        out = add_action_sequence(node.action, action_map, templates)
         if node.son in graph.nodes:
-            return add_action_sequence(node.action, action_map, templates) + get_sub_tree(graph.nodes[node.son],
-                                                                                          graph, action_map, templates)
-    return ""
+            out += get_sub_tree(graph.nodes[node.son],graph, action_map, templates)
+        return out
 
 
-def generate_bt(plan_file, domain_file):
+def generate_bt(plan_file, domain):
     if os.path.exists(plan_file):
-        with open(domain_file) as f:
-            domain = pddl_parser.parser.parse_domain(f.read())
-
         action_map = {}
         for action in domain.actions:
             action_map[action.name] = action
@@ -193,7 +192,7 @@ def main():
         raise AssertionError("--problem must be an absolute path")
 
     plan_file = "/tmp/plan_solver/plan.txt"
-    if os.path.exists(plan_file):
+    while os.path.exists(plan_file):
         os.remove(plan_file)
 
     h_val = hash_file(domain_file, problem_file)
@@ -214,7 +213,9 @@ def main():
     cmd = f"{planner_path} {problem_file}"
     os.system(cmd)
 
-    generate_bt(plan_file, domain_file)
+    with open(domain_file) as f:
+        domain = pddl_parser.parser.parse_domain(f.read())
+    generate_bt(plan_file, domain)
 
 
 if __name__ == '__main__':
