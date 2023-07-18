@@ -20,7 +20,7 @@ namespace pddl_lib {
         ONEOF = 0, OR
     };
 
-    struct Parameter  {
+    struct Parameter {
         std::string name;
         std::string type;
 
@@ -29,7 +29,7 @@ namespace pddl_lib {
         }
     };
 
-    struct InstantiatedParameter  {
+    struct InstantiatedParameter {
         std::string name;
         std::string type;
 
@@ -95,6 +95,7 @@ namespace std {
             return intHash(obj.parameters.size()) ^ stringHash(obj.name);
         }
     };
+
     template<>
     struct hash<pddl_lib::InstantiatedPredicate> {
         std::size_t operator()(const pddl_lib::InstantiatedPredicate &obj) const {
@@ -103,6 +104,7 @@ namespace std {
             return intHash(obj.parameters.size()) ^ stringHash(obj.name);
         }
     };
+
     template<>
     struct hash<pddl_lib::InstantiatedParameter> {
         std::size_t operator()(const pddl_lib::InstantiatedParameter &obj) const {
@@ -110,6 +112,7 @@ namespace std {
             return stringHash(obj.type) ^ stringHash(obj.name);
         }
     };
+
     template<>
     struct hash<pddl_lib::Parameter> {
         std::size_t operator()(const pddl_lib::Parameter &obj) const {
@@ -154,88 +157,150 @@ namespace pddl_lib {
     };
 
 
-    class KnownPredicates : public std::unordered_set<InstantiatedPredicate> {
-    public:
-        void concurrent_insert(const InstantiatedPredicate &value);
+//    class KnownPredicates : public std::unordered_set<InstantiatedPredicate> {
+//    public:
+//        void concurrent_insert(const InstantiatedPredicate &value);
+//
+//        void concurrent_erase(const InstantiatedPredicate &value);
+//
+//        bool concurrent_find(const InstantiatedPredicate &value);
+//
+//        void lock();
+//
+//        void unlock();
+//
+//    private:
+//        std::mutex mutex_;
+//
+//    };
+//
+//
+//    class UnknownPredicates : public std::unordered_set<InstantiatedPredicate> {
+//    public:
+//        void concurrent_insert(const InstantiatedPredicate &value);
+//
+//        void concurrent_erase(const InstantiatedPredicate &value);
+//
+//        bool concurrent_find(const InstantiatedPredicate &value);
+//
+//        void lock();
+//
+//        void unlock();
+//
+//        std::vector<Constraint> constraints;
+//    private:
+//        std::mutex mutex_;
+//
+//    };
+//
+//    class Objects : public std::unordered_set<InstantiatedParameter> {
+//    public:
+//        void concurrent_insert(const InstantiatedParameter &value);
+//
+//        void concurrent_erase(const InstantiatedParameter &value);
+//
+//        bool concurrent_find(const InstantiatedParameter &value);
+//
+//        void lock();
+//
+//        void unlock();
+//
+//    private:
+//        std::mutex mutex_;
+//
+//    };
 
-        void concurrent_erase(const InstantiatedPredicate &value);
-
-        bool concurrent_find(const InstantiatedPredicate &value);
-
-        void lock();
-
-        void unlock();
-
-    private:
-        std::mutex mutex_;
-
-    };
-
-
-    class UnknownPredicates : public std::unordered_set<InstantiatedPredicate> {
-    public:
-        void concurrent_insert(const InstantiatedPredicate &value);
-
-        void concurrent_erase(const InstantiatedPredicate &value);
-
-        bool concurrent_find(const InstantiatedPredicate &value);
-
-        void lock();
-
-        void unlock();
-
-        std::vector<Constraint> constraints;
-    private:
-        std::mutex mutex_;
-
-    };
-
-    class Objects : public std::unordered_set<InstantiatedParameter> {
-    public:
-        void concurrent_insert(const InstantiatedParameter &value);
-
-        void concurrent_erase(const InstantiatedParameter &value);
-
-        bool concurrent_find(const InstantiatedParameter &value);
-
-        void lock();
-
-        void unlock();
-
-    private:
-        std::mutex mutex_;
-
-    };
+//    template<typename T>
+//    class ConcurrentSet : public std::unordered_set<T> {
+//    public:
+//        void concurrent_insert(const T &value);
+//
+//        void concurrent_erase(const T &value);
+//
+//        bool concurrent_find(const T &value)  const;
+//
+//        void concurrent_clear();
+//
+//        void lock() {
+//            mutex_.lock();
+//        }
+//
+//        void unlock() {
+//            mutex_.unlock();
+//        }
+//
+//    private:
+//        std::mutex mutex_;
+//
+//    };
 
     class KnowledgeBase {
     public:
         static KnowledgeBase &getInstance();
 
-        std::string convert_to_problem(const Domain &domain);
+        std::string convert_to_problem(const Domain &domain) const;
+        bool check_conditions(const InstantiatedCondition &condition) const;
 
-        bool check_conditions(const InstantiatedCondition &condition);
+        void load_kb(const Problem &problem);
+
+        void clear();
 
         void apply_conditions(const InstantiatedCondition &condition, bool negated = false);
 
         void apply_constraints();
 
-        KnownPredicates knownPredicates;
-        UnknownPredicates unknownPredicates;
-        Objects objects;
+        std::unordered_set<InstantiatedParameter> get_objects();
+
+        std::unordered_set<InstantiatedPredicate> get_known_predicates();
+
+        void insert_object(const InstantiatedParameter &obj);
+
+        void erase_object(const InstantiatedParameter &obj);
+
+        bool find_object(const InstantiatedParameter &obj);
+
+        void insert_predicate(const InstantiatedPredicate &pred);
+
+        void erase_predicate(const InstantiatedPredicate &pred);
+
+        bool find_predicate(const InstantiatedPredicate &pred);
+
+        void insert_unknown_predicate(const InstantiatedPredicate &pred);
+
+        void erase_unknown_predicate(const InstantiatedPredicate &pred);
+
+        bool find_unknown_predicate(const InstantiatedPredicate &pred);
+
+
+
+        void insert_constraint(const Constraint &constraint);
+
 
     private:
         KnowledgeBase() {} // Private constructor to prevent direct instantiation
         ~KnowledgeBase() {} // Private destructor to prevent deletion
         KnowledgeBase(const KnowledgeBase &) = delete; // Disable copy constructor
         KnowledgeBase &operator=(const KnowledgeBase &) = delete; // Disable assignment operator
+
+        bool check_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition) const;
+        void apply_conditions_internal(const InstantiatedCondition &condition, bool negated);
+        void apply_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & var, bool negated);
+
+        std::unordered_set<InstantiatedPredicate> knownPredicates;
+        std::unordered_set<InstantiatedPredicate> unknownPredicates;
+        std::unordered_set<InstantiatedParameter> objects;
+        std::vector<Constraint> constraints;
+        std::mutex mutex_;
     };
+
+
 
 // condition
 
 // parsing functions
     tl::expected<Domain, std::string> parse_domain(const std::string &content);
 
-    tl::expected<Problem, std::string> parse_problem(const std::string &content);
+    tl::expected<Problem, std::string> parse_problem(const std::string &content, const std::string &domain_content="");
 
     tl::expected<Predicate, std::string>
     parse_predicate(const std::string &content,

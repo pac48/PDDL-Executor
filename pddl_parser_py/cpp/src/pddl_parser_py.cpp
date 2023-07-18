@@ -9,8 +9,8 @@ namespace pddl_lib {
         return {};
     }
 
-    std::optional<Problem> parse_problem_py(const std::string &content) {
-        if (auto problem = parse_problem(content)) {
+    std::optional<Problem> parse_problem_py(const std::string &content, const std::string &domain_content) {
+        if (auto problem = parse_problem(content, domain_content)) {
             return {problem.value()};
         }
         return {};
@@ -124,7 +124,8 @@ namespace pddl_lib {
                 .def_readwrite("goal", &pddl_lib::Problem::goal)
                 .def_readwrite("comments", &pddl_lib::Problem::comments);
         m.def("parse_problem", &pddl_lib::parse_problem_py, "parse problem from string",
-              py::arg("content"));
+              py::arg("content"),
+              py::arg("domain_content") = "");
     }
 
 

@@ -138,6 +138,8 @@ namespace pddl_lib {
         problem.domain = substrings[1];
         ind++;
 
+
+        std::unordered_map<std::string, std::string> param_to_type_map;
         std::tie(section, remaining) = getNextParen(strings[ind]);
         substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         if (substrings[0] == ":objects") {
@@ -200,7 +202,7 @@ namespace pddl_lib {
                 problem.constraints.push_back(con);
 
             } else {
-                if (auto pred = parse_instantiated_predicate(std::string(str))) {
+                if (auto pred = parse_instantiated_predicate(std::string(str), param_to_type_map)) {
                     problem.init.insert(pred.value());
                 } else {
                     return fmt::format("ERROR line {}: failed to parse predicate \n{}", get_line_num(content, str),
@@ -419,7 +421,7 @@ namespace pddl_lib {
         return domain;
     }
 
-    tl::expected<Problem, std::string> parse_problem(const std::string &content) {
+    tl::expected<Problem, std::string> parse_problem(const std::string &content, const std::string &domain_content) {
         Problem problem;
         if (auto error = checkParens(content)) {
             return tl::unexpected(fmt::format("ERROR: failed to parse problem\n{}", error.value()));
@@ -427,6 +429,51 @@ namespace pddl_lib {
 
         if (auto error = parse_problem_internal(content, problem)) {
             return tl::unexpected(fmt::format("ERROR: failed to parse problem\n{}", error.value()));
+        }
+
+        if (!domain_content.empty()) {
+            Domain domain;
+            if (auto error = parse_domain_internal(domain_content, domain)) {
+                return tl::unexpected(
+                        fmt::format("ERROR: failed to parse optional domain argument\n{}", error.value()));
+            }
+            std::unordered_map<std::string, std::vector<Parameter>> type_map;
+            for (const auto &pred: domain.predicates) {
+                type_map[pred.name] = pred.parameters;
+            }
+            auto update_set = [type_map](std::unordered_set<InstantiatedPredicate> &pred_set) {
+                auto init_copy = pred_set;
+                for (auto pred: init_copy) {
+                    auto domain_pred = type_map.at(pred.name);
+                    assert(pred.parameters.size() == domain_pred.size());
+                    pred_set.erase(pred);
+                    for (auto i = 0ul; i < pred.parameters.size(); i++) {
+                        pred.parameters[i].type = domain_pred[i].type;
+                    }
+                    pred_set.insert(pred);
+                }
+            };
+            std::function<void(InstantiatedCondition &cond)> update_condition;
+            update_condition = [&type_map, &update_condition](InstantiatedCondition &cond) {
+                for (auto & c: cond.conditions) {
+                    if (auto inst = std::get_if<InstantiatedCondition>(&c)) {
+                        update_condition(*inst);
+                    } else {
+                        auto & pred = std::get<InstantiatedPredicate>(c);
+                        auto domain_pred = type_map.at(pred.name);
+                        assert(pred.parameters.size() == domain_pred.size());
+                        for (auto i = 0ul; i < pred.parameters.size(); i++) {
+                            pred.parameters[i].type = domain_pred[i].type;
+                        }
+                    }
+                }
+            };
+
+            update_set(problem.init);
+            update_set(problem.unknowns);
+            for (auto &constraint: problem.constraints) {
+                update_condition(constraint.condition);
+            }
         }
 
         return problem;
@@ -745,74 +792,102 @@ namespace pddl_lib {
         return instance;
     }
 
-    void KnownPredicates::concurrent_insert(const InstantiatedPredicate &value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        insert(value);
-    }
+//    template<>
+//    void ConcurrentSet<InstantiatedPredicate>::insert(const InstantiatedPredicate &value) {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        std::unordered_set<InstantiatedPredicate>::insert(value);
+//    }
+//
+//    template<>
+//    void ConcurrentSet<InstantiatedParameter>::insert(const InstantiatedParameter &value) {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        std::unordered_set<InstantiatedParameter>::insert(value);
+//    }
+//
+//    template<>
+//    void ConcurrentSet<InstantiatedPredicate>::erase(const InstantiatedPredicate &value) {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        std::unordered_set<InstantiatedPredicate>::erase(value);
+//    }
+//
+//    template<>
+//    void ConcurrentSet<InstantiatedParameter>::erase(const InstantiatedParameter &value) {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        std::unordered_set<InstantiatedParameter>::erase(value);
+//    }
+//
+//    template<>
+//    bool ConcurrentSet<InstantiatedPredicate>::find(const InstantiatedPredicate &value) const {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        return std::unordered_set<InstantiatedPredicate>::find(value) !=
+//               std::unordered_set<InstantiatedPredicate>::end();
+//    }
+//
+//    template<>
+//    bool ConcurrentSet<InstantiatedParameter>::find(const InstantiatedParameter &value) const {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        return std::unordered_set<InstantiatedParameter>::find(value) !=
+//               std::unordered_set<InstantiatedParameter>::end();
+//    }
+//
+//    template<>
+//    void ConcurrentSet<InstantiatedPredicate>::concurrent_clear() {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        std::unordered_set<InstantiatedPredicate>::clear();
+//    }
+//
+//    template<>
+//    void ConcurrentSet<InstantiatedParameter>::concurrent_clear() {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        std::unordered_set<InstantiatedParameter>::clear();
+//    }
 
-    void KnownPredicates::concurrent_erase(const InstantiatedPredicate &value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        erase(value);
-    }
 
-    bool KnownPredicates::concurrent_find(const InstantiatedPredicate &value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return find(value) != end();
-    }
-
-    void KnownPredicates::lock() {
-        mutex_.lock();
-    }
-
-    void KnownPredicates::unlock() {
-        mutex_.unlock();
-    }
-
-    void UnknownPredicates::concurrent_insert(const InstantiatedPredicate &value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        insert(value);
-    }
-
-    void UnknownPredicates::concurrent_erase(const InstantiatedPredicate &value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        erase(value);
-    }
-
-    bool UnknownPredicates::concurrent_find(const InstantiatedPredicate &value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return find(value) != end();
-    }
-
-    void UnknownPredicates::lock() {
-        mutex_.lock();
-    }
-
-    void UnknownPredicates::unlock() {
-        mutex_.unlock();
-    }
-
-    void Objects::concurrent_insert(const InstantiatedParameter &value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        insert(value);
-    }
-
-    void Objects::concurrent_erase(const InstantiatedParameter &value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        erase(value);
-    }
-
-    bool Objects::concurrent_find(const InstantiatedParameter &value) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return find(value) != end();
-    }
-
-    void Objects::lock() {
-        mutex_.lock();
-    }
-
-    void Objects::unlock() {
-        mutex_.unlock();
-    }
+//    void UnknownPredicates::insert(const InstantiatedPredicate &value) {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        insert(value);
+//    }
+//
+//    void UnknownPredicates::erase(const InstantiatedPredicate &value) {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        erase(value);
+//    }
+//
+//    bool UnknownPredicates::find(const InstantiatedPredicate &value) {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        return find(value) != end();
+//    }
+//
+//    void UnknownPredicates::lock() {
+//        mutex_.lock();
+//    }
+//
+//    void UnknownPredicates::unlock() {
+//        mutex_.unlock();
+//    }
+//
+//    void Objects::insert(const InstantiatedParameter &value) {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        insert(value);
+//    }
+//
+//    void Objects::erase(const InstantiatedParameter &value) {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        erase(value);
+//    }
+//
+//    bool Objects::find(const InstantiatedParameter &value) {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        return find(value) != end();
+//    }
+//
+//    void Objects::lock() {
+//        mutex_.lock();
+//    }
+//
+//    void Objects::unlock() {
+//        mutex_.unlock();
+//    }
 
     bool check_pred_in_domain(const InstantiatedPredicate &pred,
                               std::unordered_map<std::string, const Predicate *> name_pred) {
@@ -833,7 +908,7 @@ namespace pddl_lib {
 
     };
 
-    std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
+    std::string KnowledgeBase::convert_to_problem(const Domain &domain) const {
         std::stringstream ss;
         ss << fmt::format("(define (problem {}_problem)\n", domain.name);
         ss << fmt::format("(:domain {})\n", domain.name);
@@ -874,7 +949,7 @@ namespace pddl_lib {
                 ss << "\t" << "(unknown " << pred_to_str_no_type(pred) << ")" << "\n";
             }
         }
-        for (auto &constraint: unknownPredicates.constraints) {
+        for (auto &constraint: constraints) {
             assert(constraint.constraint == CONSTRAINTS::ONEOF);
             // remove entire constraint if any of the predicates are missing
             if (constraint.constraint == CONSTRAINTS::ONEOF) {
@@ -920,34 +995,29 @@ namespace pddl_lib {
         return ss.str();
     }
 
-    bool KnowledgeBase::check_conditions(const InstantiatedCondition &condition) {
+    bool KnowledgeBase::check_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition) const{
+        if (auto pred = std::get_if<InstantiatedPredicate>(&condition)) {
+            return knownPredicates.find(*pred) != knownPredicates.end();
+        } else {
+            return check_conditions(std::get<InstantiatedCondition>(condition));
+        }
+    }
+
+    bool KnowledgeBase::check_conditions(const InstantiatedCondition &condition) const {
         bool ret;
         if (condition.op == OPERATION::AND) {
             ret = true;
             for (const auto &sub_cond: condition.conditions) {
-                if (auto pred = std::get_if<InstantiatedPredicate>(&sub_cond)) {
-                    ret &= knownPredicates.concurrent_find(*pred);
-                } else {
-                    ret &= check_conditions(std::get<InstantiatedCondition>(sub_cond));
-                }
-                int o = 0;
+                ret &= check_variant_internal(sub_cond);
             }
         } else if (condition.op == OPERATION::OR) {
             ret = false;
             for (const auto &sub_cond: condition.conditions) {
-                if (auto pred = std::get_if<InstantiatedPredicate>(&sub_cond)) {
-                    ret |= knownPredicates.concurrent_find(*pred);
-                } else {
-                    ret |= check_conditions(std::get<InstantiatedCondition>(sub_cond));
-                }
+                ret |= check_variant_internal(sub_cond);
             }
         } else if (condition.op == OPERATION::NOT) {
             assert(condition.conditions.size() == 1);
-            if (auto pred = std::get_if<InstantiatedPredicate>(&condition.conditions[0])) {
-                return !knownPredicates.concurrent_find(*pred);
-            } else {
-                return !check_conditions(std::get<InstantiatedCondition>(condition.conditions[0]));
-            }
+            ret = !check_variant_internal(condition.conditions[0]);
         } else {
             throw std::runtime_error("Only AND, OR, and NOT operations are  allowed in a InstantiatedCondition");
         }
@@ -955,71 +1025,163 @@ namespace pddl_lib {
         return ret;
     }
 
-    void KnowledgeBase::apply_conditions(const InstantiatedCondition &condition, bool negated) {
+
+    void KnowledgeBase::apply_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition, bool negated){
+        if (auto pred = std::get_if<InstantiatedPredicate>(&condition)) {
+            if (!negated) {
+                knownPredicates.insert(*pred);
+            } else {
+                knownPredicates.erase(*pred);
+            }
+            // whether or not the predicate becomes true or false, it must be removed from the unknown set
+            unknownPredicates.erase({*pred});
+        } else {
+            apply_conditions_internal(std::get<InstantiatedCondition>(condition), negated);
+        }
+    }
+
+    void KnowledgeBase::apply_conditions_internal(const InstantiatedCondition &condition, bool negated) {
         if (condition.op == OPERATION::AND) {
             for (const auto &sub_cond: condition.conditions) {
-                if (auto pred = std::get_if<InstantiatedPredicate>(&sub_cond)) {
-                    if (!negated) {
-                        knownPredicates.concurrent_insert(*pred);
-                    } else {
-                        knownPredicates.concurrent_erase(*pred);
-                    }
-                    // whether or not the predicate becomes true or false, it must be removed from the unknown set
-                    unknownPredicates.concurrent_erase({*pred});
-                } else {
-                    apply_conditions(std::get<InstantiatedCondition>(sub_cond), negated);
-                }
+                apply_variant_internal(sub_cond, negated);
             }
         } else if (condition.op == OPERATION::NOT) {
             negated = !negated;
             assert(condition.conditions.size() == 1);
-            if (auto pred = std::get_if<InstantiatedPredicate>(&condition.conditions[0])) {
-                if (!negated) {
-                    knownPredicates.concurrent_insert(*pred);
-                } else {
-                    knownPredicates.concurrent_erase(*pred);
-                }
-                // whether or not the predicate becomes true or false, it must be removed from the unknown set
-                unknownPredicates.concurrent_erase({*pred});
-            } else {
-                apply_conditions(std::get<InstantiatedCondition>(condition.conditions[0]), negated);
+            apply_variant_internal(condition.conditions[0], negated);
+        } else if (condition.op == OPERATION::WHEN) {
+            assert(condition.conditions.size() == 2);
+            if (check_variant_internal(condition.conditions[0])) {
+                apply_variant_internal(condition.conditions[1], negated);
             }
-        } else {
+        }
+        else {
             throw std::runtime_error("Only AND and NOT operations can be applied");
         }
     }
 
+    void KnowledgeBase::apply_conditions(const InstantiatedCondition &condition, bool negated) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        apply_conditions_internal(condition, negated);
+    }
+
     void KnowledgeBase::apply_constraints() {
-        int ind = 0;
-        while (ind < unknownPredicates.constraints.size()) {
-            auto constraint = unknownPredicates.constraints[ind];
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (const auto &constraint: constraints) {
             if (constraint.constraint == CONSTRAINTS::ONEOF) {
-                std::vector<InstantiatedPredicate> preds;
+                std::vector<InstantiatedPredicate> unknown_preds;
+                std::optional<InstantiatedPredicate> known_pred;
                 for (const auto &c: constraint.condition.conditions) {
                     if (auto pred_con = std::get_if<InstantiatedPredicate>(&c)) {
-                        if (unknownPredicates.concurrent_find({*pred_con})) {
-                            preds.push_back(*pred_con);
+                        if (unknownPredicates.find(*pred_con) != unknownPredicates.end()) {
+                            unknown_preds.push_back(*pred_con);
+                        } else if (knownPredicates.find(*pred_con) != knownPredicates.end()) {
+                            known_pred = *pred_con;
                         }
                     } else {
-                        assert(0); //bad
+                        throw std::runtime_error("ONEOF constraint act on predicates not conditions");
                     }
                 }
-                if (preds.size() == 1) {
-                    unknownPredicates.concurrent_erase({preds[0]});
-                    knownPredicates.concurrent_insert(preds[0]);
-                    unknownPredicates.constraints.erase(unknownPredicates.constraints.begin() + ind);
-                    continue;
+                if (unknown_preds.size() == 1 || known_pred.has_value()) {
+                    if (unknown_preds.size() == 1) {
+                        knownPredicates.insert(unknown_preds[0]);
+                    } else {
+                        knownPredicates.insert(known_pred.value());
+                    }
+                    for (const auto &value: unknown_preds) {
+                        unknownPredicates.erase(value);
+                    }
                 }
-
-            } else if (constraint.constraint == CONSTRAINTS::OR) {
-                // TODO
-                assert(0);
             } else {
                 throw std::runtime_error("Only CONSTRAINTS::ONEOF constraint is supported");
             }
-            ind++;
         }
     }
+
+    void KnowledgeBase::insert_object(const InstantiatedParameter &obj) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        objects.insert(obj);
+    }
+
+    void KnowledgeBase::erase_object(const InstantiatedParameter &obj) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        objects.erase(obj);
+    }
+
+    bool KnowledgeBase::find_object(const InstantiatedParameter &obj) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return objects.find(obj) != objects.end();
+    }
+
+    void KnowledgeBase::insert_predicate(const InstantiatedPredicate &pred) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        knownPredicates.insert(pred);
+    }
+
+    void KnowledgeBase::erase_predicate(const InstantiatedPredicate &pred) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        knownPredicates.erase(pred);
+    }
+
+    bool KnowledgeBase::find_predicate(const InstantiatedPredicate &pred) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return knownPredicates.find(pred) != knownPredicates.end();
+    }
+
+    void KnowledgeBase::insert_unknown_predicate(const InstantiatedPredicate &pred) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        unknownPredicates.insert(pred);
+    }
+
+    void KnowledgeBase::erase_unknown_predicate(const InstantiatedPredicate &pred) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        unknownPredicates.erase(pred);
+    }
+
+    bool KnowledgeBase::find_unknown_predicate(const InstantiatedPredicate &pred) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return unknownPredicates.find(pred) != unknownPredicates.end();
+    }
+
+    void KnowledgeBase::insert_constraint(const Constraint &constraint) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        constraints.push_back(constraint);
+    }
+
+
+    std::unordered_set<InstantiatedParameter> KnowledgeBase::get_objects() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return objects;
+    }
+
+    std::unordered_set<InstantiatedPredicate> KnowledgeBase::get_known_predicates() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return knownPredicates;
+    }
+
+    void KnowledgeBase::clear() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        objects.clear();
+        knownPredicates.clear();
+        unknownPredicates.clear();
+        constraints.clear();
+    }
+
+    void KnowledgeBase::load_kb(const Problem &problem) {
+        for (const auto &obj: problem.objects) {
+            insert_object(obj);
+        }
+        for (const auto &pred: problem.init) {
+            insert_predicate(pred);
+        }
+        for (const auto &pred: problem.unknowns) {
+            insert_unknown_predicate(pred);
+        }
+        for (const auto &constraint: problem.constraints) {
+            insert_constraint(constraint);
+        }
+    }
+
 
     std::string Domain::str() {
         std::stringstream ss;

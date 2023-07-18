@@ -29,7 +29,7 @@ public:
       std::vector<InstantiatedParameter> {{type}}_instances;
       {%- endfor %}
 
-      for (const auto object : kb.objects){
+      for (const auto object : kb.get_objects()){
           {%- for type in types %}
           if (object.type == "{{type}}"){
               {{type}}_instances.push_back(object);
@@ -44,23 +44,23 @@ public:
           {%- endfor %}
               InstantiatedPredicate pred = {"{{pred.name}}", { {%- for param in pred.parameters %}{{param.type}}_instance{%- if loop.index < loop.length %}, {% endif -%}{%- endfor %} } };
               TRUTH_VALUE old_val;
-              if (kb.knownPredicates.concurrent_find(pred)){
+              if (kb.find_predicate(pred)){
                   old_val = TRUTH_VALUE::TRUE;
-              } else if(kb.unknownPredicates.concurrent_find(pred)){
+              } else if(kb.find_unknown_predicate(pred)){
                   old_val = TRUTH_VALUE::UNKNOWN;
               } else{
                   old_val = TRUTH_VALUE::FALSE;
               }
             auto new_val = {{pred.name}}(old_val{% for param in pred.parameters %}, {{param.type}}({{param.type}}_instance.name){%- endfor %});
             if (new_val==TRUTH_VALUE::TRUE){
-                kb.knownPredicates.concurrent_insert(pred);
-                kb.unknownPredicates.concurrent_erase(pred);
+                kb.insert_predicate(pred);
+                kb.erase_unknown_predicate(pred);
             } else if(new_val==TRUTH_VALUE::UNKNOWN){
-                kb.knownPredicates.concurrent_erase(pred);
-                kb.unknownPredicates.concurrent_insert(pred);
-            } else{
-                kb.knownPredicates.concurrent_erase(pred);
-                kb.unknownPredicates.concurrent_erase(pred);
+                kb.erase_predicate(pred);
+                kb.insert_unknown_predicate(pred);
+            } else {
+                kb.erase_predicate(pred);
+                kb.erase_unknown_predicate(pred);
             }
           {%- for param in pred.parameters %}
              }

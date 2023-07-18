@@ -27,7 +27,7 @@ public:
         auto action = action_opt.value();
 
         auto & kb = KnowledgeBase::getInstance();
-        InstantiatedAction inst_action = instantiate_action(action, param_subs, kb.objects);
+        InstantiatedAction inst_action = instantiate_action(action, param_subs, kb.get_objects());
         bool precondition_met = kb.check_conditions(inst_action.precondtions);
 
         std::cout << "ACTION: " << inst_action.name << " params: ";

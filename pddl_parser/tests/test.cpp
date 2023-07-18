@@ -87,34 +87,36 @@ TEST(KB, convert_To_problem) {
     InstantiatedParameter nathan = {"nathan", "person"};
 
     auto &kb = KnowledgeBase::getInstance();
-    kb.objects.concurrent_insert(kitchen);
-    kb.objects.concurrent_insert(couch);
-    kb.objects.concurrent_insert(home);
-    kb.objects.concurrent_insert(pioneer);
-    kb.objects.concurrent_insert(nathan);
+    kb.insert_object(kitchen);
+    kb.insert_object(couch);
+    kb.insert_object(home);
+    kb.insert_object(pioneer);
+    kb.insert_object(nathan);
 
 
-    kb.knownPredicates.insert({"robot_at", {pioneer, home}});
-    kb.knownPredicates.insert({"medicine_location", {}});
+    kb.insert_predicate({"robot_at", {pioneer, home}});
+    kb.insert_predicate({"medicine_location", {}});
 
-    kb.unknownPredicates.insert({"person_at", {nathan, couch}});
-    kb.unknownPredicates.insert({"person_at", {nathan, kitchen}});
-    kb.unknownPredicates.insert({"person_at", {nathan, home}});
+    kb.insert_unknown_predicate({"person_at", {nathan, couch}});
+    kb.insert_unknown_predicate({"person_at", {nathan, kitchen}});
+    kb.insert_unknown_predicate({"person_at", {nathan, home}});
 
-    kb.unknownPredicates.insert({"guide_to_succeeded_attempt_1", {}});
-    kb.unknownPredicates.insert({"guide_to_succeeded_attempt_2", {}});
-    kb.unknownPredicates.insert({"notify_automated_succeeded", {}});
-    kb.unknownPredicates.insert({"notify_recorded_succeeded", {}});
-    InstantiatedCondition cond = {{},{},{
-                                  InstantiatedPredicate{"person_at", {nathan, couch}},
-                                  InstantiatedPredicate{"person_at", {nathan, kitchen}},
-                                  InstantiatedPredicate{"person_at", {nathan, home}}
+    kb.insert_unknown_predicate({"guide_to_succeeded_attempt_1", {}});
+    kb.insert_unknown_predicate({"guide_to_succeeded_attempt_2", {}});
+    kb.insert_unknown_predicate({"notify_automated_succeeded", {}});
+    kb.insert_unknown_predicate({"notify_recorded_succeeded", {}});
+    InstantiatedCondition cond = {{},
+                                  {},
+                                  {
+                                          InstantiatedPredicate{"person_at", {nathan, couch}},
+                                          InstantiatedPredicate{"person_at", {nathan, kitchen}},
+                                          InstantiatedPredicate{"person_at", {nathan, home}}
                                   }};
 
-    kb.unknownPredicates.constraints.push_back({
-                                                       CONSTRAINTS::ONEOF,
-                                                       cond
-                                               });
+    kb.insert_constraint({
+                                 CONSTRAINTS::ONEOF,
+                                 cond
+                         });
 
 //    std::cout << kb.convert_to_problem(domain) << std::endl;
 
