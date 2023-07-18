@@ -346,11 +346,10 @@ namespace pddl_lib {
                 return {};
             }
             ind++;
-
             action.name = strings[ind];
 
+            ind++;
             while (ind < strings.size()) {
-                ind++;
                 if (strings[ind] == ":parameters") {
                     ind++;
                     std::tie(section, remaining) = getNextParen(strings[ind]);
@@ -396,6 +395,7 @@ namespace pddl_lib {
                     return tl::unexpected(fmt::format("ERROR: failed to parse observe of action {}", action.name));
 
                 }
+                ind++;
             }
 
             return action;
@@ -699,20 +699,10 @@ namespace pddl_lib {
                           const std::unordered_map<std::string, std::string> &param_subs,
                           const std::unordered_set<InstantiatedParameter> &objects) {
         Condition condition = conditionConst;
-
         auto inst_cond = InstantiatedCondition();
-        inst_cond.op = condition.op;
-        for (const auto &c: condition.conditions) {
-            if (auto inst = std::get_if<Condition>(&c)) {
-                inst_cond.conditions.emplace_back(instantiate_condition(*inst, param_subs, objects));
-            } else {
-                inst_cond.conditions.emplace_back(instantiate_predicate(std::get<Predicate>(c), param_subs));
-            }
-        }
 
         if (condition.op == OPERATION::FORALL) {
-            auto inst_cond_2 = InstantiatedCondition();
-            inst_cond_2.op = OPERATION::AND;
+            inst_cond.op = OPERATION::AND;
 
             auto param_subs_mod = param_subs;
             for (const auto &obj: objects) {
@@ -724,16 +714,26 @@ namespace pddl_lib {
 
                     for (const auto &c: condition.conditions) {
                         if (auto inst = std::get_if<Condition>(&c)) {
-                            inst_cond_2.conditions.emplace_back(instantiate_condition(*inst, param_subs_mod, objects));
+                            inst_cond.conditions.emplace_back(instantiate_condition(*inst, param_subs_mod, objects));
                         } else {
-                            inst_cond_2.conditions.emplace_back(
+                            inst_cond.conditions.emplace_back(
                                     instantiate_predicate(std::get<Predicate>(c), param_subs_mod));
                         }
                     }
                 }
             }
-
-            return inst_cond_2;
+        } else {
+            inst_cond.op = condition.op;
+            for (const auto &c: condition.conditions) {
+                if (auto inst = std::get_if<Condition>(&c)) {
+                    auto potential_cond = instantiate_condition(*inst, param_subs, objects);
+                    if (!potential_cond.conditions.empty()) {
+                        inst_cond.conditions.emplace_back(potential_cond);
+                    }
+                } else {
+                    inst_cond.conditions.emplace_back(instantiate_predicate(std::get<Predicate>(c), param_subs));
+                }
+            }
         }
 
         return inst_cond;
@@ -930,6 +930,7 @@ namespace pddl_lib {
                 } else {
                     ret &= check_conditions(std::get<InstantiatedCondition>(sub_cond));
                 }
+                int o = 0;
             }
         } else if (condition.op == OPERATION::OR) {
             ret = false;
@@ -942,16 +943,11 @@ namespace pddl_lib {
             }
         } else if (condition.op == OPERATION::NOT) {
             assert(condition.conditions.size() == 1);
-            return !check_conditions(std::get<InstantiatedCondition>(condition.conditions[0]));
-//            if (condition.predicates.size() == 1 && condition.conditions.empty()) {
-//                auto pred = condition.predicates[0];
-//                return !knownPredicates.concurrent_find(pred) && !unknownPredicates.concurrent_find({pred});
-//            } else if (condition.predicates.empty() && condition.conditions.size() == 1) {
-//                return !check_conditions(condition.conditions[0]);
-//            } else {
-//                throw std::runtime_error("OPERATION::NOT should applies to only a single condition or predicate");
-//            }
-
+            if (auto pred = std::get_if<InstantiatedPredicate>(&condition.conditions[0])) {
+                return !knownPredicates.concurrent_find(*pred);
+            } else {
+                return !check_conditions(std::get<InstantiatedCondition>(condition.conditions[0]));
+            }
         } else {
             throw std::runtime_error("Only AND, OR, and NOT operations are  allowed in a InstantiatedCondition");
         }
@@ -977,7 +973,17 @@ namespace pddl_lib {
         } else if (condition.op == OPERATION::NOT) {
             negated = !negated;
             assert(condition.conditions.size() == 1);
-            apply_conditions(std::get<InstantiatedCondition>(condition.conditions[0]), negated);
+            if (auto pred = std::get_if<InstantiatedPredicate>(&condition.conditions[0])) {
+                if (!negated) {
+                    knownPredicates.concurrent_insert(*pred);
+                } else {
+                    knownPredicates.concurrent_erase(*pred);
+                }
+                // whether or not the predicate becomes true or false, it must be removed from the unknown set
+                unknownPredicates.concurrent_erase({*pred});
+            } else {
+                apply_conditions(std::get<InstantiatedCondition>(condition.conditions[0]), negated);
+            }
         } else {
             throw std::runtime_error("Only AND and NOT operations can be applied");
         }

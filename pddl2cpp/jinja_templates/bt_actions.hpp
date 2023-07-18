@@ -94,7 +94,7 @@ BT::BehaviorTreeFactory create_tree_factory(){
 
     BT::BehaviorTreeFactory factory;
     {% for name in action_names %}
-    factory.registerNodeType<{{name.qualified}}<T>>("{{name.qualified}}");
+    factory.registerNodeType<{{name.qualified}}<T>>("{{name.underscore}}");
     {%- endfor %}
 
     return factory;

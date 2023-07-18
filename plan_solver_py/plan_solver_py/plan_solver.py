@@ -103,7 +103,7 @@ def add_action_sequence(action, action_map, templates):
             sep = " "
 
     action_name_underscore = action_name.replace("::", '_')
-    data = {"action_id": action_name , "action_name": action_name,
+    data = {"action_id": action_name, "action_name": action_name,
             'action_name_underscore': action_name_underscore, "ports": ports}
     return j2_template.render(data, trim_blocks=True) + "\n"
 
@@ -130,7 +130,7 @@ def add_observe_action_sequence(observe_result, action, action_map, templates):
             sep = " "
 
     action_name_underscore = action_name.replace("::", '_')
-    data = {"action_id": action_name , "action_name": action_name,
+    data = {"action_id": action_name, "action_name": action_name,
             'action_name_underscore': action_name_underscore, "ports": ports}
     return j2_template.render(data, trim_blocks=True) + "\n"
 
@@ -152,16 +152,16 @@ def get_sub_tree(node, graph, action_map, templates):
     else:
         out = add_action_sequence(node.action, action_map, templates)
         if node.son in graph.nodes:
-            out += get_sub_tree(graph.nodes[node.son],graph, action_map, templates)
+            out += get_sub_tree(graph.nodes[node.son], graph, action_map, templates)
         return out
 
 
-def generate_bt(plan_file, domain):
+def generate_bt(plan_file, bt_file, domain):
     if os.path.exists(plan_file):
         action_map = {}
         for action in domain.actions:
             action_map[action.name] = action
-            action_map[action.name].name = (domain.name + "::" + action.name).lower()
+            action_map[action.name].name = domain.name + "::" + action.name
 
         with open(plan_file) as f:
             graph = parse_graph(f.read())
@@ -173,7 +173,6 @@ def generate_bt(plan_file, domain):
         data = {'tree': tree_str}
         j2_template = Template(templates["bt.xml"])
         tree = j2_template.render(data, trim_blocks=True)
-        bt_file = "/tmp/plan_solver/bt.xml"
         with open(bt_file, 'w') as f:
             f.write(tree)
 
@@ -192,8 +191,11 @@ def main():
         raise AssertionError("--problem must be an absolute path")
 
     plan_file = "/tmp/plan_solver/plan.txt"
+    bt_file = "/tmp/plan_solver/bt.xml"
     while os.path.exists(plan_file):
         os.remove(plan_file)
+    while os.path.exists(bt_file):
+        os.remove(bt_file)
 
     h_val = hash_file(domain_file, problem_file)
     planner_path = f'/tmp/plan_solver/plan_solver_{h_val}'
@@ -207,15 +209,19 @@ def main():
         cmd = f"cd {build_dir} && cmake {file_path} -DCMAKE_BUILD_TYPE=Release -DPDDL_PROBLEM={problem_file} -DPDDL_DOMAIN={domain_file} && make"
         os.system(cmd)
 
+        if os.path.exists('/tmp/plan_solver/include'):
+            shutil.rmtree('/tmp/plan_solver/include')
         shutil.move(os.path.join(build_dir, 'plan_solver'), planner_path)
-        # shutil.rmtree(build_dir)
+        shutil.move(os.path.join(build_dir, 'pddl_problem', 'include'), '/tmp/plan_solver')
+        shutil.rmtree(build_dir)
+
 
     cmd = f"{planner_path} {problem_file}"
     os.system(cmd)
 
     with open(domain_file) as f:
         domain = pddl_parser.parser.parse_domain(f.read())
-    generate_bt(plan_file, domain)
+    generate_bt(plan_file, bt_file, domain)
 
 
 if __name__ == '__main__':
