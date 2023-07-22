@@ -56,6 +56,10 @@ def main():
     for obj in problem.objects:
         objs.append(obj)
     problem.objects = list(set(objs))
+    type_counter = defaultdict(int)
+    for obj in problem.objects:
+        type_counter[obj.type] = type_counter[obj.type]+1
+        obj.name = obj.type + str(type_counter[obj.type])
 
     domain_types = set(domain.types)
     domain_types.add('')  # add empty type
