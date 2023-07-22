@@ -138,8 +138,6 @@ namespace pddl_lib {
         problem.domain = substrings[1];
         ind++;
 
-
-        std::unordered_map<std::string, std::string> param_to_type_map;
         std::tie(section, remaining) = getNextParen(strings[ind]);
         substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
         if (substrings[0] == ":objects") {
@@ -154,6 +152,7 @@ namespace pddl_lib {
         if (substrings[0] != ":init") {
             return fmt::format("ERROR line {}: missing ':init' keyword", get_line_num(content, substrings[0]));
         }
+        std::unordered_map<std::string, std::string> param_to_type_map;
         for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
             std::tie(section, remaining) = getNextParen(str);
             auto subsubstrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
@@ -592,6 +591,14 @@ namespace pddl_lib {
                 throw std::runtime_error("failed to parse parameters");
             }
             ind++;
+        }
+        std::unordered_set<std::string> duplicate_checker;
+        for (const auto& param : parameters) {
+            if (duplicate_checker.find(param.name) == duplicate_checker.end()){
+                duplicate_checker.insert(param.name);
+            } else {
+                throw std::runtime_error("duplicate object in parameter list");
+            }
         }
         return parameters;
     }
