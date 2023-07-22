@@ -36,8 +36,9 @@ public:
         }
         std::cout << std::endl;
         if (!precondition_met){
-            std::cout << "\t" << "preconditions violated" << std::endl;
-            return BT::NodeStatus::FAILURE;
+//            std::cout << "\t" << "preconditions violated" << std::endl;
+            throw std::runtime_error("abort: preconditions violated");
+//            return BT::NodeStatus::FAILURE;
         }
         T inst;
         BT::NodeStatus status = inst.{{domain_name}}_{{class_name}}(inst_action); //tick_action(inst_action);

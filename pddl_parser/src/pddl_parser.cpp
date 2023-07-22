@@ -1175,6 +1175,7 @@ namespace pddl_lib {
             insert_predicate(pred);
         }
         for (const auto &pred: problem.unknowns) {
+            erase_predicate(pred);
             insert_unknown_predicate(pred);
         }
         for (const auto &constraint: problem.constraints) {
