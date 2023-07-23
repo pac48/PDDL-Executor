@@ -799,103 +799,6 @@ namespace pddl_lib {
         return instance;
     }
 
-//    template<>
-//    void ConcurrentSet<InstantiatedPredicate>::insert(const InstantiatedPredicate &value) {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        std::unordered_set<InstantiatedPredicate>::insert(value);
-//    }
-//
-//    template<>
-//    void ConcurrentSet<InstantiatedParameter>::insert(const InstantiatedParameter &value) {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        std::unordered_set<InstantiatedParameter>::insert(value);
-//    }
-//
-//    template<>
-//    void ConcurrentSet<InstantiatedPredicate>::erase(const InstantiatedPredicate &value) {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        std::unordered_set<InstantiatedPredicate>::erase(value);
-//    }
-//
-//    template<>
-//    void ConcurrentSet<InstantiatedParameter>::erase(const InstantiatedParameter &value) {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        std::unordered_set<InstantiatedParameter>::erase(value);
-//    }
-//
-//    template<>
-//    bool ConcurrentSet<InstantiatedPredicate>::find(const InstantiatedPredicate &value) const {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        return std::unordered_set<InstantiatedPredicate>::find(value) !=
-//               std::unordered_set<InstantiatedPredicate>::end();
-//    }
-//
-//    template<>
-//    bool ConcurrentSet<InstantiatedParameter>::find(const InstantiatedParameter &value) const {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        return std::unordered_set<InstantiatedParameter>::find(value) !=
-//               std::unordered_set<InstantiatedParameter>::end();
-//    }
-//
-//    template<>
-//    void ConcurrentSet<InstantiatedPredicate>::concurrent_clear() {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        std::unordered_set<InstantiatedPredicate>::clear();
-//    }
-//
-//    template<>
-//    void ConcurrentSet<InstantiatedParameter>::concurrent_clear() {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        std::unordered_set<InstantiatedParameter>::clear();
-//    }
-
-
-//    void UnknownPredicates::insert(const InstantiatedPredicate &value) {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        insert(value);
-//    }
-//
-//    void UnknownPredicates::erase(const InstantiatedPredicate &value) {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        erase(value);
-//    }
-//
-//    bool UnknownPredicates::find(const InstantiatedPredicate &value) {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        return find(value) != end();
-//    }
-//
-//    void UnknownPredicates::lock() {
-//        mutex_.lock();
-//    }
-//
-//    void UnknownPredicates::unlock() {
-//        mutex_.unlock();
-//    }
-//
-//    void Objects::insert(const InstantiatedParameter &value) {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        insert(value);
-//    }
-//
-//    void Objects::erase(const InstantiatedParameter &value) {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        erase(value);
-//    }
-//
-//    bool Objects::find(const InstantiatedParameter &value) {
-//        std::lock_guard<std::mutex> lock(mutex_);
-//        return find(value) != end();
-//    }
-//
-//    void Objects::lock() {
-//        mutex_.lock();
-//    }
-//
-//    void Objects::unlock() {
-//        mutex_.unlock();
-//    }
-
     bool check_pred_in_domain(const InstantiatedPredicate &pred,
                               std::unordered_map<std::string, const Predicate *> name_pred) {
         auto it = name_pred.find(pred.name);
@@ -915,7 +818,8 @@ namespace pddl_lib {
 
     };
 
-    std::string KnowledgeBase::convert_to_problem(const Domain &domain) const {
+    std::string KnowledgeBase::convert_to_problem(const Domain &domain) {
+        std::lock_guard<std::mutex> lock(mutex_);
         std::stringstream ss;
         ss << fmt::format("(define (problem {}_problem)\n", domain.name);
         ss << fmt::format("(:domain {})\n", domain.name);
@@ -1001,16 +905,7 @@ namespace pddl_lib {
 
         return ss.str();
     }
-
-    bool KnowledgeBase::check_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition) const{
-        if (auto pred = std::get_if<InstantiatedPredicate>(&condition)) {
-            return knownPredicates.find(*pred) != knownPredicates.end();
-        } else {
-            return check_conditions(std::get<InstantiatedCondition>(condition));
-        }
-    }
-
-    bool KnowledgeBase::check_conditions(const InstantiatedCondition &condition) const {
+    bool KnowledgeBase::check_conditions_internal(const InstantiatedCondition &condition) {
         bool ret;
         if (condition.op == OPERATION::AND) {
             ret = true;
@@ -1032,6 +927,13 @@ namespace pddl_lib {
         return ret;
     }
 
+    bool KnowledgeBase::check_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition) {
+        if (auto pred = std::get_if<InstantiatedPredicate>(&condition)) {
+            return knownPredicates.find(*pred) != knownPredicates.end();
+        } else {
+            return check_conditions_internal(std::get<InstantiatedCondition>(condition));
+        }
+    }
 
     void KnowledgeBase::apply_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition, bool negated){
         if (auto pred = std::get_if<InstantiatedPredicate>(&condition)) {
@@ -1065,6 +967,11 @@ namespace pddl_lib {
         else {
             throw std::runtime_error("Only AND and NOT operations can be applied");
         }
+    }
+
+    bool KnowledgeBase::check_conditions(const InstantiatedCondition &condition) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return check_conditions_internal(condition);
     }
 
     void KnowledgeBase::apply_conditions(const InstantiatedCondition &condition, bool negated) {
@@ -1175,6 +1082,7 @@ namespace pddl_lib {
     }
 
     void KnowledgeBase::load_kb(const Problem &problem) {
+        // does not need mutex becuase all of the methods are thread safe
         for (const auto &obj: problem.objects) {
             insert_object(obj);
         }

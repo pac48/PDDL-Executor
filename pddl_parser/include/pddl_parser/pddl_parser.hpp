@@ -238,8 +238,8 @@ namespace pddl_lib {
     public:
         static KnowledgeBase &getInstance();
 
-        std::string convert_to_problem(const Domain &domain) const;
-        bool check_conditions(const InstantiatedCondition &condition) const;
+        std::string convert_to_problem(const Domain &domain);
+        bool check_conditions(const InstantiatedCondition &condition);
 
         void load_kb(const Problem &problem);
 
@@ -284,9 +284,11 @@ namespace pddl_lib {
         KnowledgeBase(const KnowledgeBase &) = delete; // Disable copy constructor
         KnowledgeBase &operator=(const KnowledgeBase &) = delete; // Disable assignment operator
 
-        bool check_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition) const;
+        bool check_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition);
         void apply_conditions_internal(const InstantiatedCondition &condition, bool negated);
         void apply_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & var, bool negated);
+        bool check_conditions_internal(const InstantiatedCondition &condition);
+
 
         std::unordered_set<InstantiatedPredicate> knownPredicates;
         std::unordered_set<InstantiatedPredicate> unknownPredicates;
