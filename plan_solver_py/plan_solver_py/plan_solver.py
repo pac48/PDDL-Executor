@@ -237,6 +237,9 @@ def main():
     if not os.path.isabs(problem_file):
         raise AssertionError("--problem must be an absolute path")
 
+    if not os.path.exists("/tmp/plan_solver"):
+        os.makedirs("/tmp/plan_solver", exist_ok=True)
+
     plan_file = "/tmp/plan_solver/plan.txt"
     bt_file = "/tmp/plan_solver/bt.xml"
     while os.path.exists(plan_file):
