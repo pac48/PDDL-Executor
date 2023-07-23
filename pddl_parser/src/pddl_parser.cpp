@@ -1190,6 +1190,12 @@ namespace pddl_lib {
         }
     }
 
+    void KnowledgeBase::clear_unknowns() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        unknownPredicates.clear();
+        constraints.clear();
+    }
+
 
     std::string Domain::str() {
         std::stringstream ss;

@@ -81,6 +81,7 @@ public:
     {%- for name in action_names %}
     virtual BT::NodeStatus {{name.underscore}}(const InstantiatedAction & action){return BT::NodeStatus::SUCCESS;} // do nothing default
     {%- endfor %}
+    virtual void abort(const InstantiatedAction & action){} // do nothing default
 };
 
 {{ action_classes }}

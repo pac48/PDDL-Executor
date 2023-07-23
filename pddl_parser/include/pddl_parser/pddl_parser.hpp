@@ -245,6 +245,8 @@ namespace pddl_lib {
 
         void clear();
 
+        void clear_unknowns();
+
         void apply_conditions(const InstantiatedCondition &condition, bool negated = false);
 
         void apply_constraints();

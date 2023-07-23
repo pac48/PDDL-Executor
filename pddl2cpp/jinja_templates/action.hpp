@@ -20,7 +20,8 @@ public:
         param_subs["{{param}}"] = {{param}}.value();
         {%- endfor %}
 
-        auto action_opt = parse_action(R"({{action_str}})");
+        std::string tmp(R"({{action_str}})");
+        tl::expected<Action, std::string> action_opt = parse_action(tmp);
         if (!action_opt.has_value()) {
             throw BT::RuntimeError("failed to parse action string for {{class_name}}");
         }
@@ -35,13 +36,15 @@ public:
             std::cout << p.name << " ";
         }
         std::cout << std::endl;
-        if (!precondition_met){
-//            std::cout << "\t" << "preconditions violated" << std::endl;
-            throw std::runtime_error("abort: preconditions violated");
-//            return BT::NodeStatus::FAILURE;
-        }
+
         T inst;
-        BT::NodeStatus status = inst.{{domain_name}}_{{class_name}}(inst_action); //tick_action(inst_action);
+        if (!precondition_met){
+            std::cout << "\t" << "abort: preconditions violated" << std::endl;
+//            throw std::runtime_error("abort: preconditions violated");
+            inst.abort(inst_action);
+            return BT::NodeStatus::FAILURE;
+        }
+        BT::NodeStatus status = inst.{{domain_name}}_{{class_name}}(inst_action);
         if (status == BT::NodeStatus::SUCCESS){
             kb.apply_conditions(inst_action.effect);
             kb.apply_conditions(inst_action.observe);
