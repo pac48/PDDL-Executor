@@ -1,64 +1,69 @@
-(define (problem high_level_domain_problem)
-(:domain high_level_domain)
+(define (problem blocksworld_problem)
+(:domain blocksworld)
 (:objects
-	 daily_med - MedicineProtocol
-	 breakfast - FoodProtocol
-	 dinner - FoodProtocol
-	 dinning_room - Landmark
-	 daily_wand - WanderingProtocol
-	 door - Landmark
-	 t2 - Time
-	 nathan - Person
-	 kitchen - Landmark
-	 living_room - Landmark
-	 couch - Landmark
-	 t1 - Time
-	 outside - Landmark
-	 t3 - Time
-	 t4 - Time
-	 bed - Landmark
-	 bathroom - Landmark
-	 t5 - Time
-	 lunch - FoodProtocol
 )
 (:init
-	(priority_1)
-	(medicine_protocol_enabled daily_med)
-	(person_at t1 nathan door)
-	(person_at_door daily_wand)
-	(time_to_take_medicine daily_med)
-	(unknown (person_at t2 nathan bed))
-	(unknown (person_at t2 nathan outside))
-	(unknown (person_at t2 nathan door))
-	(unknown (person_at t3 nathan outside))
-	(unknown (person_at t3 nathan door))
-	(unknown (person_at t2 nathan couch))
-	(unknown (person_at t2 nathan kitchen))
-	(unknown (person_at t5 nathan bed))
-	(unknown (person_at t5 nathan outside))
-	(unknown (person_at t5 nathan door))
-	(unknown (person_at t4 nathan bed))
-	(unknown (person_at t4 nathan outside))
-	(unknown (person_at t4 nathan door))
-	(unknown (person_at t3 nathan bed))
-	(unknown (person_at t5 nathan kitchen))
-	(unknown (person_at t5 nathan couch))
-	(unknown (person_at t4 nathan kitchen))
-	(unknown (person_at t4 nathan couch))
-	(unknown (person_at t3 nathan kitchen))
-	(unknown (person_at t3 nathan couch))
-	(oneof (person_at t2 nathan couch) (person_at t2 nathan kitchen))
-	(oneof (person_at t3 nathan couch) (person_at t3 nathan kitchen))
-	(oneof (person_at t4 nathan couch) (person_at t4 nathan kitchen))
-	(oneof (person_at t5 nathan couch) (person_at t5 nathan kitchen))
-	(oneof (person_at t2 nathan door) (person_at t2 nathan outside) (person_at t2 nathan bed))
-	(oneof (person_at t3 nathan door) (person_at t3 nathan outside) (person_at t3 nathan bed))
-	(oneof (person_at t4 nathan door) (person_at t4 nathan outside) (person_at t4 nathan bed))
-	(oneof (person_at t5 nathan door) (person_at t5 nathan outside) (person_at t5 nathan bed))
-	(oneof (person_at t2 nathan couch) (person_at t2 nathan kitchen))
-	(oneof (person_at t3 nathan couch) (person_at t3 nathan kitchen))
-	(oneof (person_at t4 nathan couch) (person_at t4 nathan kitchen))
-	(oneof (person_at t5 nathan couch) (person_at t5 nathan kitchen))
+	(on-table b3)
+	(unknown (on-table b4))
+	(unknown (on-table b5))
+	(unknown (on-table b2))
+	(unknown (on-table b7))
+	(unknown (clear b6))
+	(unknown (clear b1))
+	(unknown (clear b5))
+	(unknown (clear b2))
+	(unknown (clear b4))
+	(unknown (clear b7))
+	(unknown (on b7 b4))
+	(unknown (on b4 b7))
+	(unknown (on b2 b5))
+	(unknown (on b5 b2))
+	(unknown (on b1 b3))
+	(unknown (on b6 b1))
+	(unknown (on b6 b3))
+	(unknown (on b1 b6))
+	(or (and
+(not (on b2 b5) )
+(not (on b5 b2) )
+))
+	(or (and
+(not (on b5 b2) )
+(not (on b2 b5) )
+))
+	(oneof (clear b2) (clear b5))
+	(oneof (on-table b2) (on-table b5))
+	(oneof (on-table b2) (on b2 b5))
+	(oneof (on-table b5) (on b5 b2))
+	(oneof (clear b2) (on b5 b2))
+	(oneof (clear b5) (on b2 b5))
+	(or (and
+(not (on b1 b6) )
+(not (on b6 b1) )
+))
+	(or (and
+(not (on b6 b1) )
+(not (on b1 b6) )
+))
+	(oneof (clear b1) (clear b6))
+	(oneof (on b1 b3) (on b6 b3))
+	(oneof (on b1 b3) (on b1 b6))
+	(oneof (on b6 b3) (on b6 b1))
+	(oneof (clear b1) (on b6 b1))
+	(oneof (clear b6) (on b1 b6))
+	(or (and
+(not (on b4 b7) )
+(not (on b7 b4) )
+))
+	(or (and
+(not (on b7 b4) )
+(not (on b4 b7) )
+))
+	(oneof (clear b4) (clear b7))
+	(oneof (on-table b4) (on-table b7))
+	(oneof (on-table b4) (on b4 b7))
+	(oneof (on-table b7) (on b7 b4))
+	(oneof (clear b4) (on b7 b4))
+	(oneof (clear b7) (on b4 b7))
 )
 (:goal (success))
 )

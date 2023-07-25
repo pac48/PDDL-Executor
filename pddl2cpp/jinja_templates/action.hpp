@@ -29,8 +29,8 @@ public:
 
         auto & kb = KnowledgeBase::getInstance();
         InstantiatedAction inst_action = instantiate_action(action, param_subs, kb.get_objects());
-        bool precondition_met = kb.check_conditions(inst_action.precondtions);
-
+        auto precondition_met = kb.check_conditions(inst_action.precondtions);
+//        KnowledgeBase::getInstance().print_predicate();
         std::cout << "ACTION: " << inst_action.name << " params: ";
         for (const auto & p : inst_action.parameters){
             std::cout << p.name << " ";
@@ -38,7 +38,7 @@ public:
         std::cout << std::endl;
 
         T inst;
-        if (!precondition_met){
+        if (precondition_met == TRUTH_VALUE::FALSE){
             std::cout << "\t" << "abort: preconditions violated" << std::endl;
 //            throw std::runtime_error("abort: preconditions violated");
             inst.abort(inst_action);

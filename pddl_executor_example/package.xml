@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>pddl_bt</name>
+  <name>pddl_executor_example</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="paulgesel@gmail.com">paul</maintainer>
@@ -11,6 +11,7 @@
 
   <depend>behaviortree_cpp_v3</depend>
   <depend>pddl2cpp</depend>
+  <depend>pddl_parser</depend>
   <depend>plan_solver_py</depend>
 
   <test_depend>ament_lint_auto</test_depend>

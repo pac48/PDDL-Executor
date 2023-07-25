@@ -78,8 +78,12 @@ def main():
 
     # predicates = list(predicate_map.values())
     for pred in predicates:
+        pred.name = pred.name.replace('-', '_')
         for param in pred.parameters:
             param.name = param.name.replace('?', '')
+            if param.type == '':
+                param.type = "None"
+                all_types.add(param.type)
 
     tmp = {f"{p.name}:::{str([param.type for param in p.parameters])}": p for p in predicates}
     predicates = list(tmp.values())

@@ -9,10 +9,6 @@
 
 namespace pddl_lib {
 
-enum TRUTH_VALUE{
-    FALSE, TRUE, UNKNOWN
-};
-
 {% for type in types %}class {{type}} : public std::string {
 public:
     using std::string::string;
@@ -31,18 +27,24 @@ public:
 
       for (const auto object : kb.get_objects()){
           {%- for type in types %}
+          {%- if type=='None' %}
+          if (object.type == ""){
+              None_instances.push_back(object);
+          }
+          {%- else %}
           if (object.type == "{{type}}"){
               {{type}}_instances.push_back(object);
           }
+          {%- endif %}
           {%- endfor %}
       }
 
       {% for pred in predicates %}
         {
           {%- for param in pred.parameters %}
-            for (auto {{param.type}}_instance : {{param.type}}_instances ) {
+            for (auto {{param.type}}_instance_{{loop.index}} : {{param.type}}_instances ) {
           {%- endfor %}
-              InstantiatedPredicate pred = {"{{pred.name}}", { {%- for param in pred.parameters %}{{param.type}}_instance{%- if loop.index < loop.length %}, {% endif -%}{%- endfor %} } };
+              InstantiatedPredicate pred = {"{{pred.name}}", { {%- for param in pred.parameters %}{{param.type}}_instance_{{loop.index}}{%- if loop.index < loop.length %}, {% endif -%}{%- endfor %} } };
               TRUTH_VALUE old_val;
               if (kb.find_predicate(pred)){
                   old_val = TRUTH_VALUE::TRUE;
@@ -51,7 +53,7 @@ public:
               } else{
                   old_val = TRUTH_VALUE::FALSE;
               }
-            auto new_val = {{pred.name}}(old_val{% for param in pred.parameters %}, {{param.type}}({{param.type}}_instance.name){%- endfor %});
+            auto new_val = {{pred.name}}(old_val{% for param in pred.parameters %}, {{param.type}}({{param.type}}_instance_{{loop.index}}.name){%- endfor %});
             if (new_val==TRUTH_VALUE::TRUE){
                 kb.insert_predicate(pred);
                 kb.erase_unknown_predicate(pred);

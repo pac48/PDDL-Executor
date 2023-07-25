@@ -454,11 +454,11 @@ namespace pddl_lib {
             };
             std::function<void(InstantiatedCondition &cond)> update_condition;
             update_condition = [&type_map, &update_condition](InstantiatedCondition &cond) {
-                for (auto & c: cond.conditions) {
+                for (auto &c: cond.conditions) {
                     if (auto inst = std::get_if<InstantiatedCondition>(&c)) {
                         update_condition(*inst);
                     } else {
-                        auto & pred = std::get<InstantiatedPredicate>(c);
+                        auto &pred = std::get<InstantiatedPredicate>(c);
                         auto domain_pred = type_map.at(pred.name);
                         assert(pred.parameters.size() == domain_pred.size());
                         for (auto i = 0ul; i < pred.parameters.size(); i++) {
@@ -593,8 +593,8 @@ namespace pddl_lib {
             ind++;
         }
         std::unordered_set<std::string> duplicate_checker;
-        for (const auto& param : parameters) {
-            if (duplicate_checker.find(param.name) == duplicate_checker.end()){
+        for (const auto &param: parameters) {
+            if (duplicate_checker.find(param.name) == duplicate_checker.end()) {
                 duplicate_checker.insert(param.name);
             } else {
                 throw std::runtime_error("duplicate object in parameter list");
@@ -826,7 +826,7 @@ namespace pddl_lib {
 
         ss << "(:objects\n";
         for (auto &object: objects) {
-            if (domain.types.find(object.type) != domain.types.end()) {
+            if (domain.types.find(object.type) != domain.types.end() || object.type.empty()) {
                 ss << "\t" << object << "\n";
             }
         }
@@ -861,7 +861,6 @@ namespace pddl_lib {
             }
         }
         for (auto &constraint: constraints) {
-            assert(constraint.constraint == CONSTRAINTS::ONEOF);
             // remove entire constraint if any of the predicates are missing
             if (constraint.constraint == CONSTRAINTS::ONEOF) {
                 bool none_missing = true;
@@ -882,60 +881,80 @@ namespace pddl_lib {
                         const InstantiatedCondition &condition)> tmp_check = [&none_missing, &tmp_check, name_pred](
                         const InstantiatedCondition &condition) {
                     for (auto &c: condition.conditions) {
-                        none_missing &= check_pred_in_domain(std::get<InstantiatedPredicate>(c), name_pred);
-                    }
-                    for (auto &cond: condition.conditions) {
-                        tmp_check(std::get<InstantiatedCondition>(cond));
+                        if (auto pred = std::get_if<InstantiatedPredicate>(&c)) {
+                            none_missing &= check_pred_in_domain(std::get<InstantiatedPredicate>(c), name_pred);
+                        } else {
+                            tmp_check(std::get<InstantiatedCondition>(c));
+                        }
                     }
                 };
                 tmp_check(constraint.condition);
                 if (!none_missing) {
                     continue;
                 }
+                assert(constraint.condition.conditions.size() == 2);
                 ss << "\t" << "(or";
-                ss << " " << constraint.condition;
+                ss << " " << constraint.condition.conditions[0];
+                ss << " " << constraint.condition.conditions[1];
                 ss << ")\n";
             }
 
         }
         ss << ")\n";
 
-        ss << "(:goal (success))\n";
+        ss << "(:goal\n";
+        ss << goal;
+        ss << ")\n";
+
         ss << ")\n";
 
         return ss.str();
     }
-    bool KnowledgeBase::check_conditions_internal(const InstantiatedCondition &condition) {
-        bool ret;
+
+    pddl_lib::TRUTH_VALUE KnowledgeBase::check_conditions_internal(const InstantiatedCondition &condition) {
+        pddl_lib::TRUTH_VALUE ret;
         if (condition.op == OPERATION::AND) {
-            ret = true;
+            ret = pddl_lib::TRUTH_VALUE::TRUE;
             for (const auto &sub_cond: condition.conditions) {
                 ret &= check_variant_internal(sub_cond);
             }
-        } else if (condition.op == OPERATION::OR) {
-            ret = false;
+            return ret;
+        }
+        if (condition.op == OPERATION::OR) {
+            ret = pddl_lib::TRUTH_VALUE::FALSE;
             for (const auto &sub_cond: condition.conditions) {
                 ret |= check_variant_internal(sub_cond);
             }
-        } else if (condition.op == OPERATION::NOT) {
+            return ret;
+        }
+        if (condition.op == OPERATION::NOT) {
             assert(condition.conditions.size() == 1);
             ret = !check_variant_internal(condition.conditions[0]);
-        } else {
-            throw std::runtime_error("Only AND, OR, and NOT operations are  allowed in a InstantiatedCondition");
+            return ret;
         }
 
-        return ret;
+        throw std::runtime_error("Only AND, OR, and NOT operations are  allowed in a InstantiatedCondition");
     }
 
-    bool KnowledgeBase::check_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition) {
+    pddl_lib::TRUTH_VALUE
+    KnowledgeBase::check_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> &condition) {
         if (auto pred = std::get_if<InstantiatedPredicate>(&condition)) {
-            return knownPredicates.find(*pred) != knownPredicates.end();
+            if (knownPredicates.find(*pred) != knownPredicates.end()) {
+                return pddl_lib::TRUTH_VALUE::TRUE;
+            } else if (unknownPredicates.find(*pred) != unknownPredicates.end()) {
+                return pddl_lib::TRUTH_VALUE::UNKNOWN;
+            } else {
+                return pddl_lib::TRUTH_VALUE::FALSE;
+            }
         } else {
             return check_conditions_internal(std::get<InstantiatedCondition>(condition));
         }
+
     }
 
-    void KnowledgeBase::apply_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition, bool negated){
+    void
+    KnowledgeBase::apply_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> &condition,
+                                          bool negated) {
         if (auto pred = std::get_if<InstantiatedPredicate>(&condition)) {
             if (!negated) {
                 knownPredicates.insert(*pred);
@@ -960,16 +979,15 @@ namespace pddl_lib {
             apply_variant_internal(condition.conditions[0], negated);
         } else if (condition.op == OPERATION::WHEN) {
             assert(condition.conditions.size() == 2);
-            if (check_variant_internal(condition.conditions[0])) {
+            if (check_variant_internal(condition.conditions[0]) == TRUTH_VALUE::TRUE) {
                 apply_variant_internal(condition.conditions[1], negated);
             }
-        }
-        else {
+        } else {
             throw std::runtime_error("Only AND and NOT operations can be applied");
         }
     }
 
-    bool KnowledgeBase::check_conditions(const InstantiatedCondition &condition) {
+    TRUTH_VALUE KnowledgeBase::check_conditions(const InstantiatedCondition &condition) {
         std::lock_guard<std::mutex> lock(mutex_);
         return check_conditions_internal(condition);
     }
@@ -981,6 +999,9 @@ namespace pddl_lib {
 
     void KnowledgeBase::apply_constraints() {
         std::lock_guard<std::mutex> lock(mutex_);
+        if (unknownPredicates.empty()){
+            return;
+        }
         for (const auto &constraint: constraints) {
             if (constraint.constraint == CONSTRAINTS::ONEOF) {
                 std::vector<InstantiatedPredicate> unknown_preds;
@@ -993,18 +1014,34 @@ namespace pddl_lib {
                             known_pred = *pred_con;
                         }
                     } else {
-                        throw std::runtime_error("ONEOF constraint act on predicates not conditions");
+                        throw std::runtime_error("ONEOF constraint acts on predicates not conditions");
                     }
                 }
-                if (unknown_preds.size() == 1 || known_pred.has_value()) {
-                    if (unknown_preds.size() == 1) {
-                        knownPredicates.insert(unknown_preds[0]);
+//                assert(!unknown_preds.empty() || known_pred.has_value());
+                if (unknown_preds.size() == 1) {
+                    if (known_pred.has_value()) {
+                        knownPredicates.erase(unknown_preds[0]);
                     } else {
-                        knownPredicates.insert(known_pred.value());
+                        knownPredicates.insert(unknown_preds[0]);
                     }
                     for (const auto &value: unknown_preds) {
                         unknownPredicates.erase(value);
                     }
+                }
+            } else if (constraint.constraint == CONSTRAINTS::OR) {
+                assert(constraint.condition.conditions.size() == 2);
+                auto cond1 = check_variant_internal(constraint.condition.conditions[0]);
+                auto cond2 = check_variant_internal(constraint.condition.conditions[1]);
+//                assert(!(cond2 == TRUTH_VALUE::TRUE && cond1 ==
+//                                                       TRUTH_VALUE::TRUE)); // TODO only one condition can be true, but need to check unknowns
+                if (cond2 == TRUTH_VALUE::FALSE) {
+                    apply_variant_internal(constraint.condition.conditions[0], false);
+                } else if (cond2 == TRUTH_VALUE::TRUE) {
+                    apply_variant_internal(constraint.condition.conditions[0], true);
+                } else if (cond1 == TRUTH_VALUE::FALSE) {
+                    apply_variant_internal(constraint.condition.conditions[1], false);
+                } else if (cond1 == TRUTH_VALUE::TRUE) {
+                    apply_variant_internal(constraint.condition.conditions[1], true);
                 }
             } else {
                 throw std::runtime_error("Only CONSTRAINTS::ONEOF constraint is supported");
@@ -1062,6 +1099,10 @@ namespace pddl_lib {
         constraints.push_back(constraint);
     }
 
+    void KnowledgeBase::set_goal(const InstantiatedCondition &new_goal) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        goal = new_goal;
+    }
 
     std::unordered_set<InstantiatedParameter> KnowledgeBase::get_objects() {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -1096,12 +1137,39 @@ namespace pddl_lib {
         for (const auto &constraint: problem.constraints) {
             insert_constraint(constraint);
         }
+        set_goal(problem.goal);
+
     }
 
     void KnowledgeBase::clear_unknowns() {
         std::lock_guard<std::mutex> lock(mutex_);
         unknownPredicates.clear();
         constraints.clear();
+    }
+
+    void KnowledgeBase::print_predicate() {
+//        std::lock_guard<std::mutex> lock(mutex_);
+        std::cout << "objects :\n";
+        for (const auto &obj: objects) {
+            std::cout << obj << "\n";
+        }
+        std::cout << "predicates :\n";
+        for (const auto &pred: knownPredicates) {
+            std::cout << pred << "\n";
+        }
+        std::cout << "unknowns :\n";
+        for (const auto &pred: unknownPredicates) {
+            std::cout << pred << "\n";
+        }
+        for (const auto &constraint: constraints) {
+            if (constraint.constraint == CONSTRAINTS::ONEOF) {
+                std::cout << "oneof : " << constraint.condition << "\n";
+            }
+            if (constraint.constraint == CONSTRAINTS::OR) {
+                std::cout << "or : " << constraint.condition << "\n";
+            }
+        }
+        std::cout << "goal : " << goal << "\n";
     }
 
 
@@ -1117,6 +1185,7 @@ namespace pddl_lib {
         ss << *this;
         return ss.str();
     }
+
 } // pddl_lib
 
 
@@ -1307,6 +1376,17 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedPredicate
     }
     os << ")";
 
+    return os;
+}
+
+
+std::ostream &operator<<(std::ostream &os,
+                         const std::variant<pddl_lib::InstantiatedCondition, pddl_lib::InstantiatedPredicate> &cond) {
+    if (auto inst = std::get_if<pddl_lib::InstantiatedCondition>(&cond)) {
+        os << *inst;
+    } else {
+        os << std::get<pddl_lib::InstantiatedPredicate>(cond);
+    }
     return os;
 }
 

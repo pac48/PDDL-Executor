@@ -9,8 +9,45 @@
 #include <unordered_map>
 #include <tl_expected/expected.hpp>
 #include <tl_expected/expected.hpp>
+#include <cassert>
+
+#include "functional"
 
 namespace pddl_lib {
+
+    enum class TRUTH_VALUE {
+        FALSE, TRUE, UNKNOWN
+    };
+
+    inline TRUTH_VALUE operator&=(TRUTH_VALUE lhs, TRUTH_VALUE rhs) {
+        if (lhs == TRUTH_VALUE::FALSE || rhs == TRUTH_VALUE::FALSE) {
+            return TRUTH_VALUE::FALSE;
+        }
+        if (lhs == TRUTH_VALUE::UNKNOWN || rhs == TRUTH_VALUE::UNKNOWN) {
+            return TRUTH_VALUE::UNKNOWN;
+        }
+        return TRUTH_VALUE::TRUE;
+    }
+
+    inline TRUTH_VALUE operator|=(TRUTH_VALUE lhs, TRUTH_VALUE rhs) {
+        if (lhs == TRUTH_VALUE::TRUE || rhs == TRUTH_VALUE::TRUE) {
+            return TRUTH_VALUE::TRUE;
+        }
+        if (lhs == TRUTH_VALUE::UNKNOWN || rhs == TRUTH_VALUE::UNKNOWN) {
+            return TRUTH_VALUE::UNKNOWN;
+        }
+        return TRUTH_VALUE::FALSE;
+    }
+
+    inline TRUTH_VALUE operator!(TRUTH_VALUE val) {
+        if (val == TRUTH_VALUE::TRUE) {
+            return TRUTH_VALUE::FALSE;
+        }
+        if (val == TRUTH_VALUE::FALSE) {
+            return TRUTH_VALUE::TRUE;
+        }
+        return TRUTH_VALUE::UNKNOWN;
+    }
 
     enum class OPERATION {
         AND = 0, OR, FORALL, NOT, WHEN
@@ -239,7 +276,8 @@ namespace pddl_lib {
         static KnowledgeBase &getInstance();
 
         std::string convert_to_problem(const Domain &domain);
-        bool check_conditions(const InstantiatedCondition &condition);
+
+        TRUTH_VALUE check_conditions(const InstantiatedCondition &condition);
 
         void load_kb(const Problem &problem);
 
@@ -265,6 +303,8 @@ namespace pddl_lib {
 
         void erase_predicate(const InstantiatedPredicate &pred);
 
+        void set_goal(const InstantiatedCondition &goal);
+
         bool find_predicate(const InstantiatedPredicate &pred);
 
         void insert_unknown_predicate(const InstantiatedPredicate &pred);
@@ -273,9 +313,9 @@ namespace pddl_lib {
 
         bool find_unknown_predicate(const InstantiatedPredicate &pred);
 
-
-
         void insert_constraint(const Constraint &constraint);
+
+        void print_predicate();
 
 
     private:
@@ -284,16 +324,21 @@ namespace pddl_lib {
         KnowledgeBase(const KnowledgeBase &) = delete; // Disable copy constructor
         KnowledgeBase &operator=(const KnowledgeBase &) = delete; // Disable assignment operator
 
-        bool check_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & condition);
+        TRUTH_VALUE check_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> &condition);
+
         void apply_conditions_internal(const InstantiatedCondition &condition, bool negated);
-        void apply_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> & var, bool negated);
-        bool check_conditions_internal(const InstantiatedCondition &condition);
+
+        void
+        apply_variant_internal(const std::variant<InstantiatedCondition, InstantiatedPredicate> &var, bool negated);
+
+        TRUTH_VALUE check_conditions_internal(const InstantiatedCondition &condition);
 
 
         std::unordered_set<InstantiatedPredicate> knownPredicates;
         std::unordered_set<InstantiatedPredicate> unknownPredicates;
         std::unordered_set<InstantiatedParameter> objects;
         std::vector<Constraint> constraints;
+        InstantiatedCondition goal;
         std::mutex mutex_;
     };
 
@@ -304,7 +349,8 @@ namespace pddl_lib {
 // parsing functions
     tl::expected<Domain, std::string> parse_domain(const std::string &content);
 
-    tl::expected<Problem, std::string> parse_problem(const std::string &content, const std::string &domain_content="");
+    tl::expected<Problem, std::string>
+    parse_problem(const std::string &content, const std::string &domain_content = "");
 
     tl::expected<Predicate, std::string>
     parse_predicate(const std::string &content,
@@ -357,3 +403,6 @@ std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedAction &a
 std::ostream &operator<<(std::ostream &os, const pddl_lib::Parameter &param);
 
 std::ostream &operator<<(std::ostream &os, const pddl_lib::InstantiatedParameter &param);
+
+std::ostream &operator<<(std::ostream &os,
+                         const std::variant<pddl_lib::InstantiatedCondition, pddl_lib::InstantiatedPredicate> &cond);
