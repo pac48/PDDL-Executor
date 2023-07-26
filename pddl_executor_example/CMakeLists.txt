@@ -27,6 +27,13 @@ target_link_libraries(planning_controller_node
     bt_blocks_actions
     )
 
+install(TARGETS
+    planning_controller_node
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION lib/${PROJECT_NAME}
+    )
+
 install(DIRECTORY pddl
     DESTINATION share/pddl_executor_example/
     )

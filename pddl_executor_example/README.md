@@ -129,6 +129,10 @@ UpdatePredicatesImpl updater;
 updater.update();
 ```
 
+## Run
+First, make sure you compile the repository in a ros2 workspace and source it.
+Then, you can run the example node with the following command.
 
+`ros2 run pddl_executor_example planning_controller_node`
 
 
