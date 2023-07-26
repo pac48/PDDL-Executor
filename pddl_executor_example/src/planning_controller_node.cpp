@@ -90,17 +90,17 @@ int main(int argc, char **argv) {
 
     auto domain_content = get_file_content("domain_blocks.pddl");
     auto problem_content = get_file_content("problem_blocks.pddl");
-    auto domain = parse_domain(domain_content).value();
-    auto prob = parse_problem(problem_content, domain_content).value();
+    pddl_lib::Domain domain = parse_domain(domain_content).value();
+    pddl_lib::Problem prob = parse_problem(problem_content).value();
 
-    BT::BehaviorTreeFactory factory = create_tree_factory<BlockWorldActions>();
+    auto factory = create_tree_factory<BlockWorldActions>();
     UpdatePredicatesImpl updater;
 
     while (rclcpp::ok()) {
         kb.clear();
         kb.load_kb(prob);
         updater.update();
-        auto config = getPlan(domain.str(), kb.convert_to_problem(domain));
+        std::optional<std::string> config = getPlan(domain.str(), kb.convert_to_problem(domain));
         auto tree = factory.createTreeFromText(config.value());
         tree.tickRoot();
         std::cout << "\n\n";
