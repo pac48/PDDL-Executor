@@ -122,6 +122,48 @@ TEST(KB, convert_To_problem) {
 
 }
 
+TEST(KB, convert_To_problem_2) {
+    std::filesystem::path pkg_dir = ament_index_cpp::get_package_share_directory("pddl_parser");
+    std::filesystem::path test_dir = pkg_dir / "tests" / "pddl";
+    std::filesystem::path pddl_file = test_dir / "medicine_domain.pddl";
+
+    std::ifstream pddl_file_stream(pddl_file.string().c_str());
+    std::stringstream ss;
+    ss << pddl_file_stream.rdbuf();
+    std::string content = ss.str();
+
+    auto domain_opt = parse_domain(content);
+    ASSERT_TRUE(domain_opt.has_value());
+    auto domain = domain_opt.value();
+
+    InstantiatedParameter kitchen = {"kitchen", "landmark"};
+    InstantiatedParameter couch = {"couch", "landmark"};
+    InstantiatedParameter home = {"home", "landmark"};
+    InstantiatedParameter pioneer = {"pioneer", "robot"};
+    InstantiatedParameter nathan = {"nathan", "person"};
+
+    auto &kb = KnowledgeBase::getInstance();
+    kb.insert_object(kitchen);
+    kb.insert_object(couch);
+    kb.insert_object(home);
+    kb.insert_object(pioneer);
+    kb.insert_object(nathan);
+
+    kb.insert_predicate({"robot_at", {pioneer, home}});
+    kb.insert_predicate({"medicine_location", {}});
+
+    kb.insert_predicate({"abort", {}});
+    InstantiatedCondition cond = {{},
+                                  {},
+                                  {
+                                          InstantiatedPredicate{"medicine_location", {}},
+                                          InstantiatedPredicate{"robot_at", {pioneer, home}},
+                                          InstantiatedCondition{pddl_lib::OPERATION::NOT, {} , {InstantiatedPredicate{"abort", {}}}},
+                                  }};
+    kb.check_conditions(cond);
+
+}
+
 
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);

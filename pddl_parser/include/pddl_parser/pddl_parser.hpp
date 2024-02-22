@@ -19,24 +19,31 @@ namespace pddl_lib {
         FALSE, TRUE, UNKNOWN
     };
 
-    inline TRUTH_VALUE operator&=(TRUTH_VALUE lhs, TRUTH_VALUE rhs) {
+    inline TRUTH_VALUE & operator&=(TRUTH_VALUE &lhs, TRUTH_VALUE rhs) {
         if (lhs == TRUTH_VALUE::FALSE || rhs == TRUTH_VALUE::FALSE) {
-            return TRUTH_VALUE::FALSE;
+            lhs = TRUTH_VALUE::FALSE;
+            return lhs;
+
         }
         if (lhs == TRUTH_VALUE::UNKNOWN || rhs == TRUTH_VALUE::UNKNOWN) {
-            return TRUTH_VALUE::UNKNOWN;
+            lhs = TRUTH_VALUE::UNKNOWN;
+            return lhs;
         }
-        return TRUTH_VALUE::TRUE;
+        lhs = TRUTH_VALUE::TRUE;
+        return lhs;
     }
 
-    inline TRUTH_VALUE operator|=(TRUTH_VALUE lhs, TRUTH_VALUE rhs) {
+    inline TRUTH_VALUE & operator|=(TRUTH_VALUE &lhs, TRUTH_VALUE rhs) {
         if (lhs == TRUTH_VALUE::TRUE || rhs == TRUTH_VALUE::TRUE) {
-            return TRUTH_VALUE::TRUE;
+            lhs = TRUTH_VALUE::TRUE;
+            return lhs;
         }
         if (lhs == TRUTH_VALUE::UNKNOWN || rhs == TRUTH_VALUE::UNKNOWN) {
-            return TRUTH_VALUE::UNKNOWN;
+            lhs = TRUTH_VALUE::UNKNOWN;
+            return lhs;
         }
-        return TRUTH_VALUE::FALSE;
+        lhs = TRUTH_VALUE::FALSE;
+        return lhs;
     }
 
     inline TRUTH_VALUE operator!(TRUTH_VALUE val) {
