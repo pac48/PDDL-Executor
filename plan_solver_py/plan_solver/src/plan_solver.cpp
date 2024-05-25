@@ -13,7 +13,7 @@
 #include "pddl_problem.hpp"
 
 
-constexpr int CHUNK_SIZE = 128 * 16;
+constexpr int CHUNK_SIZE = 128 * 128 * 16;
 struct Chunk {
     std::array<pddl_lib::KBState, CHUNK_SIZE> memory;
 };
@@ -402,6 +402,7 @@ int main(int argc, char **argv) {
                 auto it = close_list.find(&potential_new_state);
                 if (it == close_list.end()) {
                     open_list.push_back(potential_new_state);
+                    potential_new_state.valid = 0;
                     auto &new_state = open_list.back();
                     new_state.depth = cur_state.depth + 1;
                     close_list.insert(&new_state);
@@ -425,6 +426,7 @@ int main(int argc, char **argv) {
                         std::cout << "max_depth: " << max_depth << std::endl;
                     }
                 } else {
+                    potential_new_state.valid = 0;
                     cur_state.children.push_back(*it);
                     (*it)->parents.push_back(&cur_state);
                 }
@@ -443,7 +445,6 @@ int main(int argc, char **argv) {
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     std::cout << "Time taken by function: "
               << duration.count() << " milliseconds" << std::endl;
-
 
     return 0;
 }
