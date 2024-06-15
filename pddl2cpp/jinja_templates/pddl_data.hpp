@@ -333,11 +333,18 @@ void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*o
             const std::vector<std::function<std::pair<bool,bool>(KBState &)>> & constraints={}){
     int num = 0;
     {% for action in observe_actions %}
-    new_states[{{2*loop.index - 2}}].valid = 0;
-    new_states[{{2*loop.index - 1}}].valid = 0;
     if ({{action.name}}::check_preconditions(cur_state)){
-        new_states[num] = cur_state;
-        new_states[num+1] = cur_state;
+        std::memcpy(new_states[num].data, cur_state.data, {{size_kb_data}});
+        new_states[num].depth = cur_state.depth;
+        new_states[num].action = cur_state.action;
+        new_states[num].goal_dist = cur_state.goal_dist;
+        new_states[num].associated_state = cur_state.associated_state;
+        std::memcpy(new_states[num+1].data, cur_state.data, {{size_kb_data}});
+        new_states[num+1].depth = cur_state.depth;
+        new_states[num+1].action = cur_state.action;
+        new_states[num+1].goal_dist = cur_state.goal_dist;
+        new_states[num+1].associated_state = cur_state.associated_state;
+
         new_states[num].children.clear();
         new_states[num].parents.clear();
         new_states[num+1].children.clear();
@@ -356,9 +363,12 @@ void expand(const KBState& cur_state, std::array<KBState, {{actions|length + 2*o
     {% endfor %}
 
     {% for action in actions %}
-    new_states[{{2*observe_actions|length +  loop.index - 1}}].valid = 0;
     if ({{action.name}}::check_preconditions(cur_state)){
-            new_states[num] = cur_state;
+            std::memcpy(new_states[num].data, cur_state.data, {{size_kb_data}});
+            new_states[num].depth = cur_state.depth;
+            new_states[num].action = cur_state.action;
+            new_states[num].goal_dist = cur_state.goal_dist;
+            new_states[num].associated_state = cur_state.associated_state;
             new_states[num].action = {{ loop.index - 1}};
             new_states[num].children.clear();
             new_states[num].parents.clear();

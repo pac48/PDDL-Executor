@@ -26,6 +26,7 @@ target_include_directories(plan_solver PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 target_compile_features(plan_solver PUBLIC cxx_std_17)
+target_compile_options(plan_solver PRIVATE -O3)
 
 install(TARGETS plan_solver
     DESTINATION lib/${PROJECT_NAME})
