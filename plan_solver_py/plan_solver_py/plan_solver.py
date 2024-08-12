@@ -223,58 +223,6 @@ def create_sub_problem(problem_file, sub_problem_file):
 
     return reverse_object_map
 
-
-# def main():
-#     parser = argparse.ArgumentParser(description='Argument parser for domain and problem PDDL files.')
-#     parser.add_argument('-o', '--domain', help='Path to domain PDDL file', required=True)
-#     parser.add_argument('-f', '--problem', help='Path to problem PDDL file', required=True)
-#     args = parser.parse_args()
-#
-#     domain_file = args.domain
-#     if not os.path.isabs(domain_file):
-#         raise AssertionError("--domain must be an absolute path")
-#     problem_file = args.problem
-#     if not os.path.isabs(problem_file):
-#         raise AssertionError("--problem must be an absolute path")
-#
-#     if not os.path.exists("/tmp/plan_solver"):
-#         os.makedirs("/tmp/plan_solver", exist_ok=True)
-#
-#     plan_file = "/tmp/plan_solver/plan.txt"
-#     bt_file = "/tmp/plan_solver/bt.xml"
-#     while os.path.exists(plan_file):
-#         os.remove(plan_file)
-#     while os.path.exists(bt_file):
-#         os.remove(bt_file)
-#     # print(" ************** domain_file *********************", domain_file)
-#     # print(" ************** problem_file *********************", problem_file)
-#     h_val = hash_file(domain_file, problem_file)
-#     planner_path = f'/tmp/plan_solver/plan_solver_{h_val}'
-#     if not os.path.exists(planner_path):
-#         build_dir = "/tmp/plan_solver/build"
-#         file_path = os.path.join(get_package_share_directory('plan_solver_py'), 'plan_solver')
-#
-#         if not os.path.exists(build_dir):
-#             os.makedirs(build_dir, exist_ok=True)
-#
-#         cmd = f"cd {build_dir} && cmake {file_path} -DCMAKE_BUILD_TYPE=Release -DPDDL_PROBLEM={problem_file} -DPDDL_DOMAIN={domain_file} -DCMAKE_CXX_FLAGS='-O3' && make"
-#         # cmd = f"cd {build_dir} && cmake {file_path} -DCMAKE_BUILD_TYPE=Debug -DPDDL_PROBLEM={problem_file} -DPDDL_DOMAIN={domain_file} && make"
-#         os.system(cmd)
-#
-#         if os.path.exists('/tmp/plan_solver/include'):
-#             shutil.rmtree('/tmp/plan_solver/include')
-#         shutil.move(os.path.join(build_dir, 'plan_solver'), planner_path)
-#         shutil.move(os.path.join(build_dir, 'pddl_problem', 'include'), '/tmp/plan_solver')
-#         shutil.rmtree(build_dir)
-#
-#     sub_problem_file = "/tmp/plan_solver/problem_with_sub.pddl"
-#     reverse_object_map = create_sub_problem(problem_file, sub_problem_file)
-#     cmd = f"{planner_path} '{sub_problem_file}'"
-#     os.system(cmd)
-#
-#     with open(domain_file) as f:
-#         domain = pddl_parser.parser.parse_domain(f.read())
-#     generate_bt(plan_file, bt_file, domain, reverse_object_map)
 def main():
     parser = argparse.ArgumentParser(description='Argument parser for domain and problem PDDL files.')
     parser.add_argument('-o', '--domain', help='Path to domain PDDL file', required=True)
@@ -289,6 +237,8 @@ def main():
         raise AssertionError("--problem must be an absolute path")
 
     home_dir = os.getenv("HOME")
+    if not os.path.exists(home_dir + "/planner_data"):
+        os.makedirs(home_dir + "/plan_solver", exist_ok=True)
     path = home_dir + "/planner_data"
     if not os.path.exists(path + "/plan_solver"):
         os.makedirs(path + "/plan_solver", exist_ok=True)
