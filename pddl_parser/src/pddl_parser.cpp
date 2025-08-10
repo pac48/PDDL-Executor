@@ -107,6 +107,8 @@ namespace pddl_lib {
         std::string_view section;
         std::string matched_token;
         std::vector<std::string_view> all_comments;
+        
+        std::unordered_map<std::string, std::string> param_to_type_map;
 
         std::tie(section, remaining) = getNextParen(content);
         const auto strings = parseVector(section, {'\t', '\n', ' '}, all_comments);
@@ -144,6 +146,13 @@ namespace pddl_lib {
 //            return fmt::format("ERROR line {}: missing ':objects' keyword", get_line_num(content, substrings[0]));
             problem.objects = parse_instantiated_params(
                     std::vector<std::string_view>(substrings.begin() + 1, substrings.end()));
+            
+            // <-- Populate param_to_type_map here
+
+            for (auto &obj : problem.objects) {
+                param_to_type_map[obj.name] = obj.type;
+            }
+
             ind++;
             std::tie(section, remaining) = getNextParen(strings[ind]);
             substrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
@@ -152,7 +161,7 @@ namespace pddl_lib {
         if (substrings[0] != ":init") {
             return fmt::format("ERROR line {}: missing ':init' keyword", get_line_num(content, substrings[0]));
         }
-        std::unordered_map<std::string, std::string> param_to_type_map;
+
         for (const auto &str: std::vector<std::string_view>(substrings.begin() + 1, substrings.end())) {
             std::tie(section, remaining) = getNextParen(str);
             auto subsubstrings = parseVector(section, {'\t', '\n', ' '}, all_comments);
